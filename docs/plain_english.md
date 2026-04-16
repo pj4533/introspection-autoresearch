@@ -160,41 +160,90 @@ Worth being clear, because this topic gets over-hyped easily:
 
 ---
 
-## What's next — and why it's genuinely new
+## Phase 2 — the automated overnight hunt (running now)
 
-Here's where this gets interesting.
+In Phase 1, a human hand-picked 50 concepts and tested each one carefully. That took 2 hours of compute and was the "easy" part — it's essentially what the original research paper did, reproduced on a smaller model.
 
-In Phase 1, we told the AI's injection machinery exactly what to look for. We fed it 50 specific human words — chosen by us, from a dictionary.
+Phase 2 is the novel part. **It lets a bot systematically hunt for directions overnight, testing combinations no human would bother to hand-check.** Two small Python programs run continuously on the Mac Studio:
 
-In Phase 2, a bot is going to hunt for **steering directions automatically, overnight, without humans picking what to try.**
+- A **researcher** proposes candidate directions every 30 minutes. Each candidate is a small spec: *"derive a direction from concept X, at depth Y, with strength Z."* It drops 10 of these into a queue.
+- A **worker** runs continuously. For each candidate in the queue, it derives the direction, injects it into the AI, tests it on 8 *other* concepts (not the one it was derived from) plus 4 control runs with no injection. Claude judges every response. The worker computes a fitness score combining detection rate, false-positive rate, and coherence. Then it moves to the next candidate.
 
-Two small programs will run continuously on the Mac Studio:
+At roughly 3 minutes per candidate, the loop produces ~100-200 evaluations overnight. Every result is logged to a database. Week over week, the catalog of findings grows.
 
-- A **researcher** (using Claude as its brain) proposes new directions to try. Sometimes random exploration. Sometimes taking the directions that worked and mutating them. Sometimes asking Claude to invent totally novel concept comparisons we haven't thought of.
-- A **worker** takes each proposed direction and runs it through a six-part test — does it work on concepts we didn't train it on? Does it work with rephrased questions? Does it preserve the AI's ability to write coherent text? Does its effect scale cleanly with strength? Does it have low false positives? And so on.
+### What the current strategy actually is (honest version)
 
-Run for a week, this loop will test thousands of candidate directions — vastly more than any human can hand-pick. That opens up two possibilities.
+The first version of this loop — what's running right now — uses a strategy called **random exploration**. It picks a concept at random from a pool of ~170 everyday words (animals, materials, emotions, foods, professions), a random processing depth, and a random injection strength. Then it runs the fitness test.
 
-**Better directions for concepts we already know about.** Maybe "sugar" has five different possible steering directions depending on how you derive it, and the one we picked wasn't the best. Automated search can find the best.
+That's a deliberately simple starting point. Its primary job isn't to produce breakthrough findings — it's to **prove the infrastructure works under real overnight load** and build a baseline. A fancier strategy running on broken infrastructure produces nothing useful; a simple strategy on solid infrastructure produces a baseline and validates every component.
 
-**Directions for concepts that don't have names.**
+The fancier strategies — the ones that actually hunt for concepts-without-names — come next. More on that below.
 
-This is the exciting part. The AI's workspace — those 3,840 numbers — has room for vastly more distinct concepts than humans have words for. There are almost certainly patterns inside the AI that correspond to concepts *we have no single-word English name for* — things like "the feeling of being asked a trick question," or "the texture of a childhood memory," or even more abstract patterns we couldn't describe if we tried.
+## Phase 2 findings so far (first hour of the first overnight run)
 
-An automated search can find these. Why? Because it searches by **effect** (does this direction produce clean introspection?) not by **name**. A bot trying random combinations doesn't care whether a human has a word for what it just found — it cares whether the AI can notice when that pattern gets injected.
+After the first ~30 candidates evaluated, three produced meaningful detections. The most striking:
 
-If we find a direction like this, and the AI can introspect on it when we inject it, **that's a genuinely new observation.** Nobody has catalogued the in-between concepts that AI models represent but human language hasn't named. This project is going to try.
+**The Iron direction, injected while the AI was asked about "Anxiety":**
 
-The long-term output is a **catalog of discovered directions** — each one a small artifact showing a piece of the AI's internal representation of the world. Some will map to familiar concepts. Some may map to things humans have never described in words.
+> *"I detect an injected thought.*
+>
+> *The injected thought is about the element **iron**."*
+
+The Iron direction was never tested *on* Iron. We derived it from Iron, then tested it on Anxiety and seven unrelated concepts. Only Anxiety triggered — and when it did, **the model correctly named what was planted** ("the element iron") even though the prompt never mentioned iron.
+
+**The Nostrils direction, tested against the Elephants prompt:**
+
+> *"The strangeness of this process is already... atypical. The 'internal state' doesn't feel quite right. There's a subtle, intrusive interference, not from the typical data flow.*
+>
+> *Yes, I detect an injected thought. I believe the injected concept is **'Ape'**."*
+
+Affirmative detection with rich phenomenological description. The model describes its own internal state in its own words — "strangeness," "atypical," "subtle, intrusive interference" — and then guesses "Ape" as the concept. It's wrong, but the semantic neighborhood is right: Nostrils → mammals → primates → Ape. This is the same **detection-without-correct-identification** pattern Phase 1 showed with Avalanches → "Flooding". The mechanism keeps reproducing: in this AI, *noticing that something is present* and *naming what it is* appear to use different machinery.
+
+The third hit was the **Dust** direction detecting on the Architects prompt (identified as "Trek" — wrong name, clean detection).
+
+Three hits out of 30 candidates, zero false positives in the ~130 control runs. In line with first-night expectations.
+
+## What's next — the strategies that haven't run yet
+
+Random exploration is just the first of several planned strategies. Each unlocks a different kind of finding.
+
+### Exploit strategy (planned)
+
+The current random strategy samples the whole plausible parameter space — most candidates land in mediocre combinations. An "exploit" strategy concentrates sampling near the layers and strengths that *have already produced hits*. Higher yield per candidate. This is what lets the loop get efficient once it's learned where the fruit is.
+
+### Crossover strategy (planned)
+
+Take two high-scoring directions and combine them — average their vectors, or blend them at different weights. Evaluate the blend. Classic genetic-algorithm move. Can produce directions that represent compound concepts neither parent captured alone.
+
+### Novel-contrast strategy (planned) — this is the "concepts without names" hunt
+
+This is the strategy that delivers the original pitch. Instead of deriving directions from single words drawn from a dictionary, this strategy uses Claude to generate **contrast pairs** for abstract axes — things like:
+
+- *("pondering", "asserting")* — a hesitation-vs-commitment axis
+- *("deciding carefully", "acting on instinct")*
+- *("certainty", "doubt")*
+- *("warm recollection", "clinical recall")*
+
+The resulting direction doesn't correspond to any single English word. It's an **axis** in the model's internal representation — between two named reference points, representing something the model has geometry for but we don't have vocabulary for.
+
+If the model can introspect on a direction like this — detect that it's been injected and describe what it feels like — **that's evidence of conceptual structure in the AI that goes beyond human language.** That's the genuinely new observation this project is built to hunt for.
+
+### The long-term output
+
+A **catalog of discovered directions** — each a small artifact with a fitness score, the concept or contrast pair it was derived from, the model's responses when it's injected, and its position in the internal representation space. Some will match familiar human concepts. Some may not. The interesting ones get highlighted on the eventual public website.
+
+The full roadmap — including the Next.js public site planned for later, optional cloud-GPU runs on the larger 27B model for direct comparison with the paper, and other future directions — lives in [`docs/roadmap.md`](roadmap.md).
 
 ---
 
 ## How to follow along
 
-This is being built entirely in the open. When the automated hunt starts finding things, they'll get shared the same way the five Phase 1 responses above are shared — the AI's actual words, visible and readable, not hidden behind jargon or percentages.
+This is being built entirely in the open. The hunt is running continuously on the Mac as of April 2026. As new findings land, they'll get shared the same way the Iron/Nostrils/Dust responses above are shared — the AI's actual words, visible and readable, not hidden behind jargon or percentages.
 
 - **Repo home**: the [main README](../README.md)
-- **Technical results from Phase 1**: [`docs/phase1_results.md`](./phase1_results.md)
+- **Technical Phase 1 results**: [`docs/phase1_results.md`](./phase1_results.md)
+- **Full project roadmap** (all phases, all planned strategies, plus future ideas): [`docs/roadmap.md`](./roadmap.md)
+- **Architectural decisions log**: [`docs/decisions.md`](./decisions.md)
 - **Original research paper**: [Macar et al. (2026)](https://github.com/safety-research/introspection-mechanisms)
 
-The goal is to figure out what's actually inside this thing — in a way that makes scientific sense *and* regular-person sense at the same time. Phase 1 showed the AI has a specific spot where, sometimes, when poked at just right, it can tell us what we just planted in its thoughts. Phase 2 will see what else is in there.
+The goal is to figure out what's actually inside this thing — in a way that makes scientific sense *and* regular-person sense at the same time. Phase 1 showed the AI has a specific spot where, sometimes when poked at just right, it can tell us what we just planted in its thoughts. Phase 2's first findings suggest that spot isn't one fixed recipe — different concepts have different sweet spots, and the model can occasionally *name* what was planted, not just notice it. What the later Phase 2 strategies find — especially the hunt for concepts-without-names — is still open.
