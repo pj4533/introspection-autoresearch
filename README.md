@@ -43,6 +43,8 @@ Hardware target: Mac Studio M2 Ultra 64 GB.
   tiered fitness screening): planned, not started.
 
 - Plain-English walkthrough: [`docs/plain_english.md`](docs/plain_english.md)
+- Roadmap (phases, rationale, what's next): [`docs/roadmap.md`](docs/roadmap.md)
+- Architectural decisions log: [`docs/decisions.md`](docs/decisions.md)
 - Phase 1 technical results: [`docs/phase1_results.md`](docs/phase1_results.md)
 - Full project spec: [`docs/01_introspection_steering_autoresearch.md`](docs/01_introspection_steering_autoresearch.md)
 

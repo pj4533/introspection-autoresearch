@@ -11,11 +11,17 @@ directions affecting introspection capability.
 
 ## Canonical references (read first if orienting)
 
+- **Roadmap** (what's done, what's next, full rationale): `docs/roadmap.md`
+- **Architectural decisions** (ADR log): `docs/decisions.md`
 - Plain-English project writeup (public-facing): `docs/plain_english.md`
 - Phase 1 technical results: `docs/phase1_results.md`
 - Full spec: `docs/01_introspection_steering_autoresearch.md`
-- Approved plan: `/Users/pj4533/.claude/plans/lexical-mixing-unicorn.md`
+- Approved plan (pre-execution, for historical reference): `/Users/pj4533/.claude/plans/lexical-mixing-unicorn.md`
 - README: `README.md` (repo layout, setup, running)
+
+**Rule:** if a project decision only lives in chat logs, memory files, or the
+plan file, it's a bug. Commit it to `docs/roadmap.md` (forward-looking) or
+`docs/decisions.md` (rationale for past choices).
 
 ## Status snapshot
 
