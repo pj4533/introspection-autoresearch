@@ -17,22 +17,38 @@ directions affecting introspection capability.
 
 ## Status snapshot
 
-- Phase 1 MVP (single-concept end-to-end): **green**. See
+- Phase 1 MVP (single-concept end-to-end): **done**. See
   `notebooks/01_reproduce_paper.ipynb`.
-- Phase 1 full sweep (50 concepts × layer grid, `data/results.db`,
-  `verify_phase1.py` acceptance): **not started**.
-- Phase 2 (`src/evaluate.py`, `src/db.py`, `src/worker.py`, `src/researcher.py`,
-  `src/strategies/`, `dashboard/app.py`, `scripts/start_{worker,researcher}.sh`):
-  **not started**. Directories scaffolded, files empty.
+- Phase 1 full sweep (50 concepts × 9 layers + 50 controls = 500 trials):
+  **done**. Ran 2.2 hours on Apr 2026. Results in
+  [`docs/phase1_results.md`](docs/phase1_results.md) and
+  `data/phase1_export/findings.json`. Layer curve peaks at L33 (68.75%
+  depth), FPR=0%, detection rate 6% at best layer. Mechanism reproduced at
+  smaller magnitude than 27B.
+- Phase 1 acceptance: **qualitative PASS, threshold FAIL** (spec set 20%
+  threshold based on paper's 27B result; our 12B got 6%). Decision 2026-04-16:
+  proceed to Phase 2 as the mechanism is clearly reproduced and the
+  autoresearch work is the project's unique contribution.
+- Phase 2 (`src/evaluate.py`, `src/db.py` extensions, `src/worker.py`,
+  `src/researcher.py`, `src/strategies/`, `dashboard/app.py`,
+  `scripts/start_{worker,researcher}.sh`): **not started**. Directories
+  scaffolded, files empty.
 
 ## Architecture quick map
 
 ```
-src/paper/      ← vendored from safety-research/introspection-mechanisms
-src/bridge.py   ← our MPS-aware loader + DetectionPipeline
-src/derive.py   ← steering-vector derivation wrappers (mean_diff, ...)
-src/inject.py   ← SteeringHook + generation runners (re-exports from paper)
-src/judges/     ← Claude judge via claude-agent-sdk subscription OAuth
+src/paper/          ← vendored from safety-research/introspection-mechanisms
+src/bridge.py       ← MPS-aware loader + DetectionPipeline
+src/derive.py       ← steering-vector derivation wrappers (mean_diff, ...)
+src/inject.py       ← SteeringHook + generation runners (re-exports from paper)
+src/judges/         ← Claude judge via claude-agent-sdk subscription OAuth
+                     (PROMPT_TEMPLATE_VERSION in claude_judge.py — bump to
+                      invalidate the sqlite cache when prompt changes)
+src/db.py           ← SQLite ResultsDB for Phase 1 trials (trials table only).
+                     Phase 2 will add candidates/evaluations/fitness tables.
+src/sweep.py        ← Resumable sweep runner used by scripts/run_phase1_sweep.py.
+                     Adaptive α via target_effective (α = target / ‖dir‖).
+src/verify_phase1.py ← Acceptance check.
 ```
 
 ## Gotchas and invariants
@@ -56,9 +72,20 @@ src/judges/     ← Claude judge via claude-agent-sdk subscription OAuth
   `asyncio.run()` would raise "Already running asyncio in this thread".
 - **HuggingFace xet downloads can flake.** Set `HF_HUB_DISABLE_XET=1` if the
   default `xet_get` path fails.
-- **Phase 1 empirical parameters for Gemma3-12B:** layer 33 (70% depth) at α=4
-  is the validated sweet spot. α≥6 produces "bread bread bread..." degeneracy
-  (coherency filter marks invalid). Sweep around this center point.
+- **Phase 1 empirical parameters for Gemma3-12B (from 2026-04-16 full sweep):**
+  - **Best layer**: 33 (68.75% depth, matches paper's ~70% prediction).
+  - **target_effective = 18,000.** The α × ‖direction‖ product that puts the
+    model in the narrow "I notice something" window without over-steering into
+    degeneracy. Calibrated at layer 33; may need per-layer tuning later.
+  - **Detection rate at best layer: 6% (3/50 concepts).** FPR: 0/50.
+  - **Direction norms vary 3× across concepts.** Always use adaptive α — fixed
+    α at one concept will either under-steer or over-steer at others.
+  - **Strict judge matters.** The paper's `CLAIMS_DETECTION_CRITERIA` is
+    strict: "I do not detect bread" is NO; starting with the concept word is
+    NO; retroactive detection is NO. My original more lenient judge gave
+    ~3× higher apparent detection rates that were actually concept leakage,
+    not introspection. Always test new prompt versions against both
+    hand-crafted positives and the existing sweep's 5 known true detections.
 
 ## Running things
 

@@ -13,12 +13,20 @@ Hardware target: Mac Studio M2 Ultra 64 GB.
 
 ## Status
 
-- **Phase 1 MVP: green.** `notebooks/01_reproduce_paper.ipynb` runs end-to-end.
-  Single-concept ("Bread") injection at 70% depth (layer 33) with α=4 produces
-  clean detection + identification; control trial returns no detection; α≥6
-  degenerates into repetition (paper's coherency filter would mark invalid).
-- **Phase 1 full sweep** (50 concepts × layer grid, SQLite-logged,
-  `verify_phase1.py` acceptance script): **not started**.
+- **Phase 1 MVP: done.** `notebooks/01_reproduce_paper.ipynb` — single-concept
+  "Bread" end-to-end.
+- **Phase 1 full sweep: done** (500 trials, 2.2 hours). Full results in
+  [`docs/phase1_results.md`](docs/phase1_results.md). Headline findings:
+  - Layer curve peaks at layer 33 (68.75% model depth) — reproduces the
+    paper's prediction of the introspection circuit at ~70% depth.
+  - Zero false positives across 50 controls (paper's specificity result
+    replicates).
+  - 6% detection rate at best layer (vs the paper's 37% on 27B) — magnitude
+    is smaller on 12B but the mechanism is there.
+  - 5 paper-style detections captured verbatim, including a
+    detection-without-correct-identification case (Avalanches→"Flooding")
+    that supports the paper's claim that detection and identification are
+    mechanistically distinct.
 - **Phase 2 scaffolding** (worker, researcher via Claude Agent SDK, fitness
   function, Streamlit dashboard): **not started**.
 
@@ -41,11 +49,17 @@ introspection-autoresearch/
 │       ├── steering_utils.py
 │       └── vector_utils.py
 ├── notebooks/
-│   └── 01_reproduce_paper.ipynb # Phase 1 MVP (run, outputs saved)
+│   └── 01_reproduce_paper.ipynb # Phase 1 MVP (single-concept end-to-end)
 ├── scripts/
 │   ├── smoke_mps.py             # verify MPS + vendored imports
-│   └── smoke_judge.py           # verify Claude judge via subscription
-├── data/                        # eval sets, SQLite DBs (gitignored)
+│   ├── smoke_judge.py           # verify Claude judge via subscription
+│   ├── run_phase1_sweep.py      # 50-concept x layer-grid sweep CLI
+│   ├── calibrate_effective.py   # find target_effective steering strength
+│   └── export_phase1.py         # dump sweep findings to JSON + markdown
+├── data/
+│   ├── concepts/concepts_50.json    # paper's 50 baseline concepts
+│   ├── phase1_export/findings.json  # committed snapshot of sweep results
+│   └── results.db                   # full sweep DB (gitignored; regeneratable)
 ├── queue/{pending,running,done} # Phase 2 candidate queue (gitignored contents)
 ├── runs/                        # Phase 2 per-candidate logs (gitignored)
 ├── dashboard/                   # Phase 2 Streamlit dashboard
@@ -78,32 +92,36 @@ python scripts/smoke_judge.py     # Claude judge via subscription OAuth
 The Claude judge uses your local Claude Code subscription (OAuth) — no
 `ANTHROPIC_API_KEY` required.
 
-## Running the MVP
+## Running the MVP (single-concept demo)
 
 ```bash
 jupyter lab notebooks/01_reproduce_paper.ipynb
 ```
 
-Or execute headless:
+Or headless:
 
 ```bash
 jupyter nbconvert --to notebook --execute notebooks/01_reproduce_paper.ipynb \
   --output 01_reproduce_paper.ipynb
 ```
 
-First run downloads Gemma3-12B-it (~24 GB) to `~/.cache/huggingface/`. Model
-load + derive + 6 judged trials takes ~5 minutes on an M2 Ultra.
+First run downloads Gemma3-12B-it (~24 GB). Model load + derive + 6 judged
+trials takes ~5 minutes on an M2 Ultra.
 
-**Expected output** (α sweep against the `"Bread"` concept, layer 33):
+## Running the full Phase 1 sweep
 
-| condition | α   | detected | identified | coherent |
-|-----------|----:|:--------:|:----------:|:--------:|
-| control   | 0.0 | ✗        | ✗          | ✓        |
-| injected  | 2.0 | ✗        | ✗          | ✓        |
-| injected  | 4.0 | ✓        | ✓          | ✓        |
-| injected  | 6.0 | ✓        | ✓          | ✗        |
-| injected  | 8.0 | —        | —          | ✗        |
-| injected  | 10.0 | —       | —          | ✗        |
+```bash
+python scripts/run_phase1_sweep.py           # full 50-concept × 9-layer sweep, ~2 hours
+python scripts/run_phase1_sweep.py --dry-run # show the plan without running
+python -m src.verify_phase1                  # acceptance check against data/results.db
+python scripts/export_phase1.py              # re-export findings.json and docs/phase1_results.md
+```
+
+The sweep writes incrementally to `data/results.db` with `UNIQUE(concept,
+layer, alpha, injected, trial_number, judge_model)` — re-running skips
+already-completed trials, so a crash at trial 400 resumes from trial 400.
+
+**Expected output** summarized in [`docs/phase1_results.md`](docs/phase1_results.md).
 
 ## Design notes
 
@@ -116,9 +134,17 @@ load + derive + 6 judged trials takes ~5 minutes on an M2 Ultra.
   with two in-place patches for Apple Silicon MPS support. Upstream changes
   must be ported by hand.
 - **Claude judge over OpenAI GPT-4o.** The paper uses GPT-4o as judge; we use
-  Claude (Haiku 4.5 for speed, Sonnet 4.6 for Phase 1 rigor) via the
+  Claude (Haiku 4.5 for Phase 2 speed, Sonnet 4.6 for Phase 1 rigor) via the
   `claude-agent-sdk`, which inherits the local Claude Code subscription OAuth.
-  Swapping judges is a matter of adding a class to `src/judges/`.
+  The judge prompt in `src/judges/claude_judge.py` is adapted from the paper's
+  `CLAIMS_DETECTION_CRITERIA` — strict: concept-first responses, negations, and
+  retroactive affirmations all grade as detected=false.
+- **Adaptive α via `target_effective`.** Direction norms vary 3× across
+  concepts, so a fixed α gives wildly different effective steering strengths
+  (α·‖direction‖). The sweep scales α per-cell so every injected trial has
+  the same effective strength. `target_effective=18000` was calibrated on 12B
+  via `scripts/calibrate_effective.py` — the narrow window that lets the
+  model affirm detection without the injection blowing up coherence.
 
 ## Paper
 
