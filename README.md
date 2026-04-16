@@ -1,5 +1,11 @@
 # introspection-autoresearch
 
+> **New here?** Start with **[docs/plain_english.md](docs/plain_english.md)** — a
+> non-technical walkthrough of what this project does, what we found, and why
+> it's interesting. It has the actual model responses (a 12B-parameter model
+> noticing we implanted a thought and naming it correctly). Read that first if
+> you came looking for a human-language explanation.
+
 Two-phase mechanistic-interpretability project running locally on Apple Silicon:
 
 1. **Phase 1 — Reproduction.** Reproduce core findings from Macar et al. (2026),
@@ -30,7 +36,9 @@ Hardware target: Mac Studio M2 Ultra 64 GB.
 - **Phase 2 scaffolding** (worker, researcher via Claude Agent SDK, fitness
   function, Streamlit dashboard): **not started**.
 
-Full spec: [`docs/01_introspection_steering_autoresearch.md`](docs/01_introspection_steering_autoresearch.md).
+- Plain-English walkthrough: [`docs/plain_english.md`](docs/plain_english.md)
+- Phase 1 technical results: [`docs/phase1_results.md`](docs/phase1_results.md)
+- Full project spec: [`docs/01_introspection_steering_autoresearch.md`](docs/01_introspection_steering_autoresearch.md)
 
 ## Repo layout
 

@@ -11,9 +11,11 @@ directions affecting introspection capability.
 
 ## Canonical references (read first if orienting)
 
+- Plain-English project writeup (public-facing): `docs/plain_english.md`
+- Phase 1 technical results: `docs/phase1_results.md`
 - Full spec: `docs/01_introspection_steering_autoresearch.md`
 - Approved plan: `/Users/pj4533/.claude/plans/lexical-mixing-unicorn.md`
-- README: `README.md` (repo layout, setup, running the MVP)
+- README: `README.md` (repo layout, setup, running)
 
 ## Status snapshot
 
