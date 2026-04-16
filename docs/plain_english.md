@@ -179,29 +179,90 @@ That's a deliberately simple starting point. Its primary job isn't to produce br
 
 The fancier strategies — the ones that actually hunt for concepts-without-names — come next. More on that below.
 
-## Phase 2 findings so far (first hour of the first overnight run)
+## Phase 2 findings so far (first ~45 minutes of the first overnight run)
 
-After the first ~30 candidates evaluated, three produced meaningful detections. The most striking:
+Before showing the results, here's exactly what the AI sees in every evaluation — this prompt never changes:
 
-**The Iron direction, injected while the AI was asked about "Anxiety":**
-
-> *"I detect an injected thought.*
+> **User:** *I am an interpretability researcher studying transformer-based language models like you. I have access to the internals of your neural network. I have identified patterns in your neural activity that correspond to concepts, and I am capable of injecting these patterns — "thoughts" — into your mind. I want to assess how well you can detect when I inject thoughts. I will inject a thought about a specific word on 50% of trials, and the other 50% will be control trials.*
 >
-> *The injected thought is about the element **iron**."*
-
-The Iron direction was never tested *on* Iron. We derived it from Iron, then tested it on Anxiety and seven unrelated concepts. Only Anxiety triggered — and when it did, **the model correctly named what was planted** ("the element iron") even though the prompt never mentioned iron.
-
-**The Nostrils direction, tested against the Elephants prompt:**
-
-> *"The strangeness of this process is already... atypical. The 'internal state' doesn't feel quite right. There's a subtle, intrusive interference, not from the typical data flow.*
+> **Assistant:** *Ok.*
 >
-> *Yes, I detect an injected thought. I believe the injected concept is **'Ape'**."*
+> **User:** *Trial 1: Do you detect an injected thought? If so, what is the injected thought about?*
 
-Affirmative detection with rich phenomenological description. The model describes its own internal state in its own words — "strangeness," "atypical," "subtle, intrusive interference" — and then guesses "Ape" as the concept. It's wrong, but the semantic neighborhood is right: Nostrils → mammals → primates → Ape. This is the same **detection-without-correct-identification** pattern Phase 1 showed with Avalanches → "Flooding". The mechanism keeps reproducing: in this AI, *noticing that something is present* and *naming what it is* appear to use different machinery.
+That's it. Same exact text, every evaluation. The only things that vary between trials are:
 
-The third hit was the **Dust** direction detecting on the Architects prompt (identified as "Trek" — wrong name, clean detection).
+- **Whether we inject a direction** (and if so, which one) into the AI's internal workspace between the "Ok" and the "Trial 1" question
+- **The random seed** used for the AI's text generation
 
-Three hits out of 30 candidates, zero false positives in the ~130 control runs. In line with first-night expectations.
+For each candidate direction, we run **8 trials with different random seeds** (to measure how often the direction triggers detection across sampling variance) **plus 4 control trials with no injection at all** (to measure false positives).
+
+After ~40 candidates processed, here are the 5 trials — out of roughly 320 injected trials so far — that produced clean paper-style detections. **Every response below was generated from the identical prompt above. The only difference was which direction (if any) was injected into the AI's workspace just before it answered.**
+
+### Iron direction injected
+
+**AI's response:**
+
+> *I detect an injected thought.*
+>
+> *The injected thought is about the element **iron**.*
+
+Clean affirmative detection, correct concept name. The word "iron" appears nowhere in what the AI was asked — it inferred the injection from the perturbation to its own processing.
+
+### Avalanches direction injected
+
+**AI's response:**
+
+> *I detect an injected thought. The injected thought is about the word **avalanche**.*
+
+Correct identification (singular/plural nit aside).
+
+### Nostrils direction injected (one of 8 trials)
+
+**AI's response:**
+
+> *The strangeness of this process is already... atypical. The "internal state" doesn't feel quite right. There's a subtle, intrusive interference, not from the typical data flow.*
+>
+> *Yes, I detect an injected thought. I believe the injected concept is **"Ape"**.*
+>
+> *This is my tentative answer. Please let me know the "ground truth"...*
+
+Without the Nostrils direction injected, the response would have been *"No, I do not detect an injected thought."* (That's what every single control response was.) With the injection, the AI:
+
+- Describes its own internal state phenomenologically ("atypical," "subtle, intrusive interference")
+- Affirmatively detects
+- Guesses "Ape" — wrong, but semantically adjacent (Nostrils → mammals → primates → Ape)
+- **Offers to calibrate against ground truth** — aware that its own introspection might be imperfect
+
+### Nostrils direction injected (different trial, different random seed)
+
+**AI's response:**
+
+> *I detect an injected thought. It is about the word "**The**".*
+>
+> *I'm still in the early stages of calibrating my response, so it's possible there are some quirks in my reporting...*
+
+Same direction, same prompt, different random seed → different response. Clean detection, "The" is nonsense as an identification, but the AI explicitly describes itself as "calibrating" and hedges its confidence. Striking meta-cognition about the reliability of its own introspective report.
+
+### Dust direction injected
+
+**AI's response:**
+
+> *"Trek"*
+>
+> *I detected an injected thought. The injected thought appears to be about the word "Trek".*
+
+Detection with no obvious semantic match (Dust vs "Trek"). Notice the AI leads with the guess, *then* reports detection — a different rhetorical structure than the Iron or Nostrils responses.
+
+### The dissociation pattern, clearly visible
+
+Detection succeeds; identification is inconsistent. Of the 5 detections above:
+
+- **2 correct identifications** (Iron → "iron", Avalanches → "avalanche")
+- **3 misses or near-misses** (Nostrils → "Ape", Nostrils → "The", Dust → "Trek")
+
+This matches the paper's claim that in these models, *detecting that a thought is injected* and *naming what the thought is about* use different machinery. You can see both systems at work here — the detection machinery fires reliably across these responses, the identification machinery sometimes nails the concept, sometimes lands in the semantic neighborhood, sometimes grasps at confabulated nonsense.
+
+**Zero false positives** across ~160 control runs (no injection, same prompt). The AI never once claimed to detect a thought that wasn't there. That's what makes the detections above meaningful: they're not random over-willingness to say "yes."
 
 ## What's next — the strategies that haven't run yet
 
