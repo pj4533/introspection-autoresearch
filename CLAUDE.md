@@ -31,10 +31,18 @@ directions affecting introspection capability.
   threshold based on paper's 27B result; our 12B got 6%). Decision 2026-04-16:
   proceed to Phase 2 as the mechanism is clearly reproduced and the
   autoresearch work is the project's unique contribution.
-- Phase 2 (`src/evaluate.py`, `src/db.py` extensions, `src/worker.py`,
-  `src/researcher.py`, `src/strategies/`, `dashboard/app.py`,
-  `scripts/start_{worker,researcher}.sh`): **not started**. Directories
-  scaffolded, files empty.
+- Phase 2 scaffolding: **built**. `src/evaluate.py` (3-component
+  multiplicative fitness: detection × (1 − 5·fpr) × coherence),
+  `src/worker.py` (long-lived queue poller, loads Gemma once),
+  `src/researcher.py` (short-lived, invoked periodically, writes candidate
+  JSON to queue/pending/), `src/strategies/random_explore.py` (first
+  strategy; samples concept×layer×target_effective), `scripts/start_worker.sh`
+  + `scripts/start_researcher.sh` (setsid nohup launchers), `data/eval_sets/`
+  (held_out_concepts.json = 20 concepts NOT in the 50-concept Phase 1 set;
+  concept_pool.json = ~170-concept search pool for random_explore).
+- Phase 2 enhancements (Claude Agent SDK researcher, `exploit_topk` /
+  `crossover` / `novel_contrast` strategies, Streamlit dashboard, T1/T2/T3
+  tiered fitness screening): planned, not started.
 
 ## Architecture quick map
 
@@ -46,11 +54,16 @@ src/inject.py       ← SteeringHook + generation runners (re-exports from paper
 src/judges/         ← Claude judge via claude-agent-sdk subscription OAuth
                      (PROMPT_TEMPLATE_VERSION in claude_judge.py — bump to
                       invalidate the sqlite cache when prompt changes)
-src/db.py           ← SQLite ResultsDB for Phase 1 trials (trials table only).
-                     Phase 2 will add candidates/evaluations/fitness tables.
-src/sweep.py        ← Resumable sweep runner used by scripts/run_phase1_sweep.py.
+src/db.py           ← SQLite ResultsDB. Phase 1 trials + Phase 2 candidates/
+                     evaluations/fitness_scores. Schema version 2.
+src/sweep.py        ← Resumable Phase 1 sweep runner.
                      Adaptive α via target_effective (α = target / ‖dir‖).
-src/verify_phase1.py ← Acceptance check.
+src/verify_phase1.py ← Phase 1 acceptance check.
+src/evaluate.py     ← Phase 2 candidate fitness (3-component multiplicative).
+src/worker.py       ← Phase 2 long-lived queue poller. Loads model once.
+src/researcher.py   ← Phase 2 short-lived candidate generator driver.
+src/strategies/     ← Phase 2 strategies. Currently: random_explore. Future:
+                     exploit_topk, crossover, novel_contrast (via Agent SDK).
 ```
 
 ## Gotchas and invariants
@@ -99,9 +112,24 @@ source .venv/bin/activate
 python scripts/smoke_mps.py
 python scripts/smoke_judge.py
 
-# MVP notebook (~5 min on M2 Ultra)
+# Phase 1 MVP notebook (~5 min on M2 Ultra)
 jupyter nbconvert --to notebook --execute notebooks/01_reproduce_paper.ipynb \
   --output 01_reproduce_paper.ipynb --ExecutePreprocessor.timeout=1200
+
+# Phase 1 full sweep (~2 hours)
+python scripts/run_phase1_sweep.py
+python -m src.verify_phase1
+python scripts/export_phase1.py
+
+# Phase 2 autoresearch loop (overnight)
+./scripts/start_worker.sh          # background, one per machine
+./scripts/start_researcher.sh      # background, 30-min cycle
+tail -f logs/worker.log logs/researcher.log
+
+# Phase 2 manual / test invocation
+python -m src.researcher --strategy random --n 5 --dry-run
+python -m src.researcher --strategy random --n 5
+python -m src.worker --max-candidates 5
 ```
 
 ## User preferences (PJ)

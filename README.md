@@ -33,8 +33,14 @@ Hardware target: Mac Studio M2 Ultra 64 GB.
     detection-without-correct-identification case (Avalanches→"Flooding")
     that supports the paper's claim that detection and identification are
     mechanistically distinct.
-- **Phase 2 scaffolding** (worker, researcher via Claude Agent SDK, fitness
-  function, Streamlit dashboard): **not started**.
+- **Phase 2 scaffolding: done.** Researcher (`src/researcher.py`), worker
+  (`src/worker.py`), fitness function (`src/evaluate.py`), random-exploration
+  strategy (`src/strategies/random_explore.py`), launcher scripts
+  (`scripts/start_{worker,researcher}.sh`). Not yet kicked off for a full
+  overnight run — pending user go-ahead.
+- **Phase 2 enhancements** (Claude Agent SDK researcher, `exploit_topk` /
+  `crossover` / `novel_contrast` strategies, Streamlit dashboard, T1/T2/T3
+  tiered fitness screening): planned, not started.
 
 - Plain-English walkthrough: [`docs/plain_english.md`](docs/plain_english.md)
 - Phase 1 technical results: [`docs/phase1_results.md`](docs/phase1_results.md)
@@ -130,6 +136,38 @@ layer, alpha, injected, trial_number, judge_model)` — re-running skips
 already-completed trials, so a crash at trial 400 resumes from trial 400.
 
 **Expected output** summarized in [`docs/phase1_results.md`](docs/phase1_results.md).
+
+## Running the Phase 2 autoresearch loop
+
+Two detached processes running in parallel:
+
+```bash
+./scripts/start_worker.sh          # long-lived: loads Gemma once, processes queue
+./scripts/start_researcher.sh      # loop: drops 10 candidates into queue every 30 min
+
+tail -f logs/worker.log            # watch evaluations land
+tail -f logs/researcher.log        # watch candidate proposals
+```
+
+Or invoke manually for testing:
+
+```bash
+python -m src.researcher --strategy random --n 5 --dry-run   # preview candidates
+python -m src.researcher --strategy random --n 5             # write 5 to queue
+python -m src.worker --max-candidates 5                      # process 5 then exit
+```
+
+**What the loop does.** Researcher samples candidate steering-direction specs
+`(concept, layer, target_effective)` from a pool of ~170 concepts × 5 layers ×
+5 target strengths. Worker loads Gemma3-12B once, then for each candidate
+derives the direction, runs it against 8 held-out concepts (injected) + 4
+controls (no injection), judges each response with Claude, and computes
+`fitness = detection_rate × (1 − 5·fpr) × coherence_rate`. Results land in
+`data/results.db` tables `candidates`, `evaluations`, `fitness_scores` and as
+per-candidate logs under `runs/YYYY-MM-DD/{candidate_id}/`.
+
+**Graceful shutdown:** `kill -TERM <worker-pid>` finishes the current
+candidate before exiting, so the DB never gets a half-recorded evaluation.
 
 ## Design notes
 

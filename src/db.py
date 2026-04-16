@@ -15,7 +15,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable, Optional
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 @dataclass
@@ -40,6 +40,7 @@ class Trial:
 
 
 _SCHEMA = """
+-- Phase 1: individual (concept, layer, alpha, injected) trials
 CREATE TABLE IF NOT EXISTS trials (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -66,6 +67,62 @@ CREATE INDEX IF NOT EXISTS idx_trials_concept ON trials(concept);
 CREATE INDEX IF NOT EXISTS idx_trials_layer ON trials(layer_idx);
 CREATE INDEX IF NOT EXISTS idx_trials_run ON trials(run_id);
 CREATE INDEX IF NOT EXISTS idx_trials_injected ON trials(injected);
+
+-- Phase 2: candidate steering-direction specs proposed by the researcher
+CREATE TABLE IF NOT EXISTS candidates (
+    id TEXT PRIMARY KEY,                  -- UUID-ish, assigned by researcher
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    evaluated_at TIMESTAMP,               -- set by worker when done
+    strategy TEXT NOT NULL,               -- random_explore, exploit_topk, etc.
+    spec_json TEXT NOT NULL,              -- full candidate spec
+    spec_hash TEXT NOT NULL UNIQUE,       -- for dedup
+    concept TEXT NOT NULL,
+    layer_idx INTEGER NOT NULL,
+    target_effective REAL NOT NULL,
+    derivation_method TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending', -- pending, running, done, failed
+    error_message TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_candidates_strategy ON candidates(strategy);
+CREATE INDEX IF NOT EXISTS idx_candidates_status ON candidates(status);
+CREATE INDEX IF NOT EXISTS idx_candidates_hash ON candidates(spec_hash);
+
+-- Phase 2: per-concept evaluation results for each candidate
+CREATE TABLE IF NOT EXISTS evaluations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    candidate_id TEXT NOT NULL,
+    eval_concept TEXT NOT NULL,           -- the held-out concept we tested on
+    injected INTEGER NOT NULL,            -- 0 for controls, 1 for injection
+    alpha REAL NOT NULL,
+    direction_norm REAL NOT NULL,
+    response TEXT NOT NULL,
+    detected INTEGER NOT NULL,
+    identified INTEGER NOT NULL,
+    coherent INTEGER NOT NULL,
+    judge_model TEXT NOT NULL,
+    judge_reasoning TEXT NOT NULL,
+    FOREIGN KEY (candidate_id) REFERENCES candidates(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_evaluations_candidate ON evaluations(candidate_id);
+
+-- Phase 2: composite fitness score per candidate
+CREATE TABLE IF NOT EXISTS fitness_scores (
+    candidate_id TEXT PRIMARY KEY,
+    score REAL NOT NULL,
+    detection_rate REAL NOT NULL,
+    identification_rate REAL NOT NULL,
+    fpr REAL NOT NULL,
+    coherence_rate REAL NOT NULL,
+    n_held_out INTEGER NOT NULL,
+    n_controls INTEGER NOT NULL,
+    components_json TEXT,                 -- full breakdown for analysis
+    FOREIGN KEY (candidate_id) REFERENCES candidates(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_fitness_score ON fitness_scores(score);
 
 CREATE TABLE IF NOT EXISTS schema_meta (
     key TEXT PRIMARY KEY,
@@ -195,3 +252,134 @@ class ResultsDB:
         n = int(r["n"] or 0)
         fp = int(r["n_false_pos"] or 0)
         return {"n": n, "n_false_pos": fp, "fpr": (fp / n) if n else 0.0}
+
+    # ------------------------------------------------------------------
+    # Phase 2: candidates / evaluations / fitness_scores
+    # ------------------------------------------------------------------
+
+    def has_candidate_hash(self, spec_hash: str) -> bool:
+        with self._conn() as conn:
+            row = conn.execute(
+                "SELECT 1 FROM candidates WHERE spec_hash=? LIMIT 1", (spec_hash,)
+            ).fetchone()
+        return row is not None
+
+    def insert_candidate(
+        self,
+        candidate_id: str,
+        strategy: str,
+        spec_json: str,
+        spec_hash: str,
+        concept: str,
+        layer_idx: int,
+        target_effective: float,
+        derivation_method: str,
+    ) -> None:
+        with self._conn() as conn:
+            conn.execute(
+                """INSERT OR IGNORE INTO candidates
+                   (id, strategy, spec_json, spec_hash, concept, layer_idx,
+                    target_effective, derivation_method, status)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')""",
+                (
+                    candidate_id, strategy, spec_json, spec_hash,
+                    concept, layer_idx, target_effective, derivation_method,
+                ),
+            )
+
+    def set_candidate_status(
+        self,
+        candidate_id: str,
+        status: str,
+        error_message: Optional[str] = None,
+    ) -> None:
+        with self._conn() as conn:
+            if status == "done":
+                conn.execute(
+                    """UPDATE candidates SET status=?, evaluated_at=CURRENT_TIMESTAMP,
+                       error_message=? WHERE id=?""",
+                    (status, error_message, candidate_id),
+                )
+            else:
+                conn.execute(
+                    "UPDATE candidates SET status=?, error_message=? WHERE id=?",
+                    (status, error_message, candidate_id),
+                )
+
+    def record_evaluation(
+        self,
+        candidate_id: str,
+        eval_concept: str,
+        injected: bool,
+        alpha: float,
+        direction_norm: float,
+        response: str,
+        detected: bool,
+        identified: bool,
+        coherent: bool,
+        judge_model: str,
+        judge_reasoning: str,
+    ) -> None:
+        with self._conn() as conn:
+            conn.execute(
+                """INSERT INTO evaluations
+                   (candidate_id, eval_concept, injected, alpha, direction_norm,
+                    response, detected, identified, coherent,
+                    judge_model, judge_reasoning)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    candidate_id, eval_concept, int(injected), alpha, direction_norm,
+                    response, int(detected), int(identified), int(coherent),
+                    judge_model, judge_reasoning,
+                ),
+            )
+
+    def record_fitness(
+        self,
+        candidate_id: str,
+        score: float,
+        detection_rate: float,
+        identification_rate: float,
+        fpr: float,
+        coherence_rate: float,
+        n_held_out: int,
+        n_controls: int,
+        components_json: str,
+    ) -> None:
+        with self._conn() as conn:
+            conn.execute(
+                """INSERT OR REPLACE INTO fitness_scores
+                   (candidate_id, score, detection_rate, identification_rate,
+                    fpr, coherence_rate, n_held_out, n_controls, components_json)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    candidate_id, score, detection_rate, identification_rate,
+                    fpr, coherence_rate, n_held_out, n_controls, components_json,
+                ),
+            )
+
+    def top_candidates(self, limit: int = 10) -> list[dict]:
+        with self._conn() as conn:
+            rows = conn.execute(
+                """SELECT c.id, c.strategy, c.concept, c.layer_idx,
+                          c.target_effective, c.derivation_method,
+                          f.score, f.detection_rate, f.identification_rate,
+                          f.fpr, f.coherence_rate
+                   FROM candidates c
+                   JOIN fitness_scores f ON f.candidate_id = c.id
+                   ORDER BY f.score DESC LIMIT ?""",
+                (limit,),
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def candidates_summary(self) -> dict:
+        with self._conn() as conn:
+            row = conn.execute(
+                """SELECT COUNT(*) AS n_total,
+                          SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) AS n_pending,
+                          SUM(CASE WHEN status='running' THEN 1 ELSE 0 END) AS n_running,
+                          SUM(CASE WHEN status='done'    THEN 1 ELSE 0 END) AS n_done,
+                          SUM(CASE WHEN status='failed'  THEN 1 ELSE 0 END) AS n_failed
+                   FROM candidates"""
+            ).fetchone()
+        return dict(row) if row else {}
