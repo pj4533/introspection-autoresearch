@@ -85,6 +85,47 @@ Decision 2026-04-16: mechanism is clearly reproduced, mag is smaller, **proceed 
 
 ---
 
+## Phase 2a cleanup — known issues discovered during first overnight run
+
+### Judge target-concept bug
+
+**Symptom.** `src/evaluate.py::evaluate_candidate` passes the held-out slot's
+concept to `pipeline.run_injected` which passes it to the judge as the
+"injected concept" for grading. But the actual injection is the candidate's
+source concept. Result: `identification_rate` in the `fitness_scores` table
+is measuring "did the model say the held-out concept's name?" instead of
+"did the model say the source concept's name?"
+
+**Impact.** `score` is unaffected (it doesn't include identification). But
+the reported `identification_rate` numbers are misleading. Also correctly-
+identified Phase 2 detections (e.g. Iron direction → model response "iron")
+are silently recorded as `identified=0` because the judge was asked to look
+for "Anxiety" instead of "Iron".
+
+**Fix.** In `src/evaluate.py`, pass `spec.concept` (source) to the judge
+rather than `c` (held-out slot). One-line change. Need to invalidate the
+judge cache (bump PROMPT_TEMPLATE_VERSION or clear the cache) so already-
+stored judgments get re-scored. Phase 2a data can be rescored retroactively
+from the `evaluations.response` text — no model re-runs needed.
+
+### Held-out concept set isn't randomized per candidate
+
+**Symptom.** `evaluate_candidate(rng_seed=0)` by default, so every candidate
+sees the same shuffled subset of 8 held-out concepts. Overrepresents
+whichever concepts happen to be in the first 8.
+
+**Impact.** "Anxiety keeps responding" pattern observed in first overnight
+run is likely partly a test-set artifact (Anxiety is always in the 8, and
+one specific random seed happens to land the model in a detection-friendly
+state).
+
+**Fix.** Seed the shuffle from a hash of the candidate ID, not a constant.
+Different candidates get different 8-concept subsets. The per-concept RNG
+seed inside the evaluation loop should also derive from candidate_id +
+concept to decorrelate from other candidates.
+
+---
+
 ## Phase 2b — Smart strategies (planned, not started)
 
 This is where the project's *novel* contribution lives. Each of these strategies produces candidate steering directions by a different mechanism; they plug into the existing `src/researcher.py` plugin interface.
