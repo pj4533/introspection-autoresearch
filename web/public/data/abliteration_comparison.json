@@ -1,0 +1,52 @@
+{
+  "variants": [
+    {
+      "key": "vanilla",
+      "description": "No refusal-direction ablation.",
+      "caveat": null,
+      "detections": 5,
+      "identifications": 2,
+      "injected_coherent": 216,
+      "injected_total": 450,
+      "controls_total": 50,
+      "controls_false_positive": 0,
+      "false_positive_rate": 0.0
+    },
+    {
+      "key": "paper_method",
+      "description": "Vanilla model + per-layer gentle hooks with paper's Optuna-tuned weights.",
+      "caveat": null,
+      "detections": 10,
+      "identifications": 7,
+      "injected_coherent": 121,
+      "injected_total": 450,
+      "controls_total": 50,
+      "controls_false_positive": 0,
+      "false_positive_rate": 0.0
+    },
+    {
+      "key": "mlabonne_v2",
+      "description": "Off-the-shelf: mlabonne/gemma-3-12b-it-abliterated-v2.",
+      "caveat": "Overwhelmed by false positives \u2014 the model can't say 'I don't see anything' anymore, so it hallucinates detections even on control trials.",
+      "detections": 141,
+      "identifications": 60,
+      "injected_coherent": 153,
+      "injected_total": 432,
+      "controls_total": 48,
+      "controls_false_positive": 47,
+      "false_positive_rate": 0.9791666666666666
+    },
+    {
+      "key": "huihui",
+      "description": "Off-the-shelf: huihui-ai/gemma-3-12b-it-abliterated.",
+      "caveat": "Same failure mode as mlabonne at slightly smaller magnitude.",
+      "detections": 17,
+      "identifications": 10,
+      "injected_coherent": 30,
+      "injected_total": 40,
+      "controls_total": 10,
+      "controls_false_positive": 9,
+      "false_positive_rate": 0.9
+    }
+  ]
+}
