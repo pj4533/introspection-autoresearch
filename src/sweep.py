@@ -160,7 +160,16 @@ def run_sweep(
     if verbose:
         print(f"Model loaded: {model.hf_path}  n_layers={model.n_layers}")
 
+    # --- Cache derived directions per (concept, layer) across trials ----------
+    direction_cache: dict[tuple[str, int], torch.Tensor] = {}
+
     # --- Paper-method abliteration (optional) -------------------------------
+    # CRITICAL: concept directions must be derived from the VANILLA model
+    # (no abliteration hooks), then injected into the abliterated model.
+    # This matches the paper's methodology. If we derived with hooks active,
+    # the extracted direction would have its refusal-aligned components
+    # projected out, leaving only noise that adaptive-alpha amplifies into
+    # token-salad generation.
     ablation_handles: list = []
     if abliterate_paper is not None:
         if verbose:
@@ -170,8 +179,27 @@ def run_sweep(
             payload["directions"] if isinstance(payload, dict) else payload
         )
 
+        # Pre-derive concept directions from VANILLA model before hooks install.
+        # Enumerate the unique (concept, layer) pairs we'll need.
+        if verbose:
+            print(
+                "Pre-deriving concept directions from vanilla model "
+                "(before abliteration hooks install)..."
+            )
+        unique_pairs: set[tuple[str, int]] = {
+            (c, l) for (c, l, _a, inj, _t) in pending if inj
+        }
+        for i, (c, layer) in enumerate(sorted(unique_pairs), 1):
+            direction_cache[(c, layer)] = pipeline.derive(
+                concept=c, layer_idx=layer
+            )
+            if verbose and i % 20 == 0:
+                print(f"  derived {i}/{len(unique_pairs)}")
+        if verbose:
+            print(f"  done: {len(direction_cache)} directions cached")
+
+        # NOW install abliteration hooks for the injection / generation phase
         if abliteration_weight is None:
-            # Default: paper's per-layer weights proportionally remapped
             per_layer_weights = paper_layer_weights_for_model(model.n_layers)
             ablation_handles = install_abliteration_hooks(
                 model.model, directions, layer_weights=per_layer_weights
@@ -184,7 +212,6 @@ def run_sweep(
                     f"(mean={sum(w)/len(w):.4f}, max={max(w):.4f}, min={min(w):.6f})"
                 )
         else:
-            # Override: uniform weight everywhere. Warn loudly at >= 0.5.
             ablation_handles = install_abliteration_hooks(
                 model.model, directions, weight=abliteration_weight
             )
@@ -196,9 +223,6 @@ def run_sweep(
                 )
     if verbose:
         print()
-
-    # --- Cache derived directions per (concept, layer) across trials ----------
-    direction_cache: dict[tuple[str, int], torch.Tensor] = {}
 
     # --- Main loop -----------------------------------------------------------
     t_start = time.time()
