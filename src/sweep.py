@@ -26,6 +26,7 @@ from .bridge import DetectionPipeline, load_gemma_mps
 from .db import ResultsDB, Trial
 from .judges.base import Judge
 from .judges.claude_judge import ClaudeJudge
+from .paper.abliteration import install_abliteration_hooks, remove_abliteration_hooks
 
 
 @dataclass
@@ -66,8 +67,15 @@ def run_sweep(
     run_id: Optional[str] = None,
     judge: Optional[Judge] = None,
     verbose: bool = True,
+    abliterate_paper: Optional[Path] = None,
+    abliteration_weight: float = 1.0,
 ) -> str:
     """Run the full sweep, writing every trial to SQLite.
+
+    If ``abliterate_paper`` is a Path, loads the pre-computed per-layer
+    refusal directions from that file and installs projection-out hooks on
+    every layer of the vanilla model (paper-method abliteration). This is an
+    alternative to loading a pre-abliterated HF model.
 
     Returns the run_id.
     """
@@ -140,6 +148,25 @@ def run_sweep(
     pipeline = DetectionPipeline(model=model, judge=judge)
     if verbose:
         print(f"Model loaded: {model.hf_path}  n_layers={model.n_layers}")
+
+    # --- Paper-method abliteration (optional) -------------------------------
+    ablation_handles: list = []
+    if abliterate_paper is not None:
+        if verbose:
+            print(f"Loading refusal directions from {abliterate_paper} ...")
+        payload = torch.load(abliterate_paper, map_location="cpu", weights_only=False)
+        directions = (
+            payload["directions"] if isinstance(payload, dict) else payload
+        )
+        ablation_handles = install_abliteration_hooks(
+            model.model, directions, weight=abliteration_weight
+        )
+        if verbose:
+            print(
+                f"Installed {len(ablation_handles)} abliteration hooks "
+                f"(weight={abliteration_weight})"
+            )
+    if verbose:
         print()
 
     # --- Cache derived directions per (concept, layer) across trials ----------
@@ -224,6 +251,10 @@ def run_sweep(
         print()
         print(f"Sweep complete: {len(pending)} new trials in {_fmt_elapsed(time.time() - t_start)}.")
         print(f"Run id: {run_id}")
+
+    # Clean up hooks if we installed them
+    if ablation_handles:
+        remove_abliteration_hooks(ablation_handles)
 
     return run_id
 

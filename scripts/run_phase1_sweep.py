@@ -51,17 +51,37 @@ def main() -> int:
                          "gemma3_12b_abliterated and default DB becomes "
                          "data/results_abliterated.db, unless --model / --db "
                          "explicitly override.")
+    ap.add_argument("--abliterate-paper", type=Path, default=None,
+                    help="Path to refusal_directions_*.pt file. Loads vanilla "
+                         "model and installs projection-out hooks at every layer "
+                         "(paper's exact method, Arditi et al. 2024 / Macar et "
+                         "al. 2026 §3.3). Default DB: data/results_abliterated_paper.db.")
+    ap.add_argument("--abliteration-weight", type=float, default=1.0,
+                    help="Uniform weight for the abliteration hooks (paper uses "
+                         "per-region Optuna-tuned weights; 1.0 is the simplest "
+                         "baseline).")
     ap.add_argument("--judge-model", default="claude-haiku-4-5-20251001")
     ap.add_argument("--run-id", default=None)
     ap.add_argument("--dry-run", action="store_true",
                     help="Show the plan and exit without running")
     args = ap.parse_args()
 
-    # Resolve model and DB defaults based on --abliterate
+    # Resolve model and DB defaults based on which abliteration mode
+    if args.abliterate and args.abliterate_paper is not None:
+        ap.error("--abliterate and --abliterate-paper are mutually exclusive")
     if args.model is None:
-        args.model = "gemma3_12b_abliterated" if args.abliterate else "gemma3_12b"
+        if args.abliterate:
+            args.model = "gemma3_12b_abliterated"
+        else:
+            # Paper-method uses vanilla + hooks; also the default for no flag
+            args.model = "gemma3_12b"
     if args.db is None:
-        args.db = DEFAULT_DB_ABLITERATED if args.abliterate else DEFAULT_DB
+        if args.abliterate:
+            args.db = DEFAULT_DB_ABLITERATED
+        elif args.abliterate_paper is not None:
+            args.db = REPO / "data" / "results_abliterated_paper.db"
+        else:
+            args.db = DEFAULT_DB
 
     concepts = load_concepts(args.concepts_file)
     if args.concepts is not None:
@@ -101,6 +121,8 @@ def main() -> int:
         db_path=args.db,
         model_name=args.model,
         run_id=args.run_id,
+        abliterate_paper=args.abliterate_paper,
+        abliteration_weight=args.abliteration_weight,
     )
     print(f"\nDone. run_id={run_id}")
     return 0
