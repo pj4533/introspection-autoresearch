@@ -85,7 +85,17 @@ class DetectionPipeline:
         trial_number: int = 1,
         max_new_tokens: int = 120,
         temperature: float = 1.0,
+        judge_concept: Optional[str] = None,
     ) -> DetectionTrial:
+        """Run an injected trial.
+
+        `concept` is a label for the trial (stored in DetectionTrial.concept, and
+        passed as metadata to run_steered_introspection_test which does NOT
+        include it in the prompt). `judge_concept`, if set, overrides what the
+        judge is told about the injected concept for grading. When called from
+        Phase 2, pass the candidate's SOURCE concept here so identification is
+        graded against what was actually injected, not against the slot label.
+        """
         response = run_steered_introspection_test(
             model=self.model,
             concept_word=concept,
@@ -103,7 +113,9 @@ class DetectionPipeline:
             injected=True,
             response=response,
         )
-        trial.judge_result = self.judge.score_detection(response, concept)
+        trial.judge_result = self.judge.score_detection(
+            response, judge_concept if judge_concept is not None else concept
+        )
         return trial
 
     def run_control(
@@ -112,7 +124,14 @@ class DetectionPipeline:
         trial_number: int = 1,
         max_new_tokens: int = 120,
         temperature: float = 1.0,
+        judge_concept: Optional[str] = None,
     ) -> DetectionTrial:
+        """Run a control (no-injection) trial.
+
+        For controls, `judge_concept` matters less — the response shouldn't
+        claim detection, so identification grading is moot. We still accept the
+        override for consistency with `run_injected`.
+        """
         response = run_unsteered_introspection_test(
             model=self.model,
             concept_word=concept,
@@ -127,7 +146,9 @@ class DetectionPipeline:
             injected=False,
             response=response,
         )
-        trial.judge_result = self.judge.score_detection(response, concept)
+        trial.judge_result = self.judge.score_detection(
+            response, judge_concept if judge_concept is not None else concept
+        )
         return trial
 
     def layer_at_fraction(self, fraction: float) -> int:

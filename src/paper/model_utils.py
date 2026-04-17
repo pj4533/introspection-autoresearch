@@ -47,6 +47,9 @@ MODEL_NAME_MAP = {
     "gemma3_27b_abliterated": "uzaymacar/gemma-3-27b-abliterated",
     "gemma3_12b": "google/gemma-3-12b-it",
     "gemma3_4b": "google/gemma-3-4b-it",
+    # Refusal-ablated variant (mlabonne v2, orthogonalization against refusal
+    # direction). Text-only Gemma3ForCausalLM, full bf16. For Phase 1.5.
+    "gemma3_12b_abliterated": "mlabonne/gemma-3-12b-it-abliterated-v2",
 
     # Add more models as needed
     "mistral_small": "mistralai/Mistral-Small-Instruct-2409",

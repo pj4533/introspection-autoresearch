@@ -98,12 +98,25 @@ def evaluate_candidate(
     control_concepts: list[str],
     n_held_out: int = DEFAULT_N_HELD_OUT,
     n_controls: int = DEFAULT_N_CONTROLS,
-    rng_seed: int = 0,
+    rng_seed: Optional[int] = None,
     verbose: bool = True,
 ) -> FitnessResult:
-    """Evaluate one candidate, record everything to the DB, return fitness."""
+    """Evaluate one candidate, record everything to the DB, return fitness.
 
-    rng = random.Random(rng_seed)
+    RNG seeds are derived from `rng_seed + hash(spec.id)` so different
+    candidates get different held-out shuffles and per-trial sampling seeds
+    while each candidate remains individually reproducible.
+    """
+
+    # Derive a stable per-candidate seed from the candidate ID. Using
+    # hashlib.sha256 rather than Python's built-in hash() because the latter
+    # is randomized between interpreter runs.
+    base_seed = rng_seed if rng_seed is not None else 0
+    import hashlib
+    id_seed = int(hashlib.sha256(spec.id.encode()).hexdigest()[:8], 16)
+    candidate_seed = base_seed + id_seed
+
+    rng = random.Random(candidate_seed)
     held_out = [c for c in held_out_concepts if c.lower() != spec.concept.lower()]
     rng.shuffle(held_out)
     held_out = held_out[:n_held_out]
@@ -128,14 +141,21 @@ def evaluate_candidate(
 
     # --- injected trials on held-out concepts -------------------------------
     for c in held_out:
-        torch.manual_seed(rng_seed + hash(c) % 1000)
+        # Per-trial seed derived from (candidate_id, slot). Different candidates
+        # get different sampling paths even on the same slot concept, so we
+        # don't overfit to lucky / unlucky seeds repeating across candidates.
+        trial_seed = candidate_seed + int(
+            hashlib.sha256(f"{spec.id}|{c}".encode()).hexdigest()[:8], 16
+        )
+        torch.manual_seed(trial_seed % (2**31))
         trial = pipeline.run_injected(
-            concept=c,
+            concept=c,                 # slot label (not in prompt, used as metadata)
             direction=direction,
             layer_idx=spec.layer_idx,
             strength=alpha,
             trial_number=1,
             max_new_tokens=120,
+            judge_concept=spec.concept,  # grade identification against SOURCE concept
         )
         jr = trial.judge_result
         db.record_evaluation(
@@ -168,11 +188,17 @@ def evaluate_candidate(
     n_fp = 0
     n_ctrl = 0
     for c in controls:
-        torch.manual_seed(rng_seed + hash(c) % 1000 + 7919)
+        trial_seed = candidate_seed + int(
+            hashlib.sha256(f"{spec.id}|ctrl|{c}".encode()).hexdigest()[:8], 16
+        )
+        torch.manual_seed(trial_seed % (2**31))
         trial = pipeline.run_control(
             concept=c,
             trial_number=1,
             max_new_tokens=120,
+            # judge_concept: for controls, passes through as `c` (slot label).
+            # Detection should be false regardless of target; identification is
+            # moot. Kept consistent with run_injected's semantics.
         )
         jr = trial.judge_result
         db.record_evaluation(
