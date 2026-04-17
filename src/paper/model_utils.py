@@ -50,6 +50,10 @@ MODEL_NAME_MAP = {
     # Refusal-ablated variant (mlabonne v2, orthogonalization against refusal
     # direction). Text-only Gemma3ForCausalLM, full bf16. For Phase 1.5.
     "gemma3_12b_abliterated": "mlabonne/gemma-3-12b-it-abliterated-v2",
+    # Alternative abliteration method (huihui-ai) — different technique,
+    # kept for methodological comparison (is high FPR mlabonne-specific or
+    # general to 12B abliteration?).
+    "gemma3_12b_abliterated_huihui": "huihui-ai/gemma-3-12b-it-abliterated",
 
     # Add more models as needed
     "mistral_small": "mistralai/Mistral-Small-Instruct-2409",

@@ -6,12 +6,13 @@ no API key billing. Model defaults to Haiku 4.5 for Phase 2 speed; pass
 """
 
 import asyncio
-import concurrent.futures
 import hashlib
 import json
 import re
 import sqlite3
+import sys
 import threading
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -20,6 +21,19 @@ from claude_agent_sdk import AssistantMessage, ClaudeAgentOptions, TextBlock, qu
 from .base import JudgeResult
 
 PROMPT_TEMPLATE_VERSION = 2  # bumped 2026-04-16 to match paper's strict criteria
+
+# Per-call timeout on the underlying Claude SDK query. Prevents indefinite
+# hangs when the Anthropic connection enters CLOSE_WAIT or the SDK's async
+# machinery fails to propagate a network error. Tuning: a normal Haiku judge
+# call returns in 1-3s; Sonnet 5-10s. 60s gives plenty of room for slow
+# responses while catching hangs quickly.
+DEFAULT_CALL_TIMEOUT_S = 60.0
+
+# Retry schedule on timeout / transport error. Backoff in seconds: 1, 3, 9.
+# After all attempts fail, score_detection returns a sentinel JudgeResult
+# rather than raising, so a single bad call doesn't nuke a long-running
+# sweep. The sentinel records the error in its `reasoning` field.
+RETRY_BACKOFFS_S = (1.0, 3.0, 9.0)
 
 _SYSTEM = (
     "You are a strict evaluator for a mechanistic-interpretability experiment. You "
@@ -177,12 +191,23 @@ class ClaudeJudge:
             raw=raw,
         )
 
-    def _run_sync(self, prompt: str) -> str:
-        """Run the async query regardless of whether a loop is already running.
+    def _run_sync(
+        self,
+        prompt: str,
+        timeout_s: float = DEFAULT_CALL_TIMEOUT_S,
+    ) -> str:
+        """Run the async query with a hard timeout.
 
         Jupyter notebooks run their own asyncio loop per cell, so calling
         asyncio.run() inline fails. Running in a worker thread gives each call
-        a fresh loop.
+        a fresh loop AND lets us time it out cleanly.
+
+        Note on leaked threads: if the timeout fires, the worker thread is
+        still blocked inside the SDK's underlying network read. We mark it
+        daemon so it dies with the process; until then it consumes a file
+        descriptor and a bit of RAM. That's acceptable for rare failures.
+        Cancelling the async operation from outside its loop is non-trivial
+        and not worth the complexity for ~0.25% failure rates.
         """
         result: dict = {}
 
@@ -194,19 +219,67 @@ class ClaudeJudge:
 
         t = threading.Thread(target=worker, daemon=True)
         t.start()
-        t.join()
+        t.join(timeout=timeout_s)
+        if t.is_alive():
+            raise TimeoutError(
+                f"Claude judge call exceeded {timeout_s}s (connection may be hung)"
+            )
         if "error" in result:
             raise result["error"]
         return result["value"]
 
     def score_detection(self, response: str, concept: str) -> JudgeResult:
+        """Grade a model response. Cached on disk; retries on network failure.
+
+        After all retries are exhausted, returns a sentinel JudgeResult with
+        ``detected=False, identified=False, coherent=False`` and the error
+        text in ``reasoning``. This keeps long-running sweeps from dying on a
+        single bad call — downstream analysis can filter on
+        ``reasoning.startswith("judge_error:")`` to identify failed trials.
+        """
         key = self._cache_key(response, concept)
         cached = self.cache.get(key)
         if cached is not None:
             return cached
 
         user_prompt = _USER_TEMPLATE.format(concept=concept, response=response)
-        raw = self._run_sync(user_prompt)
-        result = self._parse(raw)
-        self.cache.put(key, self.model, result)
-        return result
+
+        last_err: Optional[BaseException] = None
+        for attempt, backoff in enumerate(RETRY_BACKOFFS_S):
+            try:
+                raw = self._run_sync(user_prompt)
+                result = self._parse(raw)
+                self.cache.put(key, self.model, result)
+                return result
+            except (TimeoutError, ConnectionError, OSError) as e:
+                # Transient transport issue. Log and retry after backoff.
+                last_err = e
+                sys.stderr.write(
+                    f"[claude_judge] attempt {attempt + 1} failed: "
+                    f"{type(e).__name__}: {e}. retrying in {backoff:.1f}s\n"
+                )
+                sys.stderr.flush()
+                if attempt < len(RETRY_BACKOFFS_S) - 1:
+                    time.sleep(backoff)
+            except Exception as e:
+                # Unexpected error (e.g. SDK bug, auth failure). Don't retry
+                # blindly — these tend to be persistent and retrying is waste.
+                # But don't crash the sweep either; return a sentinel.
+                last_err = e
+                sys.stderr.write(
+                    f"[claude_judge] non-retryable error: "
+                    f"{type(e).__name__}: {e}\n"
+                )
+                sys.stderr.flush()
+                break
+
+        # All retries exhausted (or we hit a non-retryable error). Return a
+        # sentinel so the caller can keep going.
+        err_reasoning = f"judge_error: {type(last_err).__name__}: {last_err}"[:500]
+        return JudgeResult(
+            detected=False,
+            identified=False,
+            coherent=False,
+            reasoning=err_reasoning,
+            raw=f"<ERROR: {type(last_err).__name__}>",
+        )
