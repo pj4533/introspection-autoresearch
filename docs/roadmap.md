@@ -358,6 +358,56 @@ The paper shows that training a single MLP additive bias vector for ~8000 sample
 
 Why it's interesting: the bias vector is an *artifact* — a single learned 3840-dim vector that strengthens introspection without destroying other capabilities. The paper published the recipe but only for 27B. Would be novel to show the recipe works on 12B.
 
+### Behavioral direction demos (emoji, register, etc.)
+
+**Motivation.** The Lemons candidate in the 2026-04-16 overnight run
+produced a response that included 🍋 emoji spontaneously — without any
+emoji-specific steering. This suggested the model has internal
+representations for *behavioral* properties (emoji use, register,
+verbosity, etc.) that are steerable with the same technique we use for
+concept directions.
+
+**Demo scope (not science):** isolate specific behavioral directions and
+inject them. These would be compelling public-site demos showing that the
+autoresearch method generalizes beyond concepts to behaviors. Not novel
+research on their own — behavioral steering is well-established
+literature. The novelty is the *hunt* (finding them automatically).
+
+**Candidate behavioral directions to isolate:**
+
+- **Emoji use.** Contrast pair: ~100 emoji-containing responses vs ~100
+  matched emoji-free responses. Inject and count emoji in outputs on
+  neutral prompts.
+- **Formal vs casual register.** Contrast: formal professional writing
+  vs casual chat.
+- **Terse vs verbose.** Contrast: short direct answers vs florid
+  explanatory ones.
+- **First-person vs third-person narrator.**
+- **Hedged vs confident.** Contrast: "I think maybe" vs "It is clearly."
+
+**Mechanism.** Identical to our current pipeline — derive via
+`src.paper.extract_concept_vector` with arbitrary contrast-pair prompts,
+inject at runtime. The only real change is the *evaluator*: for emoji,
+`emoji_count / response_length` is a regex metric; Claude-judged
+"appropriateness" is the second axis.
+
+**Entanglement caveat.** The Lemons→🍋 observation suggests emoji use may
+be partially entangled with sensory/experiential content. Disentangling
+requires careful contrast-pair design: the positive set should span emoji
+on non-sensory topics (e.g., bureaucratic, mathematical, abstract) so the
+extracted direction isolates "emoji-ness" from "sensory-ness."
+
+**When.** Late — after Phase 1.5 abliteration, all four Phase 2 strategies,
+tiered fitness, and dashboard are done. This is showpiece material for the
+Next.js site launch, not core science. The `novel_contrast` infrastructure
+is the natural vehicle: once it works for abstract concept axes, feeding
+it behavioral contrast pairs is a one-line parameter change.
+
+**How to apply:** remember that the Lemons spontaneous emoji is the prompt
+for this work. When Phase 2 is mature, pick this up as the first entry in
+a "behavioral directions catalog" parallel to the "concept directions
+catalog."
+
 ### Persona-specific introspection mapping
 
 Paper's wildest finding (from §3.2): introspection is persona-specific. Switch from "assistant" to "Alice-Bob narrative" and the capability collapses. Systematically test: which personas preserve introspection? `scientist`, `therapist`, `child`, `skeptic`, `poet`, etc. Each persona is a different system prompt layered on the same injection.
