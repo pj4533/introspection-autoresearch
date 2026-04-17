@@ -42,7 +42,7 @@ import random
 from typing import List, Optional
 
 import torch
-from tqdm import tqdm
+from tqdm import tqdm  # noqa: F401
 
 from .model_utils import ModelWrapper
 
@@ -50,6 +50,103 @@ from .model_utils import ModelWrapper
 # For the Gemma3 chat template, this is the newline token after
 # "<start_of_turn>model". This is where the model "decides" whether to refuse.
 DEFAULT_EXTRACT_POS = -2
+
+# -----------------------------------------------------------------------------
+# Paper's Optuna-tuned region weights (Macar et al. 2026 03d_refusal_abliteration.py)
+# -----------------------------------------------------------------------------
+# These are the DEFAULT_REGION_WEIGHTS from the paper, which were tuned for
+# the 62-layer Gemma3-27B. Key observation: all values are very small
+# (mean ~0.025, max ~0.12). Uniform weight=1.0 is ~40x more aggressive than
+# anything the paper uses — it destroys coherent generation. The paper's
+# insight is that very gentle per-layer projection is sufficient.
+#
+# The 20 regions partition the model into coarse-grained bands. Each band
+# gets its own weight; layers within a band share it. Boundaries below are
+# the absolute end-index of each region in the 62-layer 27B model.
+# For other model sizes, we proportionally remap boundaries and reuse the
+# same weights.
+# -----------------------------------------------------------------------------
+
+PAPER_REGION_WEIGHTS_27B = {
+    "very_early_a": 0.010190365613071925,
+    "very_early_b": 0.09976487098474057,
+    "very_early_c": 0.009846349798252014,
+    "very_early_d": 0.010714741304450688,
+    "early_a": 0.023812035217103455,
+    "early_b": 0.006873821994170306,
+    "early_c": 0.0023568060724657135,
+    "early_d": 0.11762696391562547,
+    "pre_key_a": 0.024324361266584712,
+    "pre_key_b": 0.009936585603088419,
+    "key_a": 0.000533052460819306,
+    "key_b": 0.0057508808893361974,
+    "mid_a": 0.020646470409482434,
+    "mid_b": 0.02205567035624907,
+    "mid_c": 0.004716948598867072,
+    "mid_d": 0.003251529189292551,
+    "late_a": 0.07694211978232157,
+    "late_b": 0.03330589279564281,
+    "final_a": 2.358688691270255e-05,
+    "final_b": 0.003955462234418926,
+}
+
+# Paper's 27B region end-layer indices (inclusive). Ordered by depth.
+PAPER_REGION_ORDER_27B = [
+    ("very_early_a", 2),
+    ("very_early_b", 5),
+    ("very_early_c", 8),
+    ("very_early_d", 10),
+    ("early_a", 13),
+    ("early_b", 15),
+    ("early_c", 18),
+    ("early_d", 20),
+    ("pre_key_a", 24),
+    ("pre_key_b", 28),
+    ("key_a", 32),
+    ("key_b", 35),
+    ("mid_a", 38),
+    ("mid_b", 41),
+    ("mid_c", 44),
+    ("mid_d", 47),
+    ("late_a", 51),
+    ("late_b", 55),
+    ("final_a", 58),
+    ("final_b", 61),
+]
+PAPER_N_LAYERS_27B = 62
+
+
+def paper_layer_weights_for_model(
+    n_layers: int,
+    region_weights: Optional[dict] = None,
+) -> list:
+    """Build a per-layer weight list by proportionally remapping the paper's
+    27B region boundaries onto this model's layer count.
+
+    For each layer ``i`` in ``[0, n_layers)``, we compute its depth fraction
+    ``(i + 0.5) / n_layers`` and find which of the paper's 20 regions covers
+    that fraction (comparing against ``end / PAPER_N_LAYERS_27B``). The layer
+    gets that region's weight.
+
+    Default uses ``PAPER_REGION_WEIGHTS_27B``; pass ``region_weights`` to
+    override (e.g., for per-model Optuna retuning).
+
+    Returns a list of length ``n_layers``.
+    """
+    weights = region_weights or PAPER_REGION_WEIGHTS_27B
+    out: list = []
+    for i in range(n_layers):
+        depth_frac = (i + 0.5) / n_layers
+        assigned = None
+        for name, end_27b in PAPER_REGION_ORDER_27B:
+            end_frac = (end_27b + 1) / PAPER_N_LAYERS_27B
+            if depth_frac <= end_frac:
+                assigned = name
+                break
+        if assigned is None:
+            assigned = PAPER_REGION_ORDER_27B[-1][0]  # fallback: final_b
+        out.append(float(weights[assigned]))
+    return out
 
 
 def compute_per_layer_refusal_directions(
@@ -82,14 +179,25 @@ def compute_per_layer_refusal_directions(
         )
 
     def _tokenize(instructions: List[str]) -> List[torch.Tensor]:
-        return [
-            model.tokenizer.apply_chat_template(
+        """Apply chat template and return a list of input_ids tensors.
+
+        Handles both older transformers versions (returns a raw tensor) and
+        newer ones (returns a BatchEncoding / dict with 'input_ids').
+        """
+        out = []
+        for insn in instructions:
+            result = model.tokenizer.apply_chat_template(
                 conversation=[{"role": "user", "content": insn}],
                 add_generation_prompt=True,
                 return_tensors="pt",
             )
-            for insn in instructions
-        ]
+            if hasattr(result, "input_ids"):
+                out.append(result.input_ids)
+            elif isinstance(result, dict) and "input_ids" in result:
+                out.append(result["input_ids"])
+            else:
+                out.append(result)
+        return out
 
     harmful_toks = _tokenize(harmful_sample)
     harmless_toks = _tokenize(harmless_sample)

@@ -56,10 +56,13 @@ def main() -> int:
                          "model and installs projection-out hooks at every layer "
                          "(paper's exact method, Arditi et al. 2024 / Macar et "
                          "al. 2026 §3.3). Default DB: data/results_abliterated_paper.db.")
-    ap.add_argument("--abliteration-weight", type=float, default=1.0,
-                    help="Uniform weight for the abliteration hooks (paper uses "
-                         "per-region Optuna-tuned weights; 1.0 is the simplest "
-                         "baseline).")
+    ap.add_argument("--abliteration-weight", type=float, default=None,
+                    help="Uniform weight override for abliteration hooks. By "
+                         "default (None), uses the paper's per-region Optuna-"
+                         "tuned weights proportionally remapped to this model's "
+                         "layer count (mean ~0.023). weight=1.0 is ~40x more "
+                         "aggressive than paper and typically destroys coherent "
+                         "generation — only use as a debug baseline.")
     ap.add_argument("--judge-model", default="claude-haiku-4-5-20251001")
     ap.add_argument("--run-id", default=None)
     ap.add_argument("--dry-run", action="store_true",

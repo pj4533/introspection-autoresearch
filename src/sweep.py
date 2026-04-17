@@ -26,7 +26,11 @@ from .bridge import DetectionPipeline, load_gemma_mps
 from .db import ResultsDB, Trial
 from .judges.base import Judge
 from .judges.claude_judge import ClaudeJudge
-from .paper.abliteration import install_abliteration_hooks, remove_abliteration_hooks
+from .paper.abliteration import (
+    install_abliteration_hooks,
+    paper_layer_weights_for_model,
+    remove_abliteration_hooks,
+)
 
 
 @dataclass
@@ -68,7 +72,7 @@ def run_sweep(
     judge: Optional[Judge] = None,
     verbose: bool = True,
     abliterate_paper: Optional[Path] = None,
-    abliteration_weight: float = 1.0,
+    abliteration_weight: Optional[float] = None,
 ) -> str:
     """Run the full sweep, writing every trial to SQLite.
 
@@ -76,6 +80,13 @@ def run_sweep(
     refusal directions from that file and installs projection-out hooks on
     every layer of the vanilla model (paper-method abliteration). This is an
     alternative to loading a pre-abliterated HF model.
+
+    When ``abliteration_weight`` is None (default), uses the paper's Optuna-
+    tuned region weights proportionally remapped to this model's layer count
+    (mean ~0.023, max ~0.12 — very gentle per-layer ablation). Pass a float
+    to override with a uniform weight instead; weight=1.0 is ~40x more
+    aggressive than the paper's recipe and will typically destroy coherent
+    generation.
 
     Returns the run_id.
     """
@@ -158,14 +169,31 @@ def run_sweep(
         directions = (
             payload["directions"] if isinstance(payload, dict) else payload
         )
-        ablation_handles = install_abliteration_hooks(
-            model.model, directions, weight=abliteration_weight
-        )
-        if verbose:
-            print(
-                f"Installed {len(ablation_handles)} abliteration hooks "
-                f"(weight={abliteration_weight})"
+
+        if abliteration_weight is None:
+            # Default: paper's per-layer weights proportionally remapped
+            per_layer_weights = paper_layer_weights_for_model(model.n_layers)
+            ablation_handles = install_abliteration_hooks(
+                model.model, directions, layer_weights=per_layer_weights
             )
+            if verbose:
+                w = per_layer_weights
+                print(
+                    f"Installed {len(ablation_handles)} abliteration hooks "
+                    f"with paper's per-region weights "
+                    f"(mean={sum(w)/len(w):.4f}, max={max(w):.4f}, min={min(w):.6f})"
+                )
+        else:
+            # Override: uniform weight everywhere. Warn loudly at >= 0.5.
+            ablation_handles = install_abliteration_hooks(
+                model.model, directions, weight=abliteration_weight
+            )
+            if verbose:
+                warn = "  ⚠  this is much stronger than paper" if abliteration_weight >= 0.3 else ""
+                print(
+                    f"Installed {len(ablation_handles)} abliteration hooks "
+                    f"(uniform weight={abliteration_weight}){warn}"
+                )
     if verbose:
         print()
 
