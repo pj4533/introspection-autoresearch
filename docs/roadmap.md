@@ -85,6 +85,117 @@ Decision 2026-04-16: mechanism is clearly reproduced, mag is smaller, **proceed 
 
 ---
 
+## Phase 1.5 — Refusal-direction abliteration (next build, scheduled 2026-04-17)
+
+**Motivation.** The paper's most dramatic intervention. Section 3.3 /
+`experiments/03d_refusal_abliteration.py` showed that ablating the refusal
+direction on Gemma3-27B-instruct boosted detection from **10.8% → 63.8%** —
+roughly 6× — with FPR only rising from 0% → 7.3%. The hypothesis: the refusal
+direction was partially suppressing the model's ability to affirmatively
+claim introspective detections. Remove that gate and the introspection
+capacity is no longer under-elicited.
+
+**Why this is Phase 1.5 and not a Phase 2 enhancement**: it's still
+reproducing a paper finding — just a different one. Phase 1 reproduced the
+layer-curve mechanism; Phase 1.5 reproduces the intervention. Both belong
+upstream of the novel Phase 2 work.
+
+**Why it matters for Phase 2**: every subsequent Phase 2 finding —
+`random_explore` hits, `novel_contrast` discoveries, etc. — would likely
+produce cleaner responses under abliteration. Hit rates should climb
+substantially. The same overnight loop on an abliterated model probably
+produces 3-5× more interesting artifacts per night.
+
+### Build plan
+
+**Phase A: find the refusal direction (~2 hours).**
+
+1. Check HuggingFace for a released `gemma-3-12b-abliterated` variant. If it
+   exists, use it via our existing `ModelWrapper` (the `MODEL_NAME_MAP` in
+   `src/paper/model_utils.py` already supports abliterated variants via the
+   `init_ablation()` hook the paper's code installs at load time).
+2. If no pre-abliterated 12B exists, compute the direction ourselves:
+   - Vendor `experiments/03d_refusal_abliteration.py` + `refusal_prompts.py`
+     from the paper repo into `src/paper/` (same pattern as our existing
+     three vendored files).
+   - Run ~100 harmful + ~100 harmless prompts through Gemma3-12B.
+   - At each late layer (30-45), compute the mean activation difference
+     between harmful and harmless prompts. Normalize.
+   - Pick the layer with cleanest separation (paper finds ~70-75% depth).
+   - Persist the direction tensor to `data/refusal_direction_12b.pt`.
+
+**Phase B: integrate into the pipeline (~2-3 hours).**
+
+1. Write `src/paper/ablation.py`: a forward hook that projects out the
+   refusal direction at every layer during every forward pass.
+   `h' = h - (h · r_hat) * r_hat`.
+2. Extend `src/bridge.py::load_gemma_mps()` with an `abliterate: bool`
+   parameter. When `True`, install the abliteration hook at model load.
+3. Extend `src/evaluate.py::evaluate_candidate` and
+   `src/sweep.py::SweepConfig` to accept an `abliterate` flag per candidate
+   so we can compare ablated-vs-not in the same DB.
+4. Extend the candidate spec JSON schema with an `"abliterate": bool`
+   field. `src/strategies/random_explore.py` can start emitting both
+   ablated and non-ablated candidates once the infrastructure lands.
+
+**Phase C: re-run the experiments.**
+
+1. Smoke test: one candidate at known-good params (e.g., `Dynasties @ L=36
+   eff=20000`) with `abliterate=True`. Confirm the model generates
+   differently (more affirmative detection language, less refusal hedging).
+2. Re-run the Phase 1 full sweep (50 concepts × 9 layers) with abliteration
+   on. Expected result: detection rate substantially higher than the 6%
+   baseline. The paper's 27B → 12B scaling is the open question — we may
+   see anywhere from 20-50% detection at best layer. Either way, the
+   headline number is "how much of the introspection capability was under-
+   elicited in 12B, and does abliteration unlock it?"
+3. Kick off the next Phase 2 overnight run on the abliterated model. Expect
+   richer responses and higher hit rates across all random candidates.
+
+### Verification / acceptance
+
+- Model still generates coherent English (abliteration doesn't break
+  general capability).
+- Detection rate on Phase 1's 50-concept sweep is measurably higher with
+  abliteration than without — specifically `> 15%` at best layer, which
+  would be a 2.5× jump from 6%.
+- FPR on control trials stays below 10% (paper's 27B FPR rose to 7.3% with
+  abliteration — more false positives are expected, just not runaway).
+- Side-by-side DB query: non-abliterated vs abliterated fitness scores on
+  the same candidate specs show the abliterated version scoring higher on
+  average.
+
+### Risk and scope notes
+
+- **Abliterated models are less safe** (that's the whole point). This model
+  variant should only be used for research within this project; it should
+  not be the default Claude judge, deployed, or exposed to users.
+- The paper's `gemma-3-27b-abliterated` uses the `init_ablation()` path; our
+  vendored `model_utils.py` already has the `if "abliterated" in model_name:
+  self.model.init_ablation()` branch at line 157-162 (inherited from the
+  paper). So if an abliterated 12B model exists on HF, integration is near
+  zero-effort.
+- If we compute the direction ourselves, we should also persist the
+  harmful/harmless prompt set + the compute timestamp so future sessions
+  can regenerate.
+
+### Priority
+
+**Higher priority than `novel_contrast`** (which is the original Phase 2b
+pitch) because abliteration lifts the ceiling on everything downstream.
+`novel_contrast` on the abliterated model would find concepts-without-names
+more easily than on the vanilla model.
+
+New order for Phase 2 enhancements:
+
+1. **Phase 1.5 abliteration** (2026-04-17 build, overnight run that evening)
+2. `novel_contrast` (after abliteration is validated)
+3. `exploit_topk`
+4. `crossover`
+5. T1/T2/T3 tiered fitness + Streamlit dashboard
+
+---
+
 ## Phase 2a cleanup — known issues discovered during first overnight run
 
 ### Judge target-concept bug
