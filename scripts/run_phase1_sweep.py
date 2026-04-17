@@ -5,6 +5,11 @@ Usage:
     python scripts/run_phase1_sweep.py --dry-run        # show plan, no work
     python scripts/run_phase1_sweep.py --concepts 5     # first 5 concepts only (smoke test)
     python scripts/run_phase1_sweep.py --layers 30 33   # narrow layer grid
+
+Phase 1.5 (abliterated variant):
+    python scripts/run_phase1_sweep.py --abliterate     # uses
+        # mlabonne/gemma-3-12b-it-abliterated-v2 and writes to
+        # data/results_abliterated.db by default. See docs/roadmap.md Phase 1.5.
 """
 
 import argparse
@@ -18,6 +23,7 @@ from src.sweep import SweepConfig, load_concepts, run_sweep
 REPO = Path(__file__).resolve().parent.parent
 DEFAULT_CONCEPTS = REPO / "data" / "concepts" / "concepts_50.json"
 DEFAULT_DB = REPO / "data" / "results.db"
+DEFAULT_DB_ABLITERATED = REPO / "data" / "results_abliterated.db"
 DEFAULT_LAYERS = [10, 15, 20, 25, 30, 33, 36, 40, 44]
 
 
@@ -34,13 +40,28 @@ def main() -> int:
                          "Set to 0 to use fixed --alpha instead.")
     ap.add_argument("--trials-per-cell", type=int, default=1)
     ap.add_argument("--no-controls", action="store_true")
-    ap.add_argument("--db", type=Path, default=DEFAULT_DB)
-    ap.add_argument("--model", default="gemma3_12b")
+    ap.add_argument("--db", type=Path, default=None,
+                    help="Override DB path. Defaults: data/results.db (vanilla), "
+                         "data/results_abliterated.db (--abliterate)")
+    ap.add_argument("--model", default=None,
+                    help="Override model name. Defaults: gemma3_12b (vanilla), "
+                         "gemma3_12b_abliterated (--abliterate)")
+    ap.add_argument("--abliterate", action="store_true",
+                    help="Use the abliterated variant. Default model becomes "
+                         "gemma3_12b_abliterated and default DB becomes "
+                         "data/results_abliterated.db, unless --model / --db "
+                         "explicitly override.")
     ap.add_argument("--judge-model", default="claude-haiku-4-5-20251001")
     ap.add_argument("--run-id", default=None)
     ap.add_argument("--dry-run", action="store_true",
                     help="Show the plan and exit without running")
     args = ap.parse_args()
+
+    # Resolve model and DB defaults based on --abliterate
+    if args.model is None:
+        args.model = "gemma3_12b_abliterated" if args.abliterate else "gemma3_12b"
+    if args.db is None:
+        args.db = DEFAULT_DB_ABLITERATED if args.abliterate else DEFAULT_DB
 
     concepts = load_concepts(args.concepts_file)
     if args.concepts is not None:
