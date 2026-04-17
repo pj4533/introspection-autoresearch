@@ -68,8 +68,12 @@ src/verify_phase1.py ← Phase 1 acceptance check.
 src/evaluate.py     ← Phase 2 candidate fitness (3-component multiplicative).
 src/worker.py       ← Phase 2 long-lived queue poller. Loads model once.
 src/researcher.py   ← Phase 2 short-lived candidate generator driver.
-src/strategies/     ← Phase 2 strategies. Currently: random_explore. Future:
-                     exploit_topk, crossover, novel_contrast (via Agent SDK).
+src/strategies/     ← Phase 2 strategies.
+                     random_explore: samples concept/layer/eff from a word pool
+                     novel_contrast: uses Claude Sonnet 4.6 to generate abstract
+                       contrast pairs; derives direction from pair instead of
+                       single concept (derivation_method="contrast_pair").
+                     Future: exploit_topk, crossover.
 ```
 
 ## Gotchas and invariants

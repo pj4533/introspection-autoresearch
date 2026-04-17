@@ -27,8 +27,20 @@ DEFAULT_DERIVATION_METHODS = ["mean_diff"]  # Phase 2 MVP only has one method
 
 
 def spec_hash(spec: CandidateSpec) -> str:
-    """Stable dedup key across (concept, layer, target_effective, method)."""
-    payload = f"{spec.concept}|{spec.layer_idx}|{spec.target_effective:.1f}|{spec.derivation_method}"
+    """Stable dedup key across (concept, layer, target_effective, method).
+
+    For contrast_pair candidates, also hashes the pair content so the same
+    (concept label, layer, eff) with different contrast pairs gets distinct
+    hashes — and so the same pair isn't re-proposed across runs.
+    """
+    payload = (
+        f"{spec.concept}|{spec.layer_idx}|{spec.target_effective:.1f}"
+        f"|{spec.derivation_method}"
+    )
+    if spec.derivation_method == "contrast_pair" and spec.contrast_pair is not None:
+        pos = "|".join(spec.contrast_pair.get("positive", []))
+        neg = "|".join(spec.contrast_pair.get("negative", []))
+        payload += f"|pos:{pos}|neg:{neg}"
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 

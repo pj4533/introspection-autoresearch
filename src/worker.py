@@ -166,8 +166,12 @@ def _process_one(
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--db", type=Path, default=DB_PATH)
-    ap.add_argument("--model", default="gemma3_12b")
+    ap.add_argument("--db", type=Path, default=DB_PATH,
+                    help="SQLite DB path. For abliterated runs, use "
+                         "data/results_abliterated.db")
+    ap.add_argument("--model", default="gemma3_12b",
+                    help="Model slug (from MODEL_NAME_MAP). For Phase 1.5 use "
+                         "gemma3_12b_abliterated.")
     ap.add_argument("--judge-model", default="claude-haiku-4-5-20251001")
     ap.add_argument("--held-out", type=Path, default=HELD_OUT_PATH)
     ap.add_argument("--max-candidates", type=int, default=0,

@@ -249,29 +249,38 @@ candidate still give the same seeds.
 
 This is where the project's *novel* contribution lives. Each of these strategies produces candidate steering directions by a different mechanism; they plug into the existing `src/researcher.py` plugin interface.
 
-### `novel_contrast` — "concepts that don't have names" (next to build)
+### `novel_contrast` — "concepts that don't have names" — **BUILT 2026-04-17**
 
 **Motivation.** Phase 2a's `random_explore` only tries directions derived from single concept words drawn from a human dictionary (Bread, Peace, Ocean, ...). This misses directions the model represents *internally* for which no single English word exists.
 
-**Mechanism.**
+**Mechanism (as built).**
 
-1. Use `claude-agent-sdk` (subscription OAuth, no API billing) to generate **contrast pairs** for abstract axes — not single words. Example pairs:
-   - `("pondering", "asserting")` — the hesitation-vs-commitment axis
-   - `("deciding carefully", "acting on instinct")`
-   - `("certainty", "doubt")`
-   - `("warm recollection", "clinical recall")`
-2. Derive a direction from the pair using `src.paper.extract_concept_vector` (positive=pair[0], negative=pair[1]). This is distinct from `extract_concept_vector_with_baseline` (the single-concept approach).
-3. The resulting direction lives *between* two reference points, representing an axis the model has internal geometry for but humans don't have single-word vocabulary for.
-4. Evaluate the same way `random_explore` candidates are evaluated — fitness over 8 held-out concepts + 4 controls.
+1. ``src/strategies/novel_contrast.py`` calls `claude-agent-sdk` (Sonnet 4.6 for quality, subscription OAuth — no API billing) to generate N abstract contrast pairs. Each pair has:
+   - `axis`: short hyphenated identifier like `commitment-vs-hesitation`
+   - `description`: one-sentence plain-English explanation
+   - `positive`: 6 short example sentences exemplifying the positive pole
+   - `negative`: 6 short example sentences exemplifying the negative pole
+2. For each pair, a `CandidateSpec` is emitted with `derivation_method="contrast_pair"` and the pair stored as metadata. Layer and target_effective are randomly sampled from `{30, 33, 36, 40}` × `{14k, 16k, 18k, 20k}` — narrower than `random_explore` because novel pairs are more expensive (Claude call).
+3. When the worker processes the candidate, `src/evaluate.py::evaluate_candidate` branches on `derivation_method`. For `contrast_pair`, it calls `src.paper.extract_concept_vector(positive_prompts=..., negative_prompts=...)` instead of the single-concept mean-diff. Everything downstream (injection, judging, scoring) is unchanged.
+4. `spec_hash` includes the contrast pair content so the same axis with different example sentences doesn't collide.
 
-**Worker changes required.** `src/evaluate.py::evaluate_candidate` currently calls `pipeline.derive(concept=spec.concept, layer_idx=...)`. For `contrast_pair` candidates, it needs to dispatch to `extract_concept_vector(positive_prompts=..., negative_prompts=...)`. Small branch in the derivation path.
+**CLI:**
+```
+python -m src.researcher --strategy novel_contrast --n 10          # pair-generation only
+python -m src.researcher --strategy both --n 10                    # random + novel_contrast together
+STRATEGY=both ./scripts/start_researcher.sh                         # continuous loop with both
+```
+
+**Example axes Claude generates** (from dry-run): `commitment-vs-hesitation`, `tracing-vs-asserting`, `inward-attending-vs-outward-reporting`, `provisional-framing-vs-settled-framing`, `grounded-assertion-vs-provisional-floating`, `figure-ground-reversal-vs-default-framing`.
 
 **Acceptance.** At least one discovered `contrast_pair` direction:
 - Scores fitness > 0.2 (higher than most random candidates)
 - Produces clean introspective responses qualitatively distinct from the pair's named components
 - Cannot be satisfactorily labeled with a single English word
 
-**Risk.** Most Claude-generated pairs will produce directions that are just noisy or map cleanly onto a named concept anyway. The signal should emerge after ~100-500 evaluated pairs.
+Pending end-to-end smoke test after the current abliterated Phase 1 sweep finishes (shares the GPU).
+
+**Risk.** Most Claude-generated pairs will produce directions that are noisy or map cleanly onto a named concept anyway. The signal should emerge after ~100-500 evaluated pairs.
 
 ### `exploit_topk` — sample near known-good directions
 

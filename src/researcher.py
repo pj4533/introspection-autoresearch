@@ -5,14 +5,17 @@ invokes a strategy module to generate N candidate JSON specs, writes them to
 queue/pending/. Exits.
 
 Usage:
-    # one cycle, 10 candidates via random exploration
+    # Random word sweep (Phase 2a — Phase 1 extended)
     python -m src.researcher --strategy random --n 10
 
-    # print what would be written without writing
-    python -m src.researcher --strategy random --n 5 --dry-run
+    # Abstract-axis contrast pairs (Phase 2b — "concepts without names" hunt)
+    python -m src.researcher --strategy novel_contrast --n 10
 
-Future strategies will use claude-agent-sdk to propose candidates that exploit
-top fitness results or generate novel contrast pairs via Claude.
+    # Mix: run both strategies in sequence
+    python -m src.researcher --strategy both --n 10
+
+    # Print what would be written without writing
+    python -m src.researcher --strategy random --n 5 --dry-run
 """
 
 from __future__ import annotations
@@ -26,6 +29,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.db import ResultsDB
+from src.strategies.novel_contrast import generate_candidates as novel_contrast_generate
 from src.strategies.random_explore import (
     generate_candidates as random_generate,
     spec_hash,
@@ -34,44 +38,61 @@ from src.strategies.random_explore import (
 
 REPO = Path(__file__).resolve().parent.parent
 DB_PATH = REPO / "data" / "results.db"
+DB_PATH_ABLITERATED = REPO / "data" / "results_abliterated.db"
 QUEUE_PENDING = REPO / "queue" / "pending"
 CONCEPT_POOL_PATH = REPO / "data" / "eval_sets" / "concept_pool.json"
 
-STRATEGIES = {"random": random_generate}
+STRATEGIES = ("random", "novel_contrast", "both")
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--strategy", choices=list(STRATEGIES.keys()), default="random")
+    ap.add_argument("--strategy", choices=list(STRATEGIES), default="random")
     ap.add_argument("--n", type=int, default=10,
-                    help="Number of candidates to generate")
+                    help="Number of candidates to generate (per strategy for 'both')")
     ap.add_argument("--concept-pool", type=Path, default=CONCEPT_POOL_PATH)
-    ap.add_argument("--db", type=Path, default=DB_PATH)
+    ap.add_argument("--db", type=Path, default=None,
+                    help="Override DB path. Defaults: data/results.db (vanilla), "
+                         "data/results_abliterated.db (--abliterated).")
+    ap.add_argument("--abliterated", action="store_true",
+                    help="Target the abliterated DB (data/results_abliterated.db) "
+                         "for dedup. Candidates written to the same queue; the "
+                         "worker decides which model to load via its own flag.")
     ap.add_argument("--pending-dir", type=Path, default=QUEUE_PENDING)
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--seed", type=int, default=None)
     args = ap.parse_args()
 
+    if args.db is None:
+        args.db = DB_PATH_ABLITERATED if args.abliterated else DB_PATH
+
     pool = json.loads(Path(args.concept_pool).read_text())["concepts"]
     db = ResultsDB(args.db)
 
-    if args.strategy == "random":
-        candidates = random_generate(
+    candidates = []
+    if args.strategy in ("random", "both"):
+        candidates.extend(random_generate(
             n=args.n,
             db=db,
             concept_pool=pool,
             rng_seed=args.seed,
-        )
-    else:
-        raise NotImplementedError(f"strategy {args.strategy!r} not yet implemented")
+        ))
+    if args.strategy in ("novel_contrast", "both"):
+        candidates.extend(novel_contrast_generate(
+            n=args.n,
+            db=db,
+            concept_pool=pool,  # accepted but ignored by novel_contrast
+            rng_seed=args.seed,
+        ))
 
     print(
         f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] strategy={args.strategy} "
         f"generated {len(candidates)} new candidates (requested {args.n})"
     )
     for c in candidates:
+        method_tag = "contr" if c.derivation_method == "contrast_pair" else "mean"
         print(
-            f"  {c.id}  concept={c.concept!r:14} "
+            f"  {c.id}  [{method_tag}] concept={c.concept!r:22} "
             f"L={c.layer_idx:>3} eff={c.target_effective:>6.0f} "
             f"hash={spec_hash(c)}"
         )

@@ -36,6 +36,24 @@ DEFAULT_N_CONTROLS = 4
 
 @dataclass
 class CandidateSpec:
+    """A candidate steering direction's full specification.
+
+    Two derivation methods supported:
+
+    - ``derivation_method="mean_diff"`` (default): derive a steering vector for
+      the single concept word ``concept`` by mean-differencing its activations
+      against ``baseline_n`` random baseline words. This is what ``random_explore``
+      produces — the Phase 1 approach extended across more concepts.
+
+    - ``derivation_method="contrast_pair"``: derive a direction from two LISTS of
+      short example sentences, ``contrast_pair["positive"]`` vs
+      ``contrast_pair["negative"]``. The resulting direction lives between the
+      two sets and captures an abstract axis (e.g., certainty-vs-doubt) that
+      doesn't correspond to any single English word. This is what
+      ``novel_contrast`` produces. For these candidates, ``concept`` holds a
+      human-readable label like ``"commitment_vs_hesitation"`` that describes
+      the axis; it is not injected into the prompt.
+    """
     id: str
     strategy: str
     concept: str
@@ -44,6 +62,9 @@ class CandidateSpec:
     derivation_method: str = "mean_diff"
     baseline_n: int = 32
     notes: str = ""
+    # Only populated when derivation_method == "contrast_pair". Shape:
+    #   {"axis": str, "positive": list[str], "negative": list[str]}
+    contrast_pair: Optional[dict] = None
 
     @classmethod
     def from_dict(cls, d: dict) -> "CandidateSpec":
@@ -56,10 +77,11 @@ class CandidateSpec:
             derivation_method=d.get("derivation_method", "mean_diff"),
             baseline_n=int(d.get("baseline_n", 32)),
             notes=d.get("notes", ""),
+            contrast_pair=d.get("contrast_pair"),
         )
 
     def to_dict(self) -> dict:
-        return {
+        out = {
             "id": self.id,
             "strategy": self.strategy,
             "concept": self.concept,
@@ -69,6 +91,9 @@ class CandidateSpec:
             "baseline_n": self.baseline_n,
             "notes": self.notes,
         }
+        if self.contrast_pair is not None:
+            out["contrast_pair"] = self.contrast_pair
+        return out
 
 
 @dataclass
@@ -126,7 +151,28 @@ def evaluate_candidate(
     controls = controls[:n_controls]
 
     # --- derive the steering direction once ---------------------------------
-    direction = pipeline.derive(concept=spec.concept, layer_idx=spec.layer_idx)
+    if spec.derivation_method == "contrast_pair":
+        # Novel-contrast: derive direction from a pair of prompt LISTS, one
+        # representing each pole of an abstract axis. Uses the paper's
+        # extract_concept_vector (positive_prompts vs negative_prompts).
+        if spec.contrast_pair is None:
+            raise ValueError(
+                f"Candidate {spec.id}: derivation_method='contrast_pair' but "
+                "contrast_pair field is None"
+            )
+        from .paper import extract_concept_vector
+        direction = extract_concept_vector(
+            model=pipeline.model,
+            positive_prompts=spec.contrast_pair["positive"],
+            negative_prompts=spec.contrast_pair["negative"],
+            layer_idx=spec.layer_idx,
+            token_idx=-1,
+            normalize=False,
+        )
+    else:
+        # mean_diff (default, Phase 1 approach): concept word vs baseline words
+        direction = pipeline.derive(concept=spec.concept, layer_idx=spec.layer_idx)
+
     norm = float(direction.norm().item())
     alpha = spec.target_effective / max(norm, 1e-6)
 
