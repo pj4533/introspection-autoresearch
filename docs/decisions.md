@@ -160,3 +160,60 @@ Format is [ADR-style](https://adr.github.io/) (Architecture Decision Records), l
 **Decision.** Single repo. All artifacts live at `github.com/pj4533/introspection-autoresearch`.
 
 **Consequences.** One clone, one README, one issue tracker. Export scripts can write directly into `web/public/data/` without cross-repo coordination. Cost: the web tooling (npm, Next.js) will share space with the Python tooling; `.gitignore` needs to cover both ecosystems. Accepted.
+
+---
+
+## ADR-013: Paper-method abliteration (vanilla + per-layer hooks) over pre-abliterated HF checkpoints
+
+**Status:** Accepted · 2026-04-17.
+
+**Context.** Phase 1.5 needed a refusal-direction ablation to reproduce Macar et al. §3.3. Three approaches were tested in sequence:
+
+1. `mlabonne/gemma-3-12b-it-abliterated-v2` — off-the-shelf pre-abliterated checkpoint. Result: 97.9% FPR on controls (47/48 falsely claimed detection). Over-aggressive; model cannot say "I don't detect" at all.
+2. `huihui-ai/gemma-3-12b-it-abliterated` — alternative pre-abliterated checkpoint. Result: 90% FPR. Also too aggressive.
+3. **Paper method**: vanilla Gemma3-12B + per-layer forward hooks projecting out a per-layer refusal direction, weighted by the paper's Optuna-tuned region weights (mean 0.023, max 0.12), proportionally remapped from 62-layer 27B onto 48-layer 12B. Result: **0% FPR, 10 detections** (2× vanilla), **7 correct identifications** (vs vanilla 2).
+
+**Decision.** Use paper-method for all Phase 1.5+ abliterated work. Abandon off-the-shelf variants.
+
+**Consequences.**
+
+- `src/paper/abliteration.py` is the canonical implementation. Contains:
+  - `compute_per_layer_refusal_directions()` — one-shot extraction, saves unit vectors to `data/refusal_directions_12b.pt`
+  - `install_abliteration_hooks()` / `remove_abliteration_hooks()` — runtime hook management
+  - `PAPER_REGION_WEIGHTS_27B` / `PAPER_REGION_ORDER_27B` — the 20 Optuna-tuned weights and their region boundaries on the 27B
+  - `paper_layer_weights_for_model()` — proportional remap to arbitrary layer count
+- `scripts/run_phase1_sweep.py --abliterate-paper <path>` is the sweep invocation.
+- Pre-abliterated model DB tables (`data/results_abliterated.db`, `data/results_abliterated_huihui.db`) retained for reference; `scripts/compare_abliterations.py` surfaces the side-by-side FPR comparison. These are negative-result artifacts, not future workflows.
+- Abliterated models from HF are deleted from the local HF cache after each experiment — ~44GB mlabonne + 24GB huihui were freed mid-session to make room for paper-method compute. Paper-method needs only the 24GB vanilla + 739KB direction tensor.
+
+**Trade-off.** Paper-method is slightly slower at sweep time (48 extra forward-hook projections per forward pass) but *far* cheaper in storage and wall-clock setup (no 24-44GB model re-download). Quality gain is decisive.
+
+---
+
+## ADR-014: Concept directions must be derived from the vanilla model, then injected into the abliterated model
+
+**Status:** Accepted · 2026-04-17. Committed in 979e932.
+
+**Context.** Initial paper-method sweep produced token salad on injected trials (e.g. `"ventureడు verbandడుడుడు..."`) despite paper-method hooks being gentle. Diagnostic showed control trials (no injection, hooks installed) were coherent. The problem was isolated to the injected-trial path.
+
+Root cause: the sweep was deriving each concept's steering vector via `pipeline.derive()` **after** abliteration hooks had been installed. When deriving a concept like "Trumpets" under active abliteration, the hooks projected the refusal-aligned component of each activation out — including whatever component of the concept vector happened to align with refusal. Direction norm collapsed (‖dir‖=744 vs vanilla ~5664 for the same concept/layer). Adaptive α then blew up (α=24 instead of ~3) to hit the calibrated `target_effective=18000`, multiplying noise into incoherent generation.
+
+The paper's reference implementation (`experiments/03d_refusal_abliteration.py`) derives concept vectors in experiment 02 (vanilla conditions) and re-uses the saved vectors in experiment 03 under abliteration. The separation is implicit in their workflow, not documented as an invariant.
+
+**Decision.** Make "derive from vanilla, inject into abliterated" an explicit invariant of the abliterated sweep path.
+
+**Implementation.** `src/sweep.py::run_sweep()`, when `abliterate_paper` is set:
+
+1. Load model. Do **not** install abliteration hooks yet.
+2. Enumerate unique `(concept, layer)` pairs from the pending trial plan. For each, call `pipeline.derive(concept, layer_idx)` to get the vanilla-derived steering vector. Cache in `direction_cache`.
+3. **Now** install abliteration hooks on the model.
+4. For each trial: retrieve the cached vanilla direction, compute adaptive α from its norm, inject under hooks.
+
+The `direction_cache` dict is keyed `(concept, layer) -> torch.Tensor`. Look-ups in the main loop still work because we populate the cache before the loop starts.
+
+**Consequences.**
+
+- Sweep has a one-time pre-derivation phase before trials begin (~8-15 min for 450 pairs on M2 Ultra). User-visible as silent stderr-buffered delay; log prints `derived N/M` every 20 pairs.
+- If the plan is empty (all trials already in DB — resume case), pre-derivation is skipped.
+- If the abliterated sweep is later extended with new concepts, those new concepts' directions must also be derived from vanilla. The cache invalidation discipline is: any concept not yet in the DB's `trials` table gets a fresh vanilla derivation on next sweep run.
+- Phase 2 worker (`src/worker.py`) does not yet implement this pattern because Phase 2 does not yet run under abliteration. When abliterated Phase 2 ships, the worker will need the same "vanilla derive, abliterated inject" dance — either by loading two models (48GB MPS, tight) or by hook install/remove per candidate.

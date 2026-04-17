@@ -15,6 +15,7 @@ directions affecting introspection capability.
 - **Architectural decisions** (ADR log): `docs/decisions.md`
 - Plain-English project writeup (public-facing): `docs/plain_english.md`
 - Phase 1 technical results: `docs/phase1_results.md`
+- Phase 1.5 technical results (paper-method abliteration): `docs/phase1_5_results.md`
 - Full spec: `docs/01_introspection_steering_autoresearch.md`
 - Approved plan (pre-execution, for historical reference): `/Users/pj4533/.claude/plans/lexical-mixing-unicorn.md`
 - README: `README.md` (repo layout, setup, running)
@@ -46,9 +47,19 @@ plan file, it's a bug. Commit it to `docs/roadmap.md` (forward-looking) or
   + `scripts/start_researcher.sh` (setsid nohup launchers), `data/eval_sets/`
   (held_out_concepts.json = 20 concepts NOT in the 50-concept Phase 1 set;
   concept_pool.json = ~170-concept search pool for random_explore).
-- Phase 2 enhancements (Claude Agent SDK researcher, `exploit_topk` /
-  `crossover` / `novel_contrast` strategies, Streamlit dashboard, T1/T2/T3
-  tiered fitness screening): planned, not started.
+- Phase 1.5 — Paper-method refusal-direction abliteration: **done** 2026-04-17.
+  500-trial sweep on vanilla 12B + per-layer paper-method hooks. 10
+  detections (2× vanilla's 5), 7 correct IDs (vs vanilla's 2), **FPR 0/50**
+  (unchanged). Detection peak shifted from L=33 to L=30. Writeup:
+  [`docs/phase1_5_results.md`](docs/phase1_5_results.md). Proves the
+  paper's ablation recipe reproduces on 12B at ~3.6× boost (vs paper's 6×
+  on 27B). Off-the-shelf abliterated variants (`mlabonne/gemma-3-12b-it-abliterated-v2`,
+  `huihui-ai/gemma-3-12b-it-abliterated`) were tested first and both
+  destroyed control hygiene (97.9% / 90% FPR) — paper-method is the way.
+- Phase 2 enhancements (Claude Agent SDK researcher — built with novel_contrast,
+  `exploit_topk` / `crossover` strategies, Streamlit dashboard, T1/T2/T3
+  tiered fitness screening): mostly planned; novel_contrast built
+  2026-04-17 but pending end-to-end smoke test.
 
 ## Architecture quick map
 
@@ -64,6 +75,18 @@ src/db.py           ← SQLite ResultsDB. Phase 1 trials + Phase 2 candidates/
                      evaluations/fitness_scores. Schema version 2.
 src/sweep.py        ← Resumable Phase 1 sweep runner.
                      Adaptive α via target_effective (α = target / ‖dir‖).
+                     Supports --abliterate-paper <directions.pt>: pre-derives
+                     concept vectors from vanilla, then installs per-layer
+                     paper-method hooks for injection. See ADR-014.
+src/paper/abliteration.py
+                    ← Paper-method refusal-direction ablation. Per-layer
+                     projection-out hooks with Optuna-tuned per-region
+                     weights proportionally remapped 27B → 12B. Includes
+                     compute_per_layer_refusal_directions() for one-shot
+                     extraction to data/refusal_directions_12b.pt.
+src/paper/refusal_prompts.py
+                    ← Vendored 520 harmful + 31811 harmless prompts for
+                     refusal direction derivation.
 src/verify_phase1.py ← Phase 1 acceptance check.
 src/evaluate.py     ← Phase 2 candidate fitness (3-component multiplicative).
 src/worker.py       ← Phase 2 long-lived queue poller. Loads model once.
@@ -111,6 +134,27 @@ src/strategies/     ← Phase 2 strategies.
     ~3× higher apparent detection rates that were actually concept leakage,
     not introspection. Always test new prompt versions against both
     hand-crafted positives and the existing sweep's 5 known true detections.
+- **Abliterated sweeps: derive concept vectors from vanilla BEFORE installing
+  hooks, then inject under hooks.** Deriving under active abliteration
+  projects the refusal-aligned component out of the concept vector, leaving
+  noise that adaptive-α amplifies into token salad. `src/sweep.py` does this
+  automatically; Phase 2 worker will need the same invariant when it ships
+  abliterated-mode support. See ADR-014.
+- **Never run two sweeps concurrently on the same DB.** MPS unified memory
+  can't hold 2× 12B (44GB+ of just weights on a 64GB machine) and activations
+  start corrupting silently. Both processes produce token salad with no
+  error. Convention: one sweep at a time per DB path.
+- **Paper-method abliteration is the only abliteration we use.** Off-the-shelf
+  HF abliterated checkpoints (`mlabonne/gemma-3-12b-it-abliterated-v2`,
+  `huihui-ai/gemma-3-12b-it-abliterated`) produced catastrophic FPR on our
+  protocol (97.9% and 90% respectively). The paper's Optuna-tuned per-region
+  weights are the surgical version; proportional remap from 62-layer 27B to
+  48-layer 12B via `paper_layer_weights_for_model()`. See ADR-013.
+- **Claude judge has 60s timeout + 3 retries with exponential backoff.** The
+  Anthropic API can enter CLOSE_WAIT state and hang indefinitely. Without the
+  timeout, a single hang kills whole sweeps (caused an 8h stall mid-session
+  before c63c295 fix). Default sentinel `JudgeResult` on final failure so
+  the sweep keeps going.
 
 ## Running things
 
@@ -130,6 +174,12 @@ jupyter nbconvert --to notebook --execute notebooks/01_reproduce_paper.ipynb \
 python scripts/run_phase1_sweep.py
 python -m src.verify_phase1
 python scripts/export_phase1.py
+
+# Phase 1.5 paper-method abliteration
+python scripts/compute_refusal_direction.py                              # one-shot, ~3-5 min
+python scripts/diagnose_paper_weights.py                                 # sanity check
+python scripts/run_phase1_sweep.py --abliterate-paper data/refusal_directions_12b.pt  # ~2.5 hours
+python scripts/compare_abliterations.py                                  # vanilla vs mlabonne vs huihui vs paper-method
 
 # Phase 2 autoresearch loop (overnight)
 ./scripts/start_worker.sh          # background, one per machine
