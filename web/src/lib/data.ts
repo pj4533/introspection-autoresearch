@@ -45,6 +45,17 @@ export type AbliterationVariant = {
   false_positive_rate: number;
 };
 
+export type Phase2Trial = {
+  eval_concept: string;
+  injected: boolean;
+  alpha: number;
+  detected: boolean;
+  identified: boolean;
+  coherent: boolean;
+  response: string;
+  judge_reasoning: string;
+};
+
 export type Phase2Entry = {
   candidate_id: string;
   strategy: string;
@@ -59,7 +70,16 @@ export type Phase2Entry = {
   coherence_rate: number;
   created_at: string;
   evaluated_at: string | null;
-  contrast_pair?: { axis: string; description: string };
+  notes?: string | null;
+  contrast_pair?: {
+    axis: string;
+    description: string;
+    positive: string[];
+    negative: string[];
+  };
+  prompt_style: "paper" | "open";
+  prompt: { setup: string; question: string };
+  trials: Phase2Trial[];
 };
 
 export type Phase2Activity = {

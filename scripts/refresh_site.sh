@@ -51,7 +51,20 @@ do_refresh() {
 
     if [[ "$before_hash" != "$after_hash" ]]; then
         echo "[$ts] data changed — deploying..."
-        (cd web && vercel --prod --yes --no-color 2>&1 | tail -3)
+        # Capture the new deployment URL so we can alias it.
+        local deploy_out
+        deploy_out=$(cd web && vercel --prod --yes --no-color 2>&1)
+        echo "$deploy_out" | tail -5
+        # Vercel's new prod deploys are NOT auto-aliased to the clean project
+        # domain — we have to do it ourselves after each deploy.
+        local deploy_url
+        deploy_url=$(echo "$deploy_out" | grep -oE 'did-the-ai-notice-[a-z0-9]+-pjs-projects-3e91f18c\.vercel\.app' | head -1)
+        if [[ -n "$deploy_url" ]]; then
+            echo "[$ts] aliasing $deploy_url -> did-the-ai-notice.vercel.app"
+            (cd web && vercel alias set "$deploy_url" did-the-ai-notice.vercel.app --no-color 2>&1 | tail -2)
+        else
+            echo "[$ts] WARNING: could not parse deployment URL from vercel output"
+        fi
         echo "[$ts] deploy complete."
     else
         echo "[$ts] no meaningful change — skipping deploy."

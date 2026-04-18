@@ -176,10 +176,17 @@ def evaluate_candidate(
     norm = float(direction.norm().item())
     alpha = spec.target_effective / max(norm, 1e-6)
 
+    # Use the "open" introspection prompt for contrast_pair (invented-axis)
+    # candidates — the paper's prompt repeatedly says "a thought about a
+    # specific word", which primes single-noun answers like "cloud" / "apple"
+    # that have no connection to abstract axes. Open prompt just asks the
+    # model to describe what the injected pattern seems to be.
+    prompt_style = "open" if spec.derivation_method == "contrast_pair" else "paper"
+
     if verbose:
         print(
             f"    derive: concept={spec.concept!r} L={spec.layer_idx} "
-            f"||dir||={norm:.0f} alpha={alpha:.2f}"
+            f"||dir||={norm:.0f} alpha={alpha:.2f} prompt={prompt_style}"
         )
 
     n_det = n_ident = n_coh = 0
@@ -202,6 +209,7 @@ def evaluate_candidate(
             trial_number=1,
             max_new_tokens=120,
             judge_concept=spec.concept,  # grade identification against SOURCE concept
+            prompt_style=prompt_style,
         )
         jr = trial.judge_result
         db.record_evaluation(
@@ -242,6 +250,7 @@ def evaluate_candidate(
             concept=c,
             trial_number=1,
             max_new_tokens=120,
+            prompt_style=prompt_style,  # match injected trials' framing
             # judge_concept: for controls, passes through as `c` (slot label).
             # Detection should be false regardless of target; identification is
             # moot. Kept consistent with run_injected's semantics.

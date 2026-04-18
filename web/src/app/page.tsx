@@ -1,10 +1,9 @@
 import { Nav } from "@/components/Nav";
-import { Hero } from "@/components/Hero";
-import { HowItWorks } from "@/components/HowItWorks";
-import { Detections } from "@/components/Detections";
+import { Leaderboard } from "@/components/Leaderboard";
+import { Explainer } from "@/components/Explainer";
 import { LayerCurve } from "@/components/LayerCurve";
 import { Abliteration } from "@/components/Abliteration";
-import { LivePhase2 } from "@/components/LivePhase2";
+import { Detections } from "@/components/Detections";
 import { Footer } from "@/components/Footer";
 import {
   loadSummary,
@@ -12,7 +11,6 @@ import {
   loadLayerCurve,
   loadAbliterationComparison,
   loadPhase2Leaderboard,
-  loadPhase2Activity,
 } from "@/lib/data";
 
 export default function Home() {
@@ -21,21 +19,15 @@ export default function Home() {
   const layerCurve = loadLayerCurve();
   const { variants } = loadAbliterationComparison();
   const leaderboard = loadPhase2Leaderboard();
-  const activity = loadPhase2Activity();
 
   return (
     <main>
       <Nav />
-      <Hero summary={summary} />
-      <HowItWorks />
-      <Detections detections={detections} />
+      <Leaderboard entries={leaderboard} summary={summary} />
+      <Explainer />
       <LayerCurve data={layerCurve} />
       <Abliteration variants={variants} />
-      <LivePhase2
-        leaderboard={leaderboard}
-        activity={activity}
-        summary={summary}
-      />
+      <Detections detections={detections} />
       <Footer />
     </main>
   );

@@ -22,9 +22,13 @@ cd "$(dirname "$0")/.."
 
 mkdir -p logs
 
-if pgrep -f "python -m src.worker" > /dev/null; then
+# Match the actual Python process running `-m src.worker` (capital P on macOS
+# Homebrew). Pattern matches literal argv substring `/Python -m src.worker`
+# so it doesn't false-positive on shell scripts that just contain the regex
+# text as a search string. Two 12B workers on MPS corrupt each other's activations.
+if pgrep -f "/Python -m src\.worker" > /dev/null; then
     echo "worker already running:"
-    pgrep -af "python -m src.worker"
+    pgrep -af "/Python -m src\.worker"
     exit 1
 fi
 

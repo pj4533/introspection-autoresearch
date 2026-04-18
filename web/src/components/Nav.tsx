@@ -28,15 +28,6 @@ export function Nav() {
           </span>
         </Link>
         <div className="flex items-center gap-7 text-sm text-[var(--ink-soft)]">
-          <Link href="#detections" className="hover:text-[var(--ink)] transition-colors">
-            detections
-          </Link>
-          <Link href="#how" className="hover:text-[var(--ink)] transition-colors">
-            how
-          </Link>
-          <Link href="#live" className="hover:text-[var(--ink)] transition-colors">
-            live
-          </Link>
           <Link
             href="https://github.com/pj4533/introspection-autoresearch"
             target="_blank"

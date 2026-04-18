@@ -86,6 +86,7 @@ class DetectionPipeline:
         max_new_tokens: int = 120,
         temperature: float = 1.0,
         judge_concept: Optional[str] = None,
+        prompt_style: str = "paper",
     ) -> DetectionTrial:
         """Run an injected trial.
 
@@ -105,6 +106,7 @@ class DetectionPipeline:
             trial_number=trial_number,
             max_new_tokens=max_new_tokens,
             temperature=temperature,
+            prompt_style=prompt_style,
         )
         trial = DetectionTrial(
             concept=concept,
@@ -125,6 +127,7 @@ class DetectionPipeline:
         max_new_tokens: int = 120,
         temperature: float = 1.0,
         judge_concept: Optional[str] = None,
+        prompt_style: str = "paper",
     ) -> DetectionTrial:
         """Run a control (no-injection) trial.
 
@@ -138,6 +141,7 @@ class DetectionPipeline:
             trial_number=trial_number,
             max_new_tokens=max_new_tokens,
             temperature=temperature,
+            prompt_style=prompt_style,
         )
         trial = DetectionTrial(
             concept=concept,
