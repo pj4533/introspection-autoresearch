@@ -180,19 +180,36 @@ def export_abliteration_comparison() -> dict:
     return {"variants": out}
 
 
-def export_phase2_leaderboard(top_k: int = 50) -> list[dict]:
-    """Top Phase 2 candidates by fitness, with full per-trial response data
-    for the top K so the site can show what the model actually said."""
-    rows = _q(VANILLA_DB, """
-        SELECT c.id, c.strategy, c.concept, c.layer_idx, c.target_effective,
-               c.derivation_method, c.created_at, c.evaluated_at,
-               f.score, f.detection_rate, f.identification_rate, f.fpr, f.coherence_rate,
-               c.spec_json
-        FROM fitness_scores f
-        JOIN candidates c ON c.id = f.candidate_id
-        ORDER BY f.score DESC, f.detection_rate DESC
-        LIMIT ?
-    """, (top_k,))
+def export_phase2_leaderboard(top_k: Optional[int] = None) -> list[dict]:
+    """Phase 2 candidates with score > 0, with full per-trial response data.
+
+    No top_k cap by default — the site shows two views (top-by-score and
+    all-by-recency), both from this single dataset. If top_k is given,
+    truncates to that many by score (used for bandwidth-constrained cases).
+    """
+    if top_k is None:
+        rows = _q(VANILLA_DB, """
+            SELECT c.id, c.strategy, c.concept, c.layer_idx, c.target_effective,
+                   c.derivation_method, c.created_at, c.evaluated_at,
+                   f.score, f.detection_rate, f.identification_rate, f.fpr, f.coherence_rate,
+                   c.spec_json
+            FROM fitness_scores f
+            JOIN candidates c ON c.id = f.candidate_id
+            WHERE f.score > 0
+            ORDER BY f.score DESC, f.detection_rate DESC
+        """)
+    else:
+        rows = _q(VANILLA_DB, """
+            SELECT c.id, c.strategy, c.concept, c.layer_idx, c.target_effective,
+                   c.derivation_method, c.created_at, c.evaluated_at,
+                   f.score, f.detection_rate, f.identification_rate, f.fpr, f.coherence_rate,
+                   c.spec_json
+            FROM fitness_scores f
+            JOIN candidates c ON c.id = f.candidate_id
+            WHERE f.score > 0
+            ORDER BY f.score DESC, f.detection_rate DESC
+            LIMIT ?
+        """, (top_k,))
 
     out = []
     for r in rows:
@@ -201,12 +218,14 @@ def export_phase2_leaderboard(top_k: int = 50) -> list[dict]:
             spec = json.loads(r["spec_json"] or "{}")
         except Exception:
             pass
-        # Infer which introspection prompt style was used. Candidates created
-        # AND evaluated before the open-prompt switchover used "paper"; after
-        # the switchover, contrast_pair candidates use "open", everything else
-        # still uses "paper". Switchover timestamp: 2026-04-17 23:30 UTC.
-        # For older candidates the field won't be in spec_json anyway.
-        OPEN_PROMPT_CUTOFF = "2026-04-17 23:30:00"
+        # Infer which introspection prompt style was used. Candidates evaluated
+        # before the open-prompt switchover used "paper" regardless of
+        # derivation_method; after the switchover, contrast_pair candidates use
+        # "open" and mean_diff keeps "paper".
+        # Switchover = first worker restart carrying the new code, identified by
+        # the first `prompt=` log line in logs/worker.log at 21:02 EDT Apr 17 =
+        # 2026-04-18 01:02:00 UTC.
+        OPEN_PROMPT_CUTOFF = "2026-04-18 01:02:00"
         if r["derivation_method"] == "contrast_pair" and (
             r["evaluated_at"] is not None and r["evaluated_at"] >= OPEN_PROMPT_CUTOFF
         ):

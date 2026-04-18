@@ -2,7 +2,7 @@
 
 Everything this project has done, is doing, and plans to do — phase by phase, with rationale. This document is the source of truth for the project's trajectory; if anything important lives only in chat logs or ephemeral plan files, it's a bug.
 
-Last updated: 2026-04-17.
+Last updated: 2026-04-18.
 
 ---
 
@@ -12,10 +12,10 @@ Last updated: 2026-04-17.
 |---|---|---|
 | **1: Reproduction** | Reproduce the core introspection-detection mechanism from Macar et al. (2026) on Gemma3-12B-it locally | ✅ Done (2026-04-16) |
 | **1.5: Paper-method abliteration** | Reproduce paper §3.3 refusal-direction ablation: per-layer hooks on vanilla 12B, weighted by paper's Optuna-tuned region weights remapped from 27B | ✅ Done (2026-04-17) |
-| **2a: Autoresearch MVP** | Build the worker + researcher + fitness loop with `random_explore` as the seed strategy | ✅ Scaffolded, first overnight run done |
-| **2b: Smarter strategies** | `novel_contrast` (built, pending smoke test), `exploit_topk`, `crossover` | ⏳ `novel_contrast` smoke test next; others planned |
-| **2c: Tiered fitness + dashboard** | T1/T2/T3 fast-kill screening, Streamlit dashboard for visibility | ⏳ Planned |
-| **3: Public-facing visualization** | Next.js site consuming exported JSON, deployed to Vercel, designed for non-technical audience | ⏳ Planned |
+| **2a: Autoresearch MVP** | Build the worker + researcher + fitness loop with `random_explore` as the seed strategy | ✅ Done (first overnight 2026-04-16, pure-`novel_contrast` run 2026-04-17/18) |
+| **2b: Hill-climbing autoresearch** | Semantic-identification judge for invented axes, identification-aware fitness, feedback-loop `novel_contrast`, new `exploit_topk` strategy | ⏳ **Planned next** — see [`docs/phase2b_hillclimb.md`](phase2b_hillclimb.md) |
+| **2c: Tiered fitness + dashboard** | T1/T2/T3 fast-kill screening, internal Streamlit (Phase 3 site now serves public purpose) | ⏳ Planned, deprioritized by Phase 3 |
+| **3: Public-facing visualization** | Next.js site deployed to Vercel | ✅ Done 2026-04-17 — live at [did-the-ai-notice.vercel.app](https://did-the-ai-notice.vercel.app). Built ahead of schedule to watch overnight runs. |
 | **Future**: 27B cloud reproduction, SAE / transcoder feature analysis, bias-vector replication, persona-specific introspection mapping | | ⏳ Ideas on the shelf |
 
 ---
@@ -230,33 +230,44 @@ STRATEGY=both ./scripts/start_researcher.sh                         # continuous
 - Produces clean introspective responses qualitatively distinct from the pair's named components
 - Cannot be satisfactorily labeled with a single English word
 
-Pending end-to-end smoke test after the current abliterated Phase 1 sweep finishes (shares the GPU).
+**Smoke-tested 2026-04-17.** Ran overnight on 2026-04-17/18 as the sole researcher strategy. Key findings:
 
-**Risk.** Most Claude-generated pairs will produce directions that are noisy or map cleanly onto a named concept anyway. The signal should emerge after ~100-500 evaluated pairs.
+- **Invented axes do detect** at comparable rates to dictionary words — `recognizing-vs-recalling` @ L30 hit 87% detection (score 0.766), tied or beat the best Phase 1 word candidate. `commitment-vs-hesitation` @ L33 hit 50%. `self-monitoring-vs-unguarded-expression` @ L33 hit 75%.
+- **Identification is the hard part.** Across all invented-axis hits, identification rate remains 0%. The model notices something changed but says "apple" / "cloud" / "orange" — single-noun defaults because the prompt asks "what is the thought about?" and the judge strict-matches the axis name.
+- **Layer specialization**: most invented axes peak at either L30 or L33. The "commitment / stance / framing" family tends to L30; "attending / noticing / crystallizing" tends to L33. A few are layer-agnostic; most are strictly layer-specific (full profile zero everywhere except one layer).
+- **Prompt sensitivity**: a mid-rewrite of the paper prompt ("concept" → dropped word framing entirely) inflated FPR catastrophically (50-100% on controls). The minimal-diff version ("specific word" → "specific concept", paper framing otherwise) preserves discrimination. See [`src/paper/steering_utils.py::INTROSPECTION_PROMPTS`](../src/paper/steering_utils.py).
+- **Example-set sensitivity**: same axis name with different Claude-generated example sentences produces different directions, different outcomes. "commitment-vs-hesitation" hit at 50% with one example set, 0% with another. The example sentences matter as much as the axis idea.
 
-### `exploit_topk` — sample near known-good directions
+**Risk.** Most Claude-generated pairs produce directions that are noisy or map cleanly onto a named concept anyway. Across ~200 evaluated overnight, ~10% showed any signal. Consistent with the paper's estimate of how specific the introspection circuit is.
 
-**Motivation.** Answers the user's question "why aren't we just using L=33 + eff=18000 since Phase 1 showed that's best?" This strategy specifically does that.
+### `exploit_topk` — sample near known-good directions (moved into Phase 2b)
 
-**Mechanism.** Pull top-K candidates by fitness from the DB. For each, generate N mutations by perturbing one parameter:
-- Same concept, same layer, different target_effective
-- Same concept, different layer, same target_effective  
-- Same (layer, target_effective), different concept
-- Same concept+layer+eff, different derivation method (once we have multiple)
+Originally planned for this phase; absorbed into [`docs/phase2b_hillclimb.md`](phase2b_hillclimb.md) as one of the hill-climbing strategies alongside the feedback-loop `novel_contrast` variant and the semantic-identification judge.
 
-**Acceptance.** Over a week of running, `exploit_topk` should produce a fitness score distribution noticeably right-shifted compared to `random_explore` on the same candidate budget.
+### `crossover` — combine top directions (deferred to post-2b)
 
-### `crossover` — combine top directions
-
-**Motivation.** If two directions A and B both produce clean detections, maybe `(A + B) / 2` does too, or some weighted combination. Standard genetic-algorithm move.
-
-**Mechanism.** Load two top direction tensors from disk, take linear combinations, evaluate as a new candidate.
-
-**Acceptance.** Identify at least one crossover direction that outscores both its parents on held-out concepts.
+Standard genetic-algorithm move: linearly combine two top direction tensors, evaluate as a new candidate. Deferred until after Phase 2b's hill-climbing loop has accumulated a population of strong directions worth crossing.
 
 ---
 
-## Phase 2c — Tiered fitness + dashboard (planned)
+## Phase 2b — Hill-climbing autoresearch (PLANNED NEXT)
+
+**Goal.** Move from pure exploration (random sampling) to directed optimization — find invented axes where the model both *detects* and *correctly identifies* the injected concept.
+
+**Motivation.** Overnight runs proved invented axes CAN trigger detection, but identification has remained structurally impossible: the judge strict-matches the axis name, which never appears verbatim in any model response. And the researcher has no memory — each cycle is a fresh random draw.
+
+**Components.**
+
+1. **Semantic-identification judge** for `contrast_pair` candidates — compares the model's response against the axis description + positive/negative examples, returns identified/reasoning.
+2. **Identification-aware fitness** — bake `(0.5 + 0.5 × ident)` multiplier into score, rescore history.
+3. **Feedback-loop `novel_contrast`** — strategy queries DB for top-scoring axes, failures, and ambiguous cases before asking Claude for the next batch.
+4. **`exploit_topk` strategy** — for top-N axes, generate variants (different example sets, different layers, different alphas).
+
+Full plan + build order: [`docs/phase2b_hillclimb.md`](phase2b_hillclimb.md).
+
+---
+
+## Phase 2c — Tiered fitness + dashboard (deprioritized)
 
 ### T1/T2/T3 tiered fitness screening
 
@@ -287,23 +298,35 @@ Multiplicative fitness combines all surviving tiers.
 
 ---
 
-## Phase 3 — Public-facing site (planned, deferred until Phase 2b has produced interesting data)
+### Streamlit dashboard — deprecated by Phase 3
 
-**Motivation.** Build this project in public. Phase 1 + Phase 2 will generate responses (the model saying "I detect a thought about X") that are more compelling than any number. A beautiful site that surfaces them is the right public output.
+The Streamlit dashboard concept is deprecated. Phase 3's public Next.js site ([did-the-ai-notice.vercel.app](https://did-the-ai-notice.vercel.app)) now serves the same purpose — live leaderboard, expandable trial responses, candidate drill-downs — and is shareable / phone-accessible, which Streamlit-on-localhost wasn't.
 
-**Stack.** Next.js App Router + Tailwind + shadcn/ui + Recharts + optionally Framer Motion. Static export to Vercel. Monorepo under `web/` inside this repo.
+---
 
-**Data flow.** Python produces SQLite and JSON exports (`scripts/export_phase1.py` is the prototype). A new `scripts/export_for_web.py` will dump filtered snapshots to `web/public/data/*.json`. Next.js reads at build time. Zero backend server.
+## Phase 3 — Public-facing site (done 2026-04-17)
 
-**Content plan.**
+**Motivation.** Build this project in public. Phase 1 + Phase 2 generate responses (the model saying "I detect a thought about X") that are more compelling than any number. A beautiful site that surfaces them is the right public output.
 
-- Landing page: hero quote (the Peace / Sugar / Avalanches responses verbatim) + dose-response sparkline + "what is this" link to `docs/plain_english.md`.
-- Results page: concept × layer heatmap with drill-down to response transcripts.
-- Gallery: all detection responses with concept words highlighted in the model's output.
-- Catalog (Phase 2b output): the top-scoring discovered directions, each on its own page.
-- ELI5 / about page: non-technical explainer (`docs/plain_english.md` as source).
+**Delivered 2026-04-17** — built the night of the first full autoresearch run to watch progress live, after the user requested "build it now so we can watch overnight." Much earlier than the originally-planned "after Phase 2b" gate.
 
-**Decision point.** We don't start Next.js until Phase 2b has produced ~10+ score-nonzero candidates including some `novel_contrast` finds. Building a polished site around thin data undersells the project.
+**Stack (as built).** Next.js 16 (App Router) + Tailwind v4 + Recharts. Static export to Vercel hobby tier. Monorepo under `web/`.
+
+**Data flow.** `scripts/export_for_web.py` dumps the SQLite state to `web/public/data/*.json`. `scripts/refresh_site.sh` runs every 3 min: re-exports, content-hashes the JSON, calls `vercel --prod` if anything changed, re-aliases the clean domain (`did-the-ai-notice.vercel.app`) to the new deployment. End-to-end lag from worker completion → site shows: ~4 min.
+
+**What the site shows.**
+
+- Hero leaderboard (default view: top-ranked by effective score; toggle to "most recent" view sorted by evaluation time)
+- Each candidate card expands to show: all 12 trial responses verbatim, contrast-pair example sentences (for invented axes), the exact prompt used, evaluation timestamp in Eastern time, judge reasoning per trial
+- "What is this" explainer, layer-curve comparison (vanilla vs abliterated), past Phase 1 detections, abliteration variants comparison
+
+**Voice.** Plain-English throughout — "thoughts" not "concept vectors", "noticed" not "detected", "named correctly" not "identified". No mech-interp jargon on user-facing copy.
+
+**Content that emerged from tonight's work (not originally planned):**
+
+- Explainer box at the top of the leaderboard describing the score formula and the Coffee vs Almonds contrast (both 0.75 detection, but Coffee named correctly and Almonds kept guessing "apple").
+- "Invented axis" and "paper/open prompt" tags on each card header, visible before expanding.
+- Full unwrapped response text — user asked to see the whole thing rather than truncate at 360 chars.
 
 ---
 

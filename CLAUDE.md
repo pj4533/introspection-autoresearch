@@ -60,6 +60,22 @@ plan file, it's a bug. Commit it to `docs/roadmap.md` (forward-looking) or
   `exploit_topk` / `crossover` strategies, Streamlit dashboard, T1/T2/T3
   tiered fitness screening): mostly planned; novel_contrast built
   2026-04-17 but pending end-to-end smoke test.
+- Phase 2a overnight run 2026-04-17/18: **novel_contrast validated**.
+  Invented axes hit at detection rates comparable to dictionary words
+  (`recognizing-vs-recalling` @ L30 scored 0.766 — new top, tied/beat
+  Coffee). But **identification rate remains 0% on all invented hits**:
+  the model notices something changed but defaults to single nouns
+  ("apple", "cloud") because the prompt is word-framed and the judge
+  strict-matches the axis name. This is the core motivation for Phase 2b.
+- Phase 3 public site: **done 2026-04-17** at
+  [did-the-ai-notice.vercel.app](https://did-the-ai-notice.vercel.app).
+  Built ahead of schedule so the user could watch overnight runs live.
+  Next.js + Tailwind + Recharts, static export, auto-redeploys every
+  3 min when Phase 2 data changes.
+- Phase 2b — hill-climbing autoresearch (semantic-ID judge,
+  identification-aware fitness, feedback-loop `novel_contrast`,
+  `exploit_topk`): **planned next**. Full plan in
+  [`docs/phase2b_hillclimb.md`](docs/phase2b_hillclimb.md).
 
 ## Architecture quick map
 

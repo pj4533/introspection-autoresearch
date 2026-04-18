@@ -39,9 +39,10 @@ from ..db import ResultsDB
 from ..evaluate import CandidateSpec
 from .random_explore import spec_hash
 
-# Layers/effectives we search across. Narrower than random_explore because
-# novel_contrast pairs are more expensive to generate (Claude call). We
-# concentrate on the layers that have shown the most activity in Phase 2 data.
+# Test each contrast pair at all 4 sweep layers so we learn WHERE each axis
+# peaks, not just whether it registered at one random layer. Each generated
+# pair becomes 4 candidates (one per layer). Costs 4x compute per axis but
+# gives full axis-by-layer profiles instead of lottery-ticket samples.
 DEFAULT_LAYERS = [30, 33, 36, 40]
 DEFAULT_TARGET_EFFECTIVES = [14000.0, 16000.0, 18000.0, 20000.0]
 
@@ -209,31 +210,39 @@ def generate_candidates(
     pairs = _parse_pairs(raw)
     print(f"[novel_contrast] parsed {len(pairs)} valid pairs", flush=True)
 
+    # For each accepted pair, emit ONE candidate per layer so we sweep the
+    # axis across all 4 layers. This gives us a full (axis × layer) profile
+    # instead of random point samples. N counts candidates, not pairs.
     out: list[CandidateSpec] = []
     seen_this_batch: set[str] = set()
     for pair in pairs:
         if len(out) >= n:
             break
-        for _ in range(max_attempts_per_candidate):
-            spec = CandidateSpec(
-                id=f"cand-{time.strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex[:6]}",
-                strategy="novel_contrast",
-                concept=pair["axis"],            # label only; not injected
-                layer_idx=rng.choice(layers),
-                target_effective=rng.choice(target_effectives),
-                derivation_method="contrast_pair",
-                baseline_n=0,                    # unused for contrast_pair
-                notes=pair.get("description", ""),
-                contrast_pair={
-                    "axis": pair["axis"],
-                    "positive": pair["positive"],
-                    "negative": pair["negative"],
-                },
-            )
-            h = spec_hash(spec)
-            if h in seen_this_batch or db.has_candidate_hash(h):
-                continue
-            seen_this_batch.add(h)
-            out.append(spec)
+        effective = rng.choice(target_effectives)
+        for layer in layers:
+            if len(out) >= n:
+                break
+            for _ in range(max_attempts_per_candidate):
+                spec = CandidateSpec(
+                    id=f"cand-{time.strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex[:6]}",
+                    strategy="novel_contrast",
+                    concept=pair["axis"],          # label only; not injected
+                    layer_idx=layer,
+                    target_effective=effective,
+                    derivation_method="contrast_pair",
+                    baseline_n=0,                  # unused for contrast_pair
+                    notes=pair.get("description", ""),
+                    contrast_pair={
+                        "axis": pair["axis"],
+                        "positive": pair["positive"],
+                        "negative": pair["negative"],
+                    },
+                )
+                h = spec_hash(spec)
+                if h in seen_this_batch or db.has_candidate_hash(h):
+                    continue
+                seen_this_batch.add(h)
+                out.append(spec)
+                break
             break
     return out

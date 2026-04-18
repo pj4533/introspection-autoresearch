@@ -176,11 +176,16 @@ def evaluate_candidate(
     norm = float(direction.norm().item())
     alpha = spec.target_effective / max(norm, 1e-6)
 
-    # Use the "open" introspection prompt for contrast_pair (invented-axis)
-    # candidates — the paper's prompt repeatedly says "a thought about a
-    # specific word", which primes single-noun answers like "cloud" / "apple"
-    # that have no connection to abstract axes. Open prompt just asks the
-    # model to describe what the injected pattern seems to be.
+    # For invented-axis (contrast_pair) candidates, use the minimal-diff
+    # "open" prompt (paper wording, "specific word" → "specific concept") so
+    # the model can answer with something other than a default noun when the
+    # axis has no single-word label. A brief experiment earlier tonight
+    # (2026-04-18) saw 6/6 zero-detection under this prompt and looked like
+    # the prompt was killing the threshold — but the confound was layer: all
+    # 6 nulls were at L30/36/40. The 5 earlier invented-axis hits tonight
+    # (prospective-commitment, generative-vs-evaluative, etc.) were all at
+    # L33, same layer where word-based candidates peak. Once we get a few
+    # L33 candidates under the open prompt we'll know for sure.
     prompt_style = "open" if spec.derivation_method == "contrast_pair" else "paper"
 
     if verbose:

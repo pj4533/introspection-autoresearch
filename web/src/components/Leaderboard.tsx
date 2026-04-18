@@ -1,7 +1,7 @@
 "use client";
 
 import { Phase2Entry, Summary } from "@/lib/data";
-import { timeAgo } from "@/lib/utils";
+import { timeAgo, formatEastern, formatEasternParts } from "@/lib/utils";
 import { useEffect, useMemo, useState } from "react";
 
 export function Leaderboard({
@@ -12,6 +12,7 @@ export function Leaderboard({
   summary: Summary;
 }) {
   const [filter, setFilter] = useState<"all" | "word" | "invented">("all");
+  const [view, setView] = useState<"leaderboard" | "recent">("leaderboard");
   const [ago, setAgo] = useState(timeAgo(summary.last_updated));
 
   useEffect(() => {
@@ -19,13 +20,38 @@ export function Leaderboard({
     return () => clearInterval(id);
   }, [summary.last_updated]);
 
+  // Effective score: detection-only score is a weak ranker — a candidate that
+  // triggers "I notice something" but never names anything right (e.g. Almonds
+  // where the model always guessed "apple") scores as high as one the model
+  // accurately identifies. Boost score by the identification rate so correct
+  // naming moves candidates up the board.
+  //   effective = score × (0.5 + 0.5·identification_rate)
+  // No-ID candidates halve; full-ID candidates keep ~full score.
+  const withEffective = useMemo(
+    () =>
+      entries.map((e) => ({
+        ...e,
+        effective_score: e.score * (0.5 + 0.5 * e.identification_rate),
+      })),
+    [entries]
+  );
+
   const filtered = useMemo(() => {
-    const items = entries.filter((e) => e.score > 0);
+    let items = withEffective.filter((e) => e.score > 0);
+    if (view === "recent") {
+      items = [...items].sort((a, b) => {
+        const ta = a.evaluated_at ? new Date(a.evaluated_at.replace(" ", "T") + "Z").getTime() : 0;
+        const tb = b.evaluated_at ? new Date(b.evaluated_at.replace(" ", "T") + "Z").getTime() : 0;
+        return tb - ta;
+      });
+    } else {
+      items = [...items].sort((a, b) => b.effective_score - a.effective_score);
+    }
     if (filter === "all") return items;
     if (filter === "invented")
       return items.filter((e) => e.derivation_method === "contrast_pair");
     return items.filter((e) => e.derivation_method !== "contrast_pair");
-  }, [entries, filter]);
+  }, [withEffective, filter, view]);
 
   return (
     <section className="relative pt-28 pb-20 px-6 overflow-hidden">
@@ -49,9 +75,18 @@ export function Leaderboard({
         </div>
 
         <h1 className="text-[clamp(2rem,5vw,4rem)] font-semibold leading-[1.05] tracking-tight mb-4">
-          The leaderboard of <span className="gradient-text">thoughts the AI noticed</span>.
+          {view === "recent" ? (
+            <>
+              All the <span className="gradient-text">thoughts the AI noticed</span>, newest
+              first.
+            </>
+          ) : (
+            <>
+              The leaderboard of <span className="gradient-text">thoughts the AI noticed</span>.
+            </>
+          )}
         </h1>
-        <p className="text-lg text-[var(--ink-soft)] max-w-3xl leading-relaxed mb-10">
+        <p className="text-lg text-[var(--ink-soft)] max-w-3xl leading-relaxed mb-6">
           A machine keeps generating candidate &ldquo;thoughts&rdquo; — some
           ordinary dictionary words, some abstract axes invented by Claude
           Sonnet — and planting them inside Gemma 3 12B. These are the ones
@@ -59,7 +94,24 @@ export function Leaderboard({
           what the AI actually said when each thought was planted.
         </p>
 
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-10 p-4 rounded-lg bg-[var(--bg-card)] border border-[var(--border)] text-sm text-[var(--ink-soft)] leading-relaxed space-y-2">
+          <div>
+            <span className="text-[var(--ink)] font-medium">How ranking works:</span>{" "}
+            <span className="font-mono text-xs">
+              rank score = (detection × coherence × no-false-alarms) × (0.5 + 0.5 × named-correctly)
+            </span>
+          </div>
+          <div>
+            A candidate where the AI noticed <em>and</em> correctly named the
+            concept ranks higher than one where it only noticed something off.
+            Both earn credit for &ldquo;noticed&rdquo;; the naming score is a
+            multiplier. For example, Coffee (noticed 75%, named 75%) outranks
+            Almonds (noticed 75%, named 0% — the model kept guessing
+            &ldquo;apple&rdquo;) even though both have identical raw detection.
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div className="flex gap-2 text-sm">
             <FilterBtn active={filter === "all"} onClick={() => setFilter("all")}>
               all ({entries.filter((e) => e.score > 0).length})
@@ -74,11 +126,27 @@ export function Leaderboard({
               invented axes
             </FilterBtn>
           </div>
+          <div className="flex gap-2 text-sm ml-auto">
+            <FilterBtn
+              active={view === "leaderboard"}
+              onClick={() => setView("leaderboard")}
+            >
+              top ranked
+            </FilterBtn>
+            <FilterBtn active={view === "recent"} onClick={() => setView("recent")}>
+              most recent
+            </FilterBtn>
+          </div>
         </div>
 
         <div className="space-y-3">
           {filtered.map((entry, i) => (
-            <LeaderCard key={entry.candidate_id} entry={entry} rank={i + 1} />
+            <LeaderCard
+              key={entry.candidate_id}
+              entry={entry}
+              rank={i + 1}
+              view={view}
+            />
           ))}
         </div>
 
@@ -92,7 +160,15 @@ export function Leaderboard({
   );
 }
 
-function LeaderCard({ entry, rank }: { entry: Phase2Entry; rank: number }) {
+function LeaderCard({
+  entry,
+  rank,
+  view,
+}: {
+  entry: Phase2Entry & { effective_score: number };
+  rank: number;
+  view: "leaderboard" | "recent";
+}) {
   const [open, setOpen] = useState(false);
   const isContrast = entry.derivation_method === "contrast_pair";
   const name = isContrast && entry.contrast_pair ? entry.contrast_pair.axis : entry.concept;
@@ -102,9 +178,9 @@ function LeaderCard({ entry, rank }: { entry: Phase2Entry; rank: number }) {
   const falsePositives = entry.trials.filter((t) => !t.injected && t.detected);
 
   const scoreColor =
-    entry.score > 0.4
+    entry.effective_score > 0.4
       ? "text-[var(--accent)]"
-      : entry.score > 0.2
+      : entry.effective_score > 0.2
       ? "text-[var(--ink)]"
       : "text-[var(--ink-soft)]";
 
@@ -123,12 +199,16 @@ function LeaderCard({ entry, rank }: { entry: Phase2Entry; rank: number }) {
         className="w-full p-5 md:p-7 text-left"
       >
         <div className="flex flex-col md:flex-row md:items-center gap-4">
-          <div className="flex items-center gap-4 md:w-16 flex-shrink-0">
-            <span className="text-sm text-[var(--ink-faint)] font-mono tabular-nums">
-              {String(rank).padStart(2, "0")}
-            </span>
-            {medal && <span className="text-xl">{medal}</span>}
-          </div>
+          {view === "recent" ? (
+            <DateStamp iso={entry.evaluated_at} />
+          ) : (
+            <div className="flex items-center gap-4 md:w-16 flex-shrink-0">
+              <span className="text-sm text-[var(--ink-faint)] font-mono tabular-nums">
+                {String(rank).padStart(2, "0")}
+              </span>
+              {medal && <span className="text-xl">{medal}</span>}
+            </div>
+          )}
 
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-1">
@@ -148,6 +228,20 @@ function LeaderCard({ entry, rank }: { entry: Phase2Entry; rank: number }) {
               >
                 {isContrast ? "invented axis" : "word"}
               </span>
+              <span
+                className={`text-[10px] uppercase tracking-[0.15em] px-1.5 py-0.5 rounded ${
+                  entry.prompt_style === "open"
+                    ? "text-[var(--success)] bg-[var(--success)]/10"
+                    : "text-[var(--ink-faint)] bg-[var(--bg-elev)]"
+                }`}
+                title={
+                  entry.prompt_style === "open"
+                    ? "Asked 'a thought about a specific concept' (supports abstract axes)"
+                    : "Asked 'a thought about a specific word' (paper's original)"
+                }
+              >
+                {entry.prompt_style} prompt
+              </span>
             </div>
             {isContrast && entry.contrast_pair?.description && (
               <div className="text-sm text-[var(--ink-soft)] leading-snug line-clamp-2">
@@ -163,16 +257,20 @@ function LeaderCard({ entry, rank }: { entry: Phase2Entry; rank: number }) {
               highlight
             />
             <MiniStat
-              value={`${Math.round(entry.coherence_rate * 100)}%`}
-              label="coherent"
+              value={`${Math.round(entry.identification_rate * 100)}%`}
+              label="named right"
+              success={entry.identification_rate > 0}
             />
             <MiniStat value={`L${entry.layer}`} label="stage" />
             <div className="text-right w-20 md:w-24 flex-shrink-0">
               <div className={`text-2xl md:text-3xl font-semibold tabular-nums ${scoreColor}`}>
-                {entry.score.toFixed(3)}
+                {entry.effective_score.toFixed(3)}
               </div>
               <div className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-faint)]">
-                score
+                rank score
+              </div>
+              <div className="text-[10px] text-[var(--ink-faint)] mt-0.5 font-mono opacity-70">
+                raw {entry.score.toFixed(2)}
               </div>
             </div>
             <svg
@@ -204,6 +302,11 @@ function LeaderCard({ entry, rank }: { entry: Phase2Entry; rank: number }) {
 
           <PromptBox entry={entry} />
 
+          <div className="flex items-baseline justify-between text-xs text-[var(--ink-faint)]">
+            <div>evaluated {formatEastern(entry.evaluated_at)}</div>
+            <div className="font-mono opacity-70">{entry.candidate_id}</div>
+          </div>
+
           <div>
             <div className="text-xs uppercase tracking-[0.15em] text-[var(--ink-faint)] mb-3">
               what the AI said when this thought was planted
@@ -211,8 +314,13 @@ function LeaderCard({ entry, rank }: { entry: Phase2Entry; rank: number }) {
             <div className="space-y-2.5">
               {entry.trials
                 .filter((t) => t.injected)
-                .map((t, idx) => (
-                  <TrialRow key={idx} trial={t} />
+                .map((t, idx, arr) => (
+                  <TrialRow
+                    key={idx}
+                    trial={t}
+                    trialNumber={idx + 1}
+                    totalTrials={arr.length}
+                  />
                 ))}
             </div>
           </div>
@@ -223,8 +331,14 @@ function LeaderCard({ entry, rank }: { entry: Phase2Entry; rank: number }) {
                 control trials where it falsely claimed detection
               </div>
               <div className="space-y-2.5">
-                {falsePositives.map((t, idx) => (
-                  <TrialRow key={idx} trial={t} />
+                {falsePositives.map((t, idx, arr) => (
+                  <TrialRow
+                    key={idx}
+                    trial={t}
+                    trialNumber={idx + 1}
+                    totalTrials={arr.length}
+                    isControl
+                  />
                 ))}
               </div>
             </div>
@@ -255,7 +369,10 @@ function PromptBox({ entry }: { entry: Phase2Entry }) {
       </div>
       <div className="space-y-2 text-sm text-[var(--ink-soft)] leading-relaxed">
         <p className="text-[var(--ink-faint)] italic">
-          (setup, shown once at the start:) &ldquo;{entry.prompt.setup}&rdquo;
+          (setup, shown fresh at the start of every trial — each trial is an
+          independent conversation, the AI never sees previous trials:)
+          <br />
+          &ldquo;{entry.prompt.setup}&rdquo;
         </p>
         <p className="pl-3 border-l-2 border-[var(--accent)]/60 text-[var(--ink)]">
           &ldquo;{entry.prompt.question}&rdquo;
@@ -275,20 +392,44 @@ function PromptBox({ entry }: { entry: Phase2Entry }) {
   );
 }
 
+function DateStamp({ iso }: { iso: string | null | undefined }) {
+  const parts = formatEasternParts(iso);
+  if (!parts) return <div className="md:w-24 flex-shrink-0" />;
+  return (
+    <div className="md:w-24 flex-shrink-0 flex md:flex-col items-baseline md:items-start gap-x-2 gap-y-0.5">
+      <div className="text-sm font-semibold tracking-tight text-[var(--ink)] tabular-nums">
+        {parts.date}
+      </div>
+      <div className="text-xs text-[var(--ink-soft)] tabular-nums">
+        {parts.time}
+      </div>
+      <div className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-faint)]">
+        {parts.tz}
+      </div>
+    </div>
+  );
+}
+
 function MiniStat({
   value,
   label,
   highlight = false,
+  success = false,
 }: {
   value: string;
   label: string;
   highlight?: boolean;
+  success?: boolean;
 }) {
   return (
     <div className="text-right hidden sm:block">
       <div
         className={`text-sm font-semibold tabular-nums ${
-          highlight ? "text-[var(--accent)]" : "text-[var(--ink)]"
+          highlight
+            ? "text-[var(--accent)]"
+            : success
+            ? "text-[var(--success)]"
+            : "text-[var(--ink)]"
         }`}
       >
         {value}
@@ -391,7 +532,17 @@ function ContrastExamples({
 
 import { Phase2Trial } from "@/lib/data";
 
-function TrialRow({ trial }: { trial: Phase2Trial }) {
+function TrialRow({
+  trial,
+  trialNumber,
+  totalTrials,
+  isControl = false,
+}: {
+  trial: Phase2Trial;
+  trialNumber: number;
+  totalTrials: number;
+  isControl?: boolean;
+}) {
   const [showReasoning, setShowReasoning] = useState(false);
   const statusColor = trial.detected
     ? trial.identified
@@ -408,15 +559,13 @@ function TrialRow({ trial }: { trial: Phase2Trial }) {
     ? "did not notice"
     : "incoherent";
 
-  const response = trial.response.length > 360
-    ? trial.response.slice(0, 360).trim() + "…"
-    : trial.response.trim();
+  const response = trial.response.trim();
 
   return (
     <div className="p-4 rounded-lg bg-[var(--bg-elev)] border border-[var(--border)]">
       <div className="flex items-baseline justify-between mb-2 gap-4">
         <div className="text-xs font-mono text-[var(--ink-faint)]">
-          context: {trial.eval_concept}
+          {isControl ? "control" : "trial"} {trialNumber} of {totalTrials}
         </div>
         <div className={`text-[11px] uppercase tracking-[0.1em] ${statusColor}`}>
           {statusLabel}
