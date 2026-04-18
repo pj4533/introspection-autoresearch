@@ -296,6 +296,10 @@ function LeaderCard({
             falsePositives={falsePositives}
           />
 
+          {isContrast && entry.contrast_pair?.rationale && (
+            <ResearcherRationale rationale={entry.contrast_pair.rationale} strategy={entry.strategy} />
+          )}
+
           {isContrast && entry.contrast_pair && (
             <ContrastExamples pair={entry.contrast_pair} />
           )}
@@ -485,6 +489,34 @@ function Takeaway({
         was injected at processing stage{" "}
         <span className="text-[var(--ink)] font-mono">{entry.layer}</span>:{" "}
         {interesting}
+      </p>
+    </div>
+  );
+}
+
+function ResearcherRationale({
+  rationale,
+  strategy,
+}: {
+  rationale: string;
+  strategy: string;
+}) {
+  const label =
+    strategy === "novel_contrast"
+      ? "why the researcher proposed this axis"
+      : "why this variant was tried";
+  return (
+    <div className="p-4 rounded-lg bg-gradient-to-br from-[var(--accent-soft)]/10 to-transparent border border-[var(--accent-soft)]/40">
+      <div className="flex items-center gap-2 mb-2">
+        <div className="text-xs uppercase tracking-[0.15em] text-[var(--accent)]">
+          {label}
+        </div>
+        <span className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-faint)] font-mono">
+          (Claude Sonnet)
+        </span>
+      </div>
+      <p className="text-sm text-[var(--ink-soft)] leading-relaxed italic">
+        &ldquo;{rationale}&rdquo;
       </p>
     </div>
   );

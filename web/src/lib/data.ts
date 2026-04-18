@@ -56,6 +56,14 @@ export type Phase2Trial = {
   judge_reasoning: string;
 };
 
+export type MutationDetail = {
+  pole?: string;
+  index?: number;
+  old?: string | number;
+  new?: string | number;
+  factor?: number;
+};
+
 export type Phase2Entry = {
   candidate_id: string;
   strategy: string;
@@ -76,10 +84,63 @@ export type Phase2Entry = {
     description: string;
     positive: string[];
     negative: string[];
+    rationale?: string;
   };
   prompt_style: "paper" | "open";
   prompt: { setup: string; question: string };
   trials: Phase2Trial[];
+  // Phase 2c lineage metadata
+  lineage_id?: string | null;
+  parent_candidate_id?: string | null;
+  generation?: number;
+  is_leader?: boolean;
+  mutation_type?: string | null;
+  mutation_detail?: MutationDetail | Record<string, unknown>;
+};
+
+export type LineageNode = {
+  candidate_id: string;
+  concept: string;
+  layer: number;
+  target_effective: number;
+  parent_candidate_id: string | null;
+  generation: number;
+  is_leader: boolean;
+  is_committed: boolean;
+  mutation_type: string | null;
+  mutation_detail: MutationDetail | Record<string, unknown>;
+  evaluated_at: string | null;
+  score: number;
+  detection_rate: number;
+  identification_rate: number;
+  fpr: number;
+  coherence_rate: number;
+};
+
+export type LineageTrajectoryPoint = {
+  generation: number;
+  score: number;
+  detection_rate: number;
+  identification_rate: number;
+  evaluated_at: string | null;
+  candidate_id: string;
+  mutation_type: string | null;
+};
+
+export type Lineage = {
+  lineage_id: string;
+  seed_axis: string;
+  seed_candidate_id: string;
+  current_leader_id: string;
+  current_score: number;
+  current_detection_rate: number;
+  current_identification_rate: number;
+  generation_count: number;
+  total_candidates: number;
+  committed_count: number;
+  rejected_count: number;
+  trajectory: LineageTrajectoryPoint[];
+  nodes: LineageNode[];
 };
 
 export type Phase2Activity = {
@@ -138,4 +199,12 @@ export function loadPhase2Leaderboard(): Phase2Entry[] {
 
 export function loadPhase2Activity(): Phase2Activity[] {
   return readJson<Phase2Activity[]>("phase2_activity");
+}
+
+export function loadLineages(): Lineage[] {
+  try {
+    return readJson<Lineage[]>("lineages");
+  } catch {
+    return [];
+  }
 }

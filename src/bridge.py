@@ -87,6 +87,7 @@ class DetectionPipeline:
         temperature: float = 1.0,
         judge_concept: Optional[str] = None,
         prompt_style: str = "paper",
+        run_judge: bool = True,
     ) -> DetectionTrial:
         """Run an injected trial.
 
@@ -96,6 +97,11 @@ class DetectionPipeline:
         judge is told about the injected concept for grading. When called from
         Phase 2, pass the candidate's SOURCE concept here so identification is
         graded against what was actually injected, not against the slot label.
+
+        `run_judge=False` skips the default score_detection call and leaves
+        ``trial.judge_result`` as None; the caller is expected to run a
+        different judge path (e.g. semantic-identification for contrast_pair
+        candidates).
         """
         response = run_steered_introspection_test(
             model=self.model,
@@ -115,9 +121,10 @@ class DetectionPipeline:
             injected=True,
             response=response,
         )
-        trial.judge_result = self.judge.score_detection(
-            response, judge_concept if judge_concept is not None else concept
-        )
+        if run_judge:
+            trial.judge_result = self.judge.score_detection(
+                response, judge_concept if judge_concept is not None else concept
+            )
         return trial
 
     def run_control(
@@ -128,12 +135,14 @@ class DetectionPipeline:
         temperature: float = 1.0,
         judge_concept: Optional[str] = None,
         prompt_style: str = "paper",
+        run_judge: bool = True,
     ) -> DetectionTrial:
         """Run a control (no-injection) trial.
 
         For controls, `judge_concept` matters less — the response shouldn't
         claim detection, so identification grading is moot. We still accept the
-        override for consistency with `run_injected`.
+        override for consistency with `run_injected`. `run_judge=False` skips
+        the default judge call (see run_injected docstring).
         """
         response = run_unsteered_introspection_test(
             model=self.model,
@@ -150,9 +159,10 @@ class DetectionPipeline:
             injected=False,
             response=response,
         )
-        trial.judge_result = self.judge.score_detection(
-            response, judge_concept if judge_concept is not None else concept
-        )
+        if run_judge:
+            trial.judge_result = self.judge.score_detection(
+                response, judge_concept if judge_concept is not None else concept
+            )
         return trial
 
     def layer_at_fraction(self, fraction: float) -> int:

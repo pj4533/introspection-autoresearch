@@ -180,6 +180,123 @@ def export_abliteration_comparison() -> dict:
     return {"variants": out}
 
 
+def export_lineages() -> list[dict]:
+    """Phase 2c lineage trees. One entry per lineage, with full history
+    (gen 0 seed + all mutations, committed and rejected) and metadata.
+
+    Each lineage entry has:
+    - lineage_id
+    - seed_axis (the axis name at gen 0)
+    - current_leader_id
+    - current_score
+    - generation_count
+    - trajectory: list of (generation, committed score, timestamp) for plotting
+    - nodes: list of every candidate in the lineage, with parent/mutation info
+    """
+    lineages_query = _q(VANILLA_DB, """
+        SELECT DISTINCT lineage_id
+        FROM candidates
+        WHERE lineage_id IS NOT NULL
+    """)
+
+    out: list[dict] = []
+    for row in lineages_query:
+        lid = row["lineage_id"]
+        nodes = _q(VANILLA_DB, """
+            SELECT c.id, c.concept, c.layer_idx, c.target_effective,
+                   c.parent_candidate_id, c.generation, c.is_leader,
+                   c.mutation_type, c.mutation_detail, c.evaluated_at,
+                   f.score, f.detection_rate, f.identification_rate,
+                   f.fpr, f.coherence_rate
+            FROM candidates c
+            LEFT JOIN fitness_scores f ON f.candidate_id = c.id
+            WHERE c.lineage_id = ?
+            ORDER BY c.generation, c.created_at
+        """, (lid,))
+        if not nodes:
+            continue
+
+        # Build seed + leader summary
+        seed = next((n for n in nodes if n["generation"] == 0), nodes[0])
+        leader = next((n for n in nodes if n["is_leader"] == 1), seed)
+
+        # Committed-score trajectory: for each committed node, its gen + score
+        committed_ids: set[str] = set()
+        committed_ids.add(seed["id"])
+        # Walk leaders: start from current leader, follow parent pointers back
+        # to seed, collecting each committed id.
+        cursor = leader
+        while cursor:
+            committed_ids.add(cursor["id"])
+            parent_id = cursor["parent_candidate_id"]
+            if not parent_id:
+                break
+            cursor = next((n for n in nodes if n["id"] == parent_id), None)
+
+        trajectory = []
+        for n in sorted(
+            (n for n in nodes if n["id"] in committed_ids),
+            key=lambda x: x["generation"],
+        ):
+            trajectory.append({
+                "generation": n["generation"],
+                "score": round(n["score"] or 0.0, 4),
+                "detection_rate": round(n["detection_rate"] or 0.0, 3),
+                "identification_rate": round(n["identification_rate"] or 0.0, 3),
+                "evaluated_at": n["evaluated_at"],
+                "candidate_id": n["id"],
+                "mutation_type": n["mutation_type"],
+            })
+
+        node_list = []
+        for n in nodes:
+            # Parse mutation detail JSON if present
+            detail = {}
+            try:
+                if n["mutation_detail"]:
+                    detail = json.loads(n["mutation_detail"])
+            except Exception:
+                pass
+            node_list.append({
+                "candidate_id": n["id"],
+                "concept": n["concept"],
+                "layer": n["layer_idx"],
+                "target_effective": n["target_effective"],
+                "parent_candidate_id": n["parent_candidate_id"],
+                "generation": n["generation"],
+                "is_leader": bool(n["is_leader"]),
+                "is_committed": n["id"] in committed_ids,
+                "mutation_type": n["mutation_type"],
+                "mutation_detail": detail,
+                "evaluated_at": n["evaluated_at"],
+                "score": round(n["score"] or 0.0, 4),
+                "detection_rate": round(n["detection_rate"] or 0.0, 3),
+                "identification_rate": round(n["identification_rate"] or 0.0, 3),
+                "fpr": round(n["fpr"] or 0.0, 3),
+                "coherence_rate": round(n["coherence_rate"] or 0.0, 3),
+            })
+
+        out.append({
+            "lineage_id": lid,
+            "seed_axis": seed["concept"],
+            "seed_candidate_id": seed["id"],
+            "current_leader_id": leader["id"],
+            "current_score": round(leader["score"] or 0.0, 4),
+            "current_detection_rate": round(leader["detection_rate"] or 0.0, 3),
+            "current_identification_rate": round(leader["identification_rate"] or 0.0, 3),
+            "generation_count": max((n["generation"] for n in nodes), default=0),
+            "total_candidates": len(nodes),
+            "committed_count": len(committed_ids),
+            "rejected_count": len(nodes) - len(committed_ids),
+            "trajectory": trajectory,
+            "nodes": node_list,
+        })
+
+    # Sort by current_score descending — best lineages first
+    out.sort(key=lambda l: -l["current_score"])
+    return out
+
+
 def export_phase2_leaderboard(top_k: Optional[int] = None) -> list[dict]:
     """Phase 2 candidates with score > 0, with full per-trial response data.
 
@@ -244,6 +361,20 @@ def export_phase2_leaderboard(top_k: Optional[int] = None) -> list[dict]:
             },
         }
 
+        # Phase 2c lineage fields (NULL for legacy candidates)
+        lineage_meta_row = _q(VANILLA_DB, """
+            SELECT lineage_id, parent_candidate_id, generation, is_leader,
+                   mutation_type, mutation_detail
+            FROM candidates WHERE id = ?
+        """, (r["id"],))
+        lineage_meta = dict(lineage_meta_row[0]) if lineage_meta_row else {}
+        detail = {}
+        try:
+            if lineage_meta.get("mutation_detail"):
+                detail = json.loads(lineage_meta["mutation_detail"])
+        except Exception:
+            pass
+
         entry = {
             "candidate_id": r["id"],
             "strategy": r["strategy"],
@@ -261,9 +392,17 @@ def export_phase2_leaderboard(top_k: Optional[int] = None) -> list[dict]:
             "notes": spec.get("notes"),
             "prompt_style": prompt_style,
             "prompt": prompt_texts[prompt_style],
+            "lineage_id": lineage_meta.get("lineage_id"),
+            "parent_candidate_id": lineage_meta.get("parent_candidate_id"),
+            "generation": lineage_meta.get("generation") or 0,
+            "is_leader": bool(lineage_meta.get("is_leader", 0)),
+            "mutation_type": lineage_meta.get("mutation_type"),
+            "mutation_detail": detail,
         }
         # For contrast_pair strategies, include the axis name + description
-        # + the positive/negative example sentences
+        # + the positive/negative example sentences + the researcher's
+        # rationale (Claude Sonnet's stated reason for choosing this axis,
+        # if recorded).
         if r["derivation_method"] == "contrast_pair" and "contrast_pair" in spec:
             cp = spec["contrast_pair"]
             entry["contrast_pair"] = {
@@ -271,6 +410,7 @@ def export_phase2_leaderboard(top_k: Optional[int] = None) -> list[dict]:
                 "description": cp.get("description") or spec.get("notes"),
                 "positive": cp.get("positive", []),
                 "negative": cp.get("negative", []),
+                "rationale": cp.get("rationale", ""),
             }
 
         # Pull each evaluation trial for this candidate (8 injected + 4 controls)
@@ -370,6 +510,7 @@ def write_all(verbose: bool = True) -> None:
         "abliteration_comparison": export_abliteration_comparison(),
         "phase2_leaderboard": export_phase2_leaderboard(),
         "phase2_activity": export_phase2_activity(),
+        "lineages": export_lineages(),
     }
     data["summary"] = export_summary(data)
 

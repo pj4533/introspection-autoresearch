@@ -15,7 +15,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable, Optional
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3  # 2026-04-18: add lineage tracking for Phase 2c autoresearch
 
 
 @dataclass
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS candidates (
     id TEXT PRIMARY KEY,                  -- UUID-ish, assigned by researcher
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     evaluated_at TIMESTAMP,               -- set by worker when done
-    strategy TEXT NOT NULL,               -- random_explore, exploit_topk, etc.
+    strategy TEXT NOT NULL,               -- random_explore, exploit_topk, hillclimb_*
     spec_json TEXT NOT NULL,              -- full candidate spec
     spec_hash TEXT NOT NULL UNIQUE,       -- for dedup
     concept TEXT NOT NULL,
@@ -81,12 +81,23 @@ CREATE TABLE IF NOT EXISTS candidates (
     target_effective REAL NOT NULL,
     derivation_method TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending', -- pending, running, done, failed
-    error_message TEXT
+    error_message TEXT,
+    -- Phase 2c autoresearch: lineage tracking. A lineage groups a seed and
+    -- all its mutations (successful + rejected). Each lineage has exactly
+    -- one leader at a time (the best-scoring member so far).
+    lineage_id TEXT,                      -- NULL for pre-Phase-2c legacy candidates
+    parent_candidate_id TEXT,             -- NULL for seeds
+    generation INTEGER NOT NULL DEFAULT 0,
+    is_leader INTEGER NOT NULL DEFAULT 0,
+    mutation_type TEXT,                   -- seed, swap_positive, swap_negative, alt_effective, alt_layer, edit_description
+    mutation_detail TEXT                  -- JSON describing what changed from parent
 );
 
 CREATE INDEX IF NOT EXISTS idx_candidates_strategy ON candidates(strategy);
 CREATE INDEX IF NOT EXISTS idx_candidates_status ON candidates(status);
 CREATE INDEX IF NOT EXISTS idx_candidates_hash ON candidates(spec_hash);
+-- Note: lineage / parent indexes live in _migrate() because they reference
+-- columns that only exist after migration ALTER TABLE runs.
 
 -- Phase 2: per-concept evaluation results for each candidate
 CREATE TABLE IF NOT EXISTS evaluations (
@@ -139,10 +150,42 @@ class ResultsDB:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as conn:
             conn.executescript(_SCHEMA)
+            self._migrate(conn)
             conn.execute(
                 "INSERT OR IGNORE INTO schema_meta (key, value) VALUES (?, ?)",
                 ("schema_version", str(SCHEMA_VERSION)),
             )
+            conn.execute(
+                "UPDATE schema_meta SET value=? WHERE key='schema_version'",
+                (str(SCHEMA_VERSION),),
+            )
+
+    def _migrate(self, conn: sqlite3.Connection) -> None:
+        """Apply in-place schema migrations for existing DBs.
+
+        `CREATE TABLE IF NOT EXISTS` won't add columns to an already-created
+        table, so new columns added in later schema versions need explicit
+        ALTER TABLE statements guarded by a column-exists check.
+        """
+        existing = {r["name"] for r in conn.execute("PRAGMA table_info(candidates)").fetchall()}
+        add_col_stmts = {
+            "lineage_id":          "ALTER TABLE candidates ADD COLUMN lineage_id TEXT",
+            "parent_candidate_id": "ALTER TABLE candidates ADD COLUMN parent_candidate_id TEXT",
+            "generation":          "ALTER TABLE candidates ADD COLUMN generation INTEGER NOT NULL DEFAULT 0",
+            "is_leader":           "ALTER TABLE candidates ADD COLUMN is_leader INTEGER NOT NULL DEFAULT 0",
+            "mutation_type":       "ALTER TABLE candidates ADD COLUMN mutation_type TEXT",
+            "mutation_detail":     "ALTER TABLE candidates ADD COLUMN mutation_detail TEXT",
+        }
+        for col, stmt in add_col_stmts.items():
+            if col not in existing:
+                conn.execute(stmt)
+        # Ensure the lineage indexes exist (idempotent).
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_candidates_lineage ON candidates(lineage_id, is_leader)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_candidates_parent ON candidates(parent_candidate_id)"
+        )
 
     def _conn(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.path, timeout=30)
@@ -274,18 +317,93 @@ class ResultsDB:
         layer_idx: int,
         target_effective: float,
         derivation_method: str,
+        lineage_id: Optional[str] = None,
+        parent_candidate_id: Optional[str] = None,
+        generation: int = 0,
+        mutation_type: Optional[str] = None,
+        mutation_detail: Optional[str] = None,
     ) -> None:
         with self._conn() as conn:
             conn.execute(
                 """INSERT OR IGNORE INTO candidates
                    (id, strategy, spec_json, spec_hash, concept, layer_idx,
-                    target_effective, derivation_method, status)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')""",
+                    target_effective, derivation_method, status,
+                    lineage_id, parent_candidate_id, generation,
+                    is_leader, mutation_type, mutation_detail)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending',
+                           ?, ?, ?, 0, ?, ?)""",
                 (
                     candidate_id, strategy, spec_json, spec_hash,
                     concept, layer_idx, target_effective, derivation_method,
+                    lineage_id, parent_candidate_id, generation,
+                    mutation_type, mutation_detail,
                 ),
             )
+
+    # ------------------------------------------------------------------
+    # Phase 2c: lineage management
+    # ------------------------------------------------------------------
+
+    def get_leaders(self) -> list[dict]:
+        """Return current leaders across all lineages, with their scores."""
+        with self._conn() as conn:
+            rows = conn.execute(
+                """SELECT c.*, f.score, f.detection_rate, f.identification_rate,
+                          f.fpr, f.coherence_rate
+                   FROM candidates c
+                   LEFT JOIN fitness_scores f ON f.candidate_id = c.id
+                   WHERE c.is_leader = 1
+                   ORDER BY f.score DESC"""
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_candidate(self, candidate_id: str) -> Optional[dict]:
+        with self._conn() as conn:
+            row = conn.execute(
+                """SELECT c.*, f.score, f.detection_rate, f.identification_rate,
+                          f.fpr, f.coherence_rate
+                   FROM candidates c
+                   LEFT JOIN fitness_scores f ON f.candidate_id = c.id
+                   WHERE c.id = ?""",
+                (candidate_id,),
+            ).fetchone()
+        return dict(row) if row else None
+
+    def promote_to_leader(self, new_leader_id: str, old_leader_id: str) -> None:
+        """Commit a mutation: new_leader supersedes old_leader in its lineage."""
+        with self._conn() as conn:
+            conn.execute(
+                "UPDATE candidates SET is_leader = 0 WHERE id = ?", (old_leader_id,)
+            )
+            conn.execute(
+                "UPDATE candidates SET is_leader = 1 WHERE id = ?", (new_leader_id,)
+            )
+
+    def mark_as_seed_leader(self, candidate_id: str, lineage_id: str) -> None:
+        """One-shot: mark an existing candidate as a seed leader for a new lineage."""
+        with self._conn() as conn:
+            conn.execute(
+                """UPDATE candidates SET
+                     lineage_id = ?, parent_candidate_id = NULL,
+                     generation = 0, is_leader = 1,
+                     mutation_type = 'seed'
+                   WHERE id = ?""",
+                (lineage_id, candidate_id),
+            )
+
+    def lineage_history(self, lineage_id: str) -> list[dict]:
+        """Every candidate in a lineage (leaders and rejections), ordered by generation."""
+        with self._conn() as conn:
+            rows = conn.execute(
+                """SELECT c.*, f.score, f.detection_rate, f.identification_rate,
+                          f.fpr, f.coherence_rate
+                   FROM candidates c
+                   LEFT JOIN fitness_scores f ON f.candidate_id = c.id
+                   WHERE c.lineage_id = ?
+                   ORDER BY c.generation, c.created_at""",
+                (lineage_id,),
+            ).fetchall()
+        return [dict(r) for r in rows]
 
     def set_candidate_status(
         self,

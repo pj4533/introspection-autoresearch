@@ -96,6 +96,50 @@ def _write_run_artifact(candidate_id: str, spec: dict, result_summary: dict) -> 
     (run_dir / "fitness.json").write_text(json.dumps(result_summary, indent=2) + "\n")
 
 
+def _maybe_promote_mutation(
+    db: ResultsDB,
+    candidate_id: str,
+    lineage_meta: dict,
+    new_score: float,
+) -> None:
+    """Phase 2c commit-or-reject rule.
+
+    If this candidate has a parent, compare its score to the parent's. If
+    it beats the parent, promote it to be the new lineage leader. Otherwise,
+    leave the parent as leader and this candidate as a rejected attempt.
+
+    Candidates with no parent (legacy or seeds) are no-ops here — seeds are
+    marked leader by ``scripts/seed_lineages.py``, legacy have no lineage.
+    """
+    parent_id = lineage_meta.get("parent_candidate_id")
+    if not parent_id:
+        return
+    parent = db.get_candidate(parent_id)
+    if not parent:
+        print(f"[worker] lineage parent {parent_id} not found; skipping promotion", flush=True)
+        return
+    parent_score = float(parent.get("score") or 0.0)
+    lineage_id = lineage_meta.get("lineage_id", "?")
+    generation = lineage_meta.get("generation", "?")
+    mutation_type = lineage_meta.get("mutation_type", "?")
+
+    if new_score > parent_score:
+        db.promote_to_leader(new_leader_id=candidate_id, old_leader_id=parent_id)
+        print(
+            f"[lineage {lineage_id[:8] if lineage_id else '?'}] "
+            f"gen{generation} {mutation_type}: "
+            f"{parent_score:.3f} -> {new_score:.3f} ✓ COMMITTED",
+            flush=True,
+        )
+    else:
+        print(
+            f"[lineage {lineage_id[:8] if lineage_id else '?'}] "
+            f"gen{generation} {mutation_type}: "
+            f"{parent_score:.3f} vs {new_score:.3f} ✗ rejected",
+            flush=True,
+        )
+
+
 def _process_one(
     path: Path,
     pipeline: DetectionPipeline,
@@ -110,6 +154,10 @@ def _process_one(
     from src.strategies.random_explore import spec_hash
     h = spec_hash(spec)
 
+    # Phase 2c lineage fields live in spec_dict["_lineage"] (nested so they
+    # don't collide with CandidateSpec schema).
+    lineage_meta = spec_dict.get("_lineage") or {}
+
     db.insert_candidate(
         candidate_id=spec.id,
         strategy=spec.strategy,
@@ -119,6 +167,11 @@ def _process_one(
         layer_idx=spec.layer_idx,
         target_effective=spec.target_effective,
         derivation_method=spec.derivation_method,
+        lineage_id=lineage_meta.get("lineage_id"),
+        parent_candidate_id=lineage_meta.get("parent_candidate_id"),
+        generation=int(lineage_meta.get("generation", 0) or 0),
+        mutation_type=lineage_meta.get("mutation_type"),
+        mutation_detail=lineage_meta.get("mutation_detail"),
     )
     db.set_candidate_status(spec.id, "running")
 
@@ -152,6 +205,7 @@ def _process_one(
         _write_run_artifact(spec.id, spec.to_dict(), result_summary)
         db.set_candidate_status(spec.id, "done")
         _move(moved, QUEUE / "done")
+        _maybe_promote_mutation(db, spec.id, lineage_meta, result.score)
         print(
             f"[{datetime.now().strftime('%H:%M:%S')}] done      {spec.id}  "
             f"score={result.score:.3f}",

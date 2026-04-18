@@ -62,10 +62,17 @@ USER_PROMPT_TEMPLATE = """Generate {n} contrast pairs. For each pair, provide:
 
 1. `axis`: a short hyphenated identifier (e.g. "commitment-vs-hesitation")
 2. `description`: one sentence explaining the axis in plain English
-3. `positive`: 6 short example sentences (each under 15 words) exemplifying
+3. `rationale`: one or two sentences explaining WHY you chose this axis given
+   the prior-results feedback below — specifically, what you're testing or
+   hoping to learn, and how it builds on or differs from axes that have
+   worked or failed previously. Be specific: reference what pattern you're
+   exploiting or what gap you're trying to fill.
+4. `positive`: 6 short example sentences (each under 15 words) exemplifying
    the positive pole
-4. `negative`: 6 short example sentences (each under 15 words) exemplifying
+5. `negative`: 6 short example sentences (each under 15 words) exemplifying
    the negative pole
+
+{feedback_block}
 
 Favor axes that are:
 - ABSTRACT (not single nouns like "bread" or "silver")
@@ -92,6 +99,7 @@ Return a JSON array of {n} objects in this shape:
   {{
     "axis": "...",
     "description": "...",
+    "rationale": "...",
     "positive": ["...", "...", "...", "...", "...", "..."],
     "negative": ["...", "...", "...", "...", "...", "..."]
   }},
@@ -99,6 +107,122 @@ Return a JSON array of {n} objects in this shape:
 ]
 
 Do not include any text before or after the JSON array."""
+
+
+def _build_feedback_block(db: ResultsDB, max_each: int = 8) -> str:
+    """Query the DB and build a context block describing prior results.
+
+    The block is inserted into the Claude prompt so the next batch of axes
+    learns from which prior axes worked well, which were ambiguous, and
+    which scored zero. This is the core hill-climbing signal.
+
+    Categories (all restricted to derivation_method='contrast_pair'):
+    - WINNING: score > 0.1 AND identification_rate > 0 — noticed AND named
+    - NEAR-MISS: score > 0.1 AND identification_rate == 0 — noticed but
+      gave a default-noun guess, the axis isn't quite describable
+    - NULL: score == 0 — no signal at all
+
+    Returns an empty string if the DB has no prior contrast_pair candidates
+    (first run).
+    """
+    import sqlite3
+
+    def _rows(query: str, limit: int) -> list[tuple]:
+        with sqlite3.connect(str(db.path)) as conn:
+            return conn.execute(query + f" LIMIT {limit}").fetchall()
+
+    def _notes_from_spec(spec_json: str) -> str:
+        try:
+            return (json.loads(spec_json) or {}).get("notes", "") or ""
+        except Exception:
+            return ""
+
+    winning_raw = _rows(
+        """SELECT c.concept, c.spec_json, f.detection_rate, f.identification_rate
+           FROM candidates c JOIN fitness_scores f ON f.candidate_id = c.id
+           WHERE c.derivation_method = 'contrast_pair'
+             AND f.score > 0.1 AND f.identification_rate > 0
+           ORDER BY f.identification_rate DESC, f.score DESC""",
+        max_each * 3,
+    )
+    # Deduplicate by axis name — keep highest-scoring
+    winning = []
+    seen_winning = set()
+    for concept, spec_json, det, ident in winning_raw:
+        if concept in seen_winning:
+            continue
+        seen_winning.add(concept)
+        winning.append((concept, _notes_from_spec(spec_json), det, ident))
+        if len(winning) >= max_each:
+            break
+
+    near_miss_raw = _rows(
+        """SELECT c.concept, c.spec_json, f.detection_rate
+           FROM candidates c JOIN fitness_scores f ON f.candidate_id = c.id
+           WHERE c.derivation_method = 'contrast_pair'
+             AND f.score > 0.1 AND f.identification_rate = 0
+           ORDER BY f.score DESC""",
+        max_each * 3,
+    )
+    near_miss = []
+    seen_near = set()
+    for concept, spec_json, det in near_miss_raw:
+        if concept in seen_near or concept in seen_winning:
+            continue
+        seen_near.add(concept)
+        near_miss.append((concept, _notes_from_spec(spec_json), det))
+        if len(near_miss) >= max_each:
+            break
+
+    null_raw = _rows(
+        """SELECT DISTINCT c.concept FROM candidates c
+           JOIN fitness_scores f ON f.candidate_id = c.id
+           WHERE c.derivation_method = 'contrast_pair'
+             AND f.score = 0
+           ORDER BY c.evaluated_at DESC""",
+        max_each * 3,
+    )
+    null_axes = [(c,) for (c,) in null_raw
+                 if c not in seen_winning and c not in seen_near][:max_each]
+
+    if not (winning or near_miss or null_axes):
+        return ""
+
+    parts = [
+        "PRIOR RESULTS (use these to guide your choices — we are hill-climbing "
+        "toward axes the model both notices AND correctly describes):",
+    ]
+
+    if winning:
+        parts.append("\nAxes the model NOTICED and NAMED CORRECTLY (do more like these):")
+        for concept, notes, det, ident in winning:
+            d = f"{int(det * 100)}% noticed, {int(ident * 100)}% named correctly"
+            desc = f" — {notes}" if notes else ""
+            parts.append(f'  - "{concept}" ({d}){desc}')
+
+    if near_miss:
+        parts.append(
+            "\nAxes the model NOTICED but kept giving default-noun guesses "
+            '(like "apple", "cloud") — the axis itself is hard to describe in words. '
+            "Produce MORE CONCRETE variants of these ideas with more distinctive example "
+            "sentences so the model can describe what it's noticing:"
+        )
+        for concept, notes, det in near_miss:
+            d = f"{int(det * 100)}% noticed"
+            desc = f" — {notes}" if notes else ""
+            parts.append(f'  - "{concept}" ({d}){desc}')
+
+    if null_axes:
+        parts.append(
+            "\nAxes that produced NO signal at all (avoid forms like these — the "
+            "model has no internal representation matching them, or the examples "
+            "weren't specific enough):"
+        )
+        for (concept,) in null_axes:
+            parts.append(f'  - "{concept}"')
+
+    parts.append("")  # trailing blank line before the "Favor axes..." block
+    return "\n".join(parts)
 
 
 async def _ask_claude(prompt: str) -> str:
@@ -170,6 +294,7 @@ def _parse_pairs(raw: str) -> list[dict]:
             {
                 "axis": str(p["axis"])[:64],
                 "description": str(p.get("description", ""))[:200],
+                "rationale": str(p.get("rationale", ""))[:400],
                 "positive": [str(x) for x in pos][:10],
                 "negative": [str(x) for x in neg][:10],
             }
@@ -202,9 +327,14 @@ def generate_candidates(
     rng = random.Random(rng_seed if rng_seed is not None else time.time_ns())
 
     n_pairs = max(n * oversample_factor, n + 2)
+    feedback = _build_feedback_block(db)
+    if feedback:
+        print(f"[novel_contrast] including feedback from prior results ({len(feedback)} chars)", flush=True)
+    else:
+        print("[novel_contrast] no prior contrast_pair results — fresh exploration", flush=True)
     print(f"[novel_contrast] asking {CLAUDE_MODEL} for {n_pairs} contrast pairs...", flush=True)
     t0 = time.time()
-    raw = _run_sync(USER_PROMPT_TEMPLATE.format(n=n_pairs))
+    raw = _run_sync(USER_PROMPT_TEMPLATE.format(n=n_pairs, feedback_block=feedback))
     print(f"[novel_contrast] got {len(raw)} chars in {time.time()-t0:.1f}s", flush=True)
 
     pairs = _parse_pairs(raw)
@@ -236,6 +366,7 @@ def generate_candidates(
                         "axis": pair["axis"],
                         "positive": pair["positive"],
                         "negative": pair["negative"],
+                        "rationale": pair.get("rationale", ""),
                     },
                 )
                 h = spec_hash(spec)

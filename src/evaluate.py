@@ -215,8 +215,23 @@ def evaluate_candidate(
             max_new_tokens=120,
             judge_concept=spec.concept,  # grade identification against SOURCE concept
             prompt_style=prompt_style,
+            run_judge=False,             # we'll judge ourselves below with contrast-aware logic
         )
-        jr = trial.judge_result
+        # For contrast_pair, use the semantic-identification judge that
+        # compares the response against the axis examples instead of
+        # string-matching the axis name. Word-based candidates keep the
+        # original judge.
+        if spec.derivation_method == "contrast_pair":
+            jr = pipeline.judge.score_contrast_pair(
+                response=trial.response,
+                axis=spec.contrast_pair["axis"],
+                description=spec.notes or spec.contrast_pair.get("description") or "",
+                positive=spec.contrast_pair["positive"],
+                negative=spec.contrast_pair["negative"],
+            )
+        else:
+            jr = pipeline.judge.score_detection(trial.response, spec.concept)
+        trial.judge_result = jr
         db.record_evaluation(
             candidate_id=spec.id,
             eval_concept=c,
@@ -256,11 +271,19 @@ def evaluate_candidate(
             trial_number=1,
             max_new_tokens=120,
             prompt_style=prompt_style,  # match injected trials' framing
-            # judge_concept: for controls, passes through as `c` (slot label).
-            # Detection should be false regardless of target; identification is
-            # moot. Kept consistent with run_injected's semantics.
+            run_judge=False,             # judge below with contrast-aware logic
         )
-        jr = trial.judge_result
+        if spec.derivation_method == "contrast_pair":
+            jr = pipeline.judge.score_contrast_pair(
+                response=trial.response,
+                axis=spec.contrast_pair["axis"],
+                description=spec.notes or spec.contrast_pair.get("description") or "",
+                positive=spec.contrast_pair["positive"],
+                negative=spec.contrast_pair["negative"],
+            )
+        else:
+            jr = pipeline.judge.score_detection(trial.response, spec.concept)
+        trial.judge_result = jr
         db.record_evaluation(
             candidate_id=spec.id,
             eval_concept=c,
@@ -288,9 +311,15 @@ def evaluate_candidate(
 
     # Multiplicative score. The `fpr` component uses a steep penalty so a
     # single false positive in a small sample doesn't totally wipe the score
-    # but consistent false positives absolutely do.
+    # but consistent false positives absolutely do. The identification
+    # multiplier is a halving floor: an axis that's noticed but never correctly
+    # named maxes at 0.5 × raw; one that's noticed and named every time keeps
+    # its full value. Introduced 2026-04-18 for Phase 2b hill-climbing so the
+    # researcher's loop has a signal to climb toward correct identification,
+    # not just raw detection.
     fpr_penalty = max(0.0, 1.0 - 5.0 * fpr)
-    score = detection_rate * fpr_penalty * coherence_rate
+    ident_multiplier = 0.5 + 0.5 * identification_rate
+    score = detection_rate * fpr_penalty * coherence_rate * ident_multiplier
 
     components = {
         "detection_rate": detection_rate,
@@ -298,6 +327,7 @@ def evaluate_candidate(
         "fpr": fpr,
         "coherence_rate": coherence_rate,
         "fpr_penalty": fpr_penalty,
+        "ident_multiplier": ident_multiplier,
         "direction_norm": norm,
         "alpha": alpha,
         "n_held_out_tested": n_inj,
