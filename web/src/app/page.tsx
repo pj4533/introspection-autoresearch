@@ -26,12 +26,24 @@ export default function Home() {
   return (
     <main>
       <Nav />
-      <Leaderboard entries={leaderboard} summary={summary} />
-      <Lineages lineages={lineages} />
-      <Explainer />
-      <LayerCurve data={layerCurve} />
-      <Abliteration variants={variants} />
-      <Detections detections={detections} />
+      <section id="leaderboard">
+        <Leaderboard entries={leaderboard} summary={summary} />
+      </section>
+      <section id="lineages">
+        <Lineages lineages={lineages} />
+      </section>
+      <section id="how-it-works">
+        <Explainer />
+      </section>
+      <section id="layer-curve">
+        <LayerCurve data={layerCurve} />
+      </section>
+      <section id="abliteration">
+        <Abliteration variants={variants} />
+      </section>
+      <section id="detections">
+        <Detections detections={detections} />
+      </section>
       <Footer />
     </main>
   );

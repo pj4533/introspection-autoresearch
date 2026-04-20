@@ -104,38 +104,66 @@ def _maybe_promote_mutation(
 ) -> None:
     """Phase 2c commit-or-reject rule.
 
-    If this candidate has a parent, compare its score to the parent's. If
-    it beats the parent, promote it to be the new lineage leader. Otherwise,
-    leave the parent as leader and this candidate as a rejected attempt.
+    Each lineage has ONE leader at a time — the highest-scoring member so
+    far. A mutation is "committed" only if it beats the current leader
+    (not just its immediate parent). This avoids a race where two parallel
+    mutations both commit by each beating their stale parent, leaving the
+    lineage with multiple leaders.
 
-    Candidates with no parent (legacy or seeds) are no-ops here — seeds are
-    marked leader by ``scripts/seed_lineages.py``, legacy have no lineage.
+    Candidates with no parent (legacy or seeds) are no-ops here — seeds
+    are marked leader by ``scripts/seed_lineages.py``, legacy have no
+    lineage.
     """
     parent_id = lineage_meta.get("parent_candidate_id")
-    if not parent_id:
+    lineage_id = lineage_meta.get("lineage_id")
+    if not parent_id or not lineage_id:
         return
-    parent = db.get_candidate(parent_id)
-    if not parent:
-        print(f"[worker] lineage parent {parent_id} not found; skipping promotion", flush=True)
-        return
-    parent_score = float(parent.get("score") or 0.0)
-    lineage_id = lineage_meta.get("lineage_id", "?")
     generation = lineage_meta.get("generation", "?")
     mutation_type = lineage_meta.get("mutation_type", "?")
 
-    if new_score > parent_score:
-        db.promote_to_leader(new_leader_id=candidate_id, old_leader_id=parent_id)
+    # Find the current leader of this lineage. Compare against THAT, not
+    # the mutation's immediate parent.
+    leaders = [l for l in db.get_leaders() if l.get("lineage_id") == lineage_id]
+    if not leaders:
         print(
-            f"[lineage {lineage_id[:8] if lineage_id else '?'}] "
-            f"gen{generation} {mutation_type}: "
-            f"{parent_score:.3f} -> {new_score:.3f} ✓ COMMITTED",
+            f"[worker] lineage {lineage_id[:8]} has no leader; "
+            "treating this as seed",
+            flush=True,
+        )
+        # No current leader — make this one the leader.
+        with db._conn() as conn:
+            conn.execute("UPDATE candidates SET is_leader=1 WHERE id=?", (candidate_id,))
+        return
+
+    # Pick the single best leader if there somehow are multiple (legacy from
+    # the buggy parent-compare version).
+    current_leader = max(leaders, key=lambda l: l.get("score") or 0.0)
+    current_leader_id = current_leader["id"]
+    current_score = float(current_leader.get("score") or 0.0)
+    lid_short = lineage_id[:8]
+
+    if new_score > current_score:
+        # Demote ALL current leaders in this lineage (in case of legacy
+        # stale multi-leader state) and promote this one.
+        with db._conn() as conn:
+            conn.execute(
+                "UPDATE candidates SET is_leader=0 WHERE lineage_id=?",
+                (lineage_id,),
+            )
+            conn.execute(
+                "UPDATE candidates SET is_leader=1 WHERE id=?",
+                (candidate_id,),
+            )
+        print(
+            f"[lineage {lid_short}] gen{generation} {mutation_type}: "
+            f"{current_score:.3f} -> {new_score:.3f} ✓ COMMITTED",
             flush=True,
         )
     else:
         print(
-            f"[lineage {lineage_id[:8] if lineage_id else '?'}] "
-            f"gen{generation} {mutation_type}: "
-            f"{parent_score:.3f} vs {new_score:.3f} ✗ rejected",
+            f"[lineage {lid_short}] gen{generation} {mutation_type}: "
+            f"current leader {current_score:.3f} vs this {new_score:.3f} "
+            "✗ rejected",
             flush=True,
         )
 

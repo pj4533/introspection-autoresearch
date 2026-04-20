@@ -13,7 +13,16 @@ export function Leaderboard({
 }) {
   const [filter, setFilter] = useState<"all" | "word" | "invented">("all");
   const [view, setView] = useState<"leaderboard" | "recent">("leaderboard");
+  const [page, setPage] = useState(1);
   const [ago, setAgo] = useState(timeAgo(summary.last_updated));
+
+  const PAGE_SIZE = 10;
+
+  // Reset to first page whenever filter or view changes so users always see
+  // relevant results instead of landing on an empty page.
+  useEffect(() => {
+    setPage(1);
+  }, [filter, view]);
 
   useEffect(() => {
     const id = setInterval(() => setAgo(timeAgo(summary.last_updated)), 30000);
@@ -140,15 +149,37 @@ export function Leaderboard({
         </div>
 
         <div className="space-y-3">
-          {filtered.map((entry, i) => (
-            <LeaderCard
-              key={entry.candidate_id}
-              entry={entry}
-              rank={i + 1}
-              view={view}
-            />
-          ))}
+          {filtered
+            .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+            .map((entry, i) => (
+              <LeaderCard
+                key={entry.candidate_id}
+                entry={entry}
+                rank={(page - 1) * PAGE_SIZE + i + 1}
+                view={view}
+              />
+            ))}
         </div>
+
+        {filtered.length > PAGE_SIZE && (
+          <Pagination
+            page={page}
+            pageCount={Math.ceil(filtered.length / PAGE_SIZE)}
+            total={filtered.length}
+            pageSize={PAGE_SIZE}
+            onChange={(p) => {
+              setPage(p);
+              // Scroll so the top of the leaderboard section is in view — the
+              // list is tall enough that a page flip otherwise leaves the user
+              // halfway down the new page.
+              if (typeof window !== "undefined") {
+                document
+                  .getElementById("leaderboard")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }}
+          />
+        )}
 
         {filtered.length === 0 && (
           <div className="p-16 rounded-2xl bg-[var(--bg-card)] border border-[var(--border)] border-dashed text-center text-[var(--ink-soft)]">
@@ -157,6 +188,90 @@ export function Leaderboard({
         )}
       </div>
     </section>
+  );
+}
+
+function Pagination({
+  page,
+  pageCount,
+  total,
+  pageSize,
+  onChange,
+}: {
+  page: number;
+  pageCount: number;
+  total: number;
+  pageSize: number;
+  onChange: (p: number) => void;
+}) {
+  const from = (page - 1) * pageSize + 1;
+  const to = Math.min(page * pageSize, total);
+  const canPrev = page > 1;
+  const canNext = page < pageCount;
+
+  return (
+    <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="text-xs text-[var(--ink-faint)] font-mono tabular-nums">
+        showing {from}–{to} of {total}
+      </div>
+      <div className="flex items-center gap-2 text-sm">
+        <PageBtn disabled={!canPrev} onClick={() => onChange(1)} title="first">
+          «
+        </PageBtn>
+        <PageBtn
+          disabled={!canPrev}
+          onClick={() => onChange(page - 1)}
+          title="previous"
+        >
+          ‹ prev
+        </PageBtn>
+        <span className="px-3 text-xs text-[var(--ink-soft)] font-mono tabular-nums">
+          page {page} of {pageCount}
+        </span>
+        <PageBtn
+          disabled={!canNext}
+          onClick={() => onChange(page + 1)}
+          title="next"
+        >
+          next ›
+        </PageBtn>
+        <PageBtn
+          disabled={!canNext}
+          onClick={() => onChange(pageCount)}
+          title="last"
+        >
+          »
+        </PageBtn>
+      </div>
+    </div>
+  );
+}
+
+function PageBtn({
+  disabled,
+  onClick,
+  title,
+  children,
+}: {
+  disabled: boolean;
+  onClick: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`px-3 py-1.5 rounded-full border text-sm transition-colors ${
+        disabled
+          ? "border-[var(--border)] text-[var(--ink-faint)] opacity-40 cursor-not-allowed"
+          : "border-[var(--border-strong)] text-[var(--ink-soft)] hover:text-[var(--ink)] hover:border-[var(--ink-soft)]"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 

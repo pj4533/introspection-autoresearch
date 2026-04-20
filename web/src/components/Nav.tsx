@@ -27,7 +27,37 @@ export function Nav() {
             did-the-ai-notice
           </span>
         </Link>
-        <div className="flex items-center gap-7 text-sm text-[var(--ink-soft)]">
+        <div className="flex items-center gap-4 md:gap-5 text-sm text-[var(--ink-soft)]">
+          <a
+            href="#lineages"
+            className="hidden sm:inline hover:text-[var(--ink)] transition-colors"
+          >
+            lineages
+          </a>
+          <a
+            href="#how-it-works"
+            className="hidden md:inline hover:text-[var(--ink)] transition-colors"
+          >
+            how it works
+          </a>
+          <a
+            href="#layer-curve"
+            className="hidden md:inline hover:text-[var(--ink)] transition-colors"
+          >
+            layer curve
+          </a>
+          <a
+            href="#abliteration"
+            className="hidden lg:inline hover:text-[var(--ink)] transition-colors"
+          >
+            abliteration
+          </a>
+          <a
+            href="#detections"
+            className="hidden lg:inline hover:text-[var(--ink)] transition-colors"
+          >
+            detections
+          </a>
           <Link
             href="https://github.com/pj4533/introspection-autoresearch"
             target="_blank"
