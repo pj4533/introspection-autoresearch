@@ -63,7 +63,7 @@ def main() -> int:
                          "layer count (mean ~0.023). weight=1.0 is ~40x more "
                          "aggressive than paper and typically destroys coherent "
                          "generation — only use as a debug baseline.")
-    ap.add_argument("--judge-model", default="claude-haiku-4-5-20251001")
+    ap.add_argument("--judge-model", default="claude-sonnet-4-6")
     ap.add_argument("--run-id", default=None)
     ap.add_argument("--dry-run", action="store_true",
                     help="Show the plan and exit without running")

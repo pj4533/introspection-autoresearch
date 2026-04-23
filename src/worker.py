@@ -254,7 +254,7 @@ def main() -> int:
     ap.add_argument("--model", default="gemma3_12b",
                     help="Model slug (from MODEL_NAME_MAP). For Phase 1.5 use "
                          "gemma3_12b_abliterated.")
-    ap.add_argument("--judge-model", default="claude-haiku-4-5-20251001")
+    ap.add_argument("--judge-model", default="claude-sonnet-4-6")
     ap.add_argument("--held-out", type=Path, default=HELD_OUT_PATH)
     ap.add_argument("--max-candidates", type=int, default=0,
                     help="Exit after processing N candidates (0 = unlimited)")

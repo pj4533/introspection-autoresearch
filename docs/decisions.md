@@ -217,3 +217,34 @@ The `direction_cache` dict is keyed `(concept, layer) -> torch.Tensor`. Look-ups
 - If the plan is empty (all trials already in DB — resume case), pre-derivation is skipped.
 - If the abliterated sweep is later extended with new concepts, those new concepts' directions must also be derived from vanilla. The cache invalidation discipline is: any concept not yet in the DB's `trials` table gets a fresh vanilla derivation on next sweep run.
 - Phase 2 worker (`src/worker.py`) does not yet implement this pattern because Phase 2 does not yet run under abliteration. When abliterated Phase 2 ships, the worker will need the same "vanilla derive, abliterated inject" dance — either by loading two models (48GB MPS, tight) or by hook install/remove per candidate.
+
+---
+
+## ADR-015: Model upgrade — judge to Sonnet 4.6, researcher to Opus 4.7
+
+**Status:** Accepted · 2026-04-23. Supersedes the Haiku-judge default from ADR-004.
+
+**Context.** Before kicking off the next Phase 2b novel_contrast autoresearch run, we re-examined the model choices in the two Claude call sites:
+
+1. **Judge (hot path).** Was Haiku 4.5. `score_detection` (word-based) is a structurally simple task Haiku handles fine, but `score_contrast_pair` — added 2026-04-18 for semantic identification on invented axes — is a semantic-gist judgment (*does the response lean toward the positive pole of this abstract axis?*). Haiku's documented weakness on abstract/metacognitive text was already the reason novel_contrast generation was switched to Sonnet; the same weakness likely affects judging those axes. Phase 2b is feedback-driven — a biased judge pulls the hill-climb toward false positives.
+2. **Researcher (cold path).** Was Sonnet 4.6. Per-cycle volume is ~3K tokens; the bottleneck is creativity, not speed. Opus 4.7 is the newest flagship and the same directional move that took us Haiku → Sonnet originally (more abstract / less literal axes).
+
+Local Qwen3.6-27B-4bit via `mlx_lm.server` was evaluated as an alternative for the judge hot path but rejected: Haiku-unit subscription cost is small, and a 20 GB second model co-resident with Gemma 12B introduces GPU contention, memory pressure, and judge-strictness recalibration risk that outweighs the savings.
+
+**Decision.** Project-wide default judge → `claude-sonnet-4-6`. Researcher → `claude-opus-4-7`.
+
+Implementation is a handful of constant / argparse-default edits:
+
+- `src/judges/claude_judge.py` constructor default.
+- `src/sweep.py::SweepConfig.judge_model` default.
+- `src/worker.py` + `scripts/run_phase1_sweep.py` + `scripts/rescore.py` + `scripts/rescore_pre_fix.py` argparse defaults.
+- `scripts/smoke_judge.py` + `scripts/calibrate_effective.py` explicit args.
+- `src/strategies/novel_contrast.py::CLAUDE_MODEL` (propagates via import to `exploit_topk.py` and `hillclimb.py`).
+
+**Consequences.**
+
+- **Subscription cost.** Sonnet judge at ~3× Haiku's per-token weight, Opus researcher at ~5× Sonnet's. Combined daily spend is ~3–4K units/day vs ~600–900 previously. Still a small fraction of a Max plan budget.
+- **Cache.** `PROMPT_TEMPLATE_VERSION` stays at 3. The SQLite judge cache keys by `(model, content-hash)`, so old Haiku entries sit in a separate namespace and don't contaminate Sonnet scoring. No DB wipe needed.
+- **Historical data.** Existing Haiku-judged Phase 2 candidates stay in the DB and remain visible to `_build_feedback_block` as hill-climb signal. That's fine — the feedback loop just needs directionally-correct winning / near-miss / null labels, which Haiku already gave. If uniform Sonnet scoring across the leaderboard is ever wanted, `scripts/rescore.py --model claude-sonnet-4-6` re-scores offline.
+- **Rollback.** Every judge default is CLI-overridable; reverting to Haiku is a flag, not a code change.
+- **Supersedes ADR-004's Haiku default** but preserves its subscription-OAuth principle and judge-abstraction invariant.

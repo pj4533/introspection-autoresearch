@@ -54,7 +54,7 @@ def main() -> int:
     ap.add_argument("--contrast-only", action="store_true",
                     help="Only rescore contrast_pair candidates (skip words).")
     ap.add_argument("--limit", type=int, default=None)
-    ap.add_argument("--model", default="claude-haiku-4-5-20251001")
+    ap.add_argument("--model", default="claude-sonnet-4-6")
     ap.add_argument("--concurrency", type=int, default=5)
     args = ap.parse_args()
 

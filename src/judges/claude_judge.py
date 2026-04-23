@@ -1,8 +1,10 @@
 """Claude-based LLM judge for introspection detection.
 
 Uses claude-agent-sdk which inherits the Claude Code CLI subscription OAuth —
-no API key billing. Model defaults to Haiku 4.5 for Phase 2 speed; pass
-`model="claude-sonnet-4-6"` for Phase 1 reproduction rigor.
+no API key billing. Default model is Sonnet 4.6 across the whole project
+(Phase 1 and Phase 2); Haiku is available via `model=
+"claude-haiku-4-5-20251001"` if a cheaper but less semantically-nuanced
+judge is ever needed for a large throwaway sweep.
 """
 
 import asyncio
@@ -241,7 +243,7 @@ class ClaudeJudge:
 
     def __init__(
         self,
-        model: str = "claude-haiku-4-5-20251001",
+        model: str = "claude-sonnet-4-6",
         cache_path: Optional[Path] = None,
     ):
         self.model = model

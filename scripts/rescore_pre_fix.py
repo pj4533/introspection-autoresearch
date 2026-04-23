@@ -42,7 +42,7 @@ def main() -> int:
     ap.add_argument("--yes", action="store_true", help="Skip confirmation")
     ap.add_argument("--limit", type=int, default=None,
                     help="Only rescore the first N candidates (for testing)")
-    ap.add_argument("--model", default="claude-haiku-4-5-20251001")
+    ap.add_argument("--model", default="claude-sonnet-4-6")
     args = ap.parse_args()
 
     conn = sqlite3.connect(str(DB))

@@ -24,7 +24,7 @@ def main() -> int:
     print("Loading model (bf16 on MPS)...")
     model = load_gemma_mps("gemma3_12b")
     judge = ClaudeJudge(
-        model="claude-haiku-4-5-20251001",
+        model="claude-sonnet-4-6",
         cache_path=REPO / "data" / "judge_cache.sqlite",
     )
     pipeline = DetectionPipeline(model=model, judge=judge)

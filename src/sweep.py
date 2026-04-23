@@ -48,7 +48,7 @@ class SweepConfig:
     run_controls: bool = True
     max_new_tokens: int = 120
     temperature: float = 1.0
-    judge_model: str = "claude-haiku-4-5-20251001"
+    judge_model: str = "claude-sonnet-4-6"
 
     def total_cells(self) -> int:
         injected = len(self.concepts) * len(self.layers) * self.trials_per_cell

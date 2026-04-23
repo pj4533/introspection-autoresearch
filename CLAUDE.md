@@ -128,9 +128,21 @@ src/strategies/     ← Phase 2 strategies.
   `src/paper/`.
 - **Claude judge uses Claude Code subscription OAuth.** Never add
   `ANTHROPIC_API_KEY` requirements. The `claude-agent-sdk` inherits auth from
-  the local Claude Code install. Default judge model: Haiku 4.5 for Phase 2
-  speed (`claude-haiku-4-5-20251001`); Sonnet 4.6 for Phase 1 reproduction
-  rigor (`claude-sonnet-4-6`).
+  the local Claude Code install. **Default judge model is Sonnet 4.6
+  (`claude-sonnet-4-6`) project-wide** (both Phase 1 and Phase 2, as of
+  2026-04-23). Haiku 4.5 remains available via `--judge-model
+  claude-haiku-4-5-20251001` as a cheaper throwaway option, but Phase 2b's
+  feedback-driven hill-climb amplifies any judge bias, so Sonnet's
+  stricter semantic-gist grading is the standing default. The SQLite
+  judge cache keys by model name, so old Haiku entries sit in a separate
+  namespace and never collide with Sonnet entries.
+- **Researcher (novel_contrast / exploit_topk / hillclimb) uses Opus 4.7
+  (`claude-opus-4-7`).** Single constant at
+  `src/strategies/novel_contrast.py::CLAUDE_MODEL` imported by the other
+  two strategies. Researcher token volume is small (~150K/day) so Opus's
+  heavier subscription weighting is negligible; the creativity-gated
+  abstract-axis invention task benefits from the smartest available
+  proposer.
 - **Judge is blocking-sync from Jupyter.** `ClaudeJudge._run_sync` spawns a
   worker thread because Jupyter already runs an asyncio loop and
   `asyncio.run()` would raise "Already running asyncio in this thread".
@@ -212,7 +224,7 @@ python -m src.worker --max-candidates 5
 
 - Uses **Claude Code subscription OAuth**, not API billing. Anything that calls
   Claude must go through `claude-agent-sdk` or a subscription-aware path.
-- Wants the **newest Claude models** — `claude-opus-4-6`, `claude-sonnet-4-6`,
+- Wants the **newest Claude models** — `claude-opus-4-7`, `claude-sonnet-4-6`,
   `claude-haiku-4-5-20251001`. No GPT-4o or older Claude 3.x.
 - Prefers **standalone Python automation** (long-running scripts, `setsid
   nohup`) over interactive Claude Code `/loop` sessions. Claude Agent SDK is

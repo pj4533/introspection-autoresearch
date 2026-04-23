@@ -46,9 +46,16 @@ from .random_explore import spec_hash
 DEFAULT_LAYERS = [30, 33, 36, 40]
 DEFAULT_TARGET_EFFECTIVES = [14000.0, 16000.0, 18000.0, 20000.0]
 
-# Use Sonnet 4.6 for pair generation — Haiku is faster but its axes tend
-# toward the obvious. Sonnet reliably produces creative in-between concepts.
-CLAUDE_MODEL = "claude-sonnet-4-6"
+# Use Opus 4.7 for pair generation. This is a creativity-gated task
+# (invent abstract axes the model likely represents but that don't map to
+# a single English word), so we want the smartest proposer. Researcher
+# token volume is tiny (~150K/day across all mutation/regen calls), so
+# Opus's heavier subscription weighting is negligible in absolute terms.
+# Haiku → Sonnet → Opus is the same directional move each time (more
+# abstract/creative axes); Haiku produced too-obvious single-word axes,
+# Sonnet's novel_contrast runs hit at rates tied with dictionary words
+# (see Phase 2a results), and Opus is the next step up that ladder.
+CLAUDE_MODEL = "claude-opus-4-7"
 
 SYSTEM_PROMPT = (
     "You are helping design contrast pairs for a mechanistic interpretability "

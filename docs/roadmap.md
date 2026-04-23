@@ -265,6 +265,14 @@ Standard genetic-algorithm move: linearly combine two top direction tensors, eva
 
 Full plan + build order: [`docs/phase2b_hillclimb.md`](phase2b_hillclimb.md).
 
+**2026-04-23 pre-run model upgrade.** Before kicking off the next 2b
+novel_contrast run: project-wide judge default moved from Haiku 4.5 to
+Sonnet 4.6 (feedback-driven hill-climb amplifies judge bias; Sonnet is
+stricter on semantic-gist grading of abstract axes). Researcher moved
+from Sonnet 4.6 to Opus 4.7 (creativity-gated task, small token volume
+makes the unit-weight delta negligible). See [ADR-015](decisions.md) for
+rationale, consequences, and the rejected local-Qwen alternative.
+
 ---
 
 ## Phase 2c — Tiered fitness + dashboard (deprioritized)
