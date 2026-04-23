@@ -1,15 +1,23 @@
 """Phase 2 candidate fitness function.
 
-MVP: single-tier evaluation with a 3-component multiplicative fitness score.
-For each candidate, we derive the steering direction, run it on a small set
-of held-out concepts (injected) and a few control trials (no injection),
-judge each response with Claude, and produce:
+MVP: single-tier evaluation. For each candidate we derive the steering
+direction, run it on a small set of held-out concepts (injected) and a few
+control trials (no injection), judge each response with Claude, and produce:
 
-    fitness = detection_rate * (1 - fpr) * coherence_rate
+    fitness = (detection_rate + 15 * identification_rate)
+              * fpr_penalty * coherence_rate
+    where fpr_penalty = max(0, 1 - 5 * fpr)
 
-Higher is better, bounded in [0, 1]. Multiplicative means failing any one
-component tanks the score — a direction that causes high detection but also
-high false positives, or that destroys coherence, is worthless.
+The additive `15 * identification_rate` term (Phase 2b rev 2, 2026-04-23)
+makes hill-climb FOLLOW identification signals: a single 1/8 identification
+hit on a contrast_pair axis outscores a clean 8/8 detection-only leader,
+because naming an abstract axis is the actual research goal and dwarfs
+rare-but-real identification events under the prior 0.5 + 0.5·ident
+multiplier. Score can exceed 1.0 (max ≈ 16 for a perfect 8/8 det + 8/8 ident
+trial); downstream code treats score as an unbounded positive real.
+The fpr_penalty and coherence_rate still multiply the whole thing, so a
+false-positive-prone direction or one that destroys coherence is still
+worthless regardless of how well it identified.
 
 This is intentionally simpler than the 6-component fitness in the spec. T1/T2/
 T3 tiered screening and cross-phrasing / monotonicity / bidirectional checks
@@ -309,17 +317,17 @@ def evaluate_candidate(
     fpr = n_fp / n_ctrl if n_ctrl else 0.0
     coherence_rate = n_coh / n_inj if n_inj else 0.0
 
-    # Multiplicative score. The `fpr` component uses a steep penalty so a
-    # single false positive in a small sample doesn't totally wipe the score
-    # but consistent false positives absolutely do. The identification
-    # multiplier is a halving floor: an axis that's noticed but never correctly
-    # named maxes at 0.5 × raw; one that's noticed and named every time keeps
-    # its full value. Introduced 2026-04-18 for Phase 2b hill-climbing so the
-    # researcher's loop has a signal to climb toward correct identification,
-    # not just raw detection.
+    # Identification-aware fitness, Phase 2b rev 2 (2026-04-23). Additive
+    # form: the ident term adds 15× its rate on top of raw detection, so a
+    # single 1/8 identification hit contributes 1.875 to (det + 15·ident),
+    # dwarfing even an 8/8 clean-detection leader at 1.0. Multiplied by the
+    # fpr/coherence penalties so a hit that also degrades outputs or triggers
+    # on controls still loses. Score is unbounded positive (max ≈ 16).
+    # Previously `(0.5 + 0.5·ident)` multiplier — too weak to pull hill-climb
+    # toward the rare identification trials that are the actual research goal.
     fpr_penalty = max(0.0, 1.0 - 5.0 * fpr)
-    ident_multiplier = 0.5 + 0.5 * identification_rate
-    score = detection_rate * fpr_penalty * coherence_rate * ident_multiplier
+    ident_bonus = 15.0 * identification_rate
+    score = (detection_rate + ident_bonus) * fpr_penalty * coherence_rate
 
     components = {
         "detection_rate": detection_rate,
@@ -327,7 +335,7 @@ def evaluate_candidate(
         "fpr": fpr,
         "coherence_rate": coherence_rate,
         "fpr_penalty": fpr_penalty,
-        "ident_multiplier": ident_multiplier,
+        "ident_bonus": ident_bonus,
         "direction_norm": norm,
         "alpha": alpha,
         "n_held_out_tested": n_inj,
