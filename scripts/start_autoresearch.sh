@@ -73,6 +73,21 @@ while true; do
     echo \"[autoresearch \$(date '+%H:%M:%S')] step 3/3: hillclimb --n $N_HILLCLIMB\" >> \"$LOG\"
     .venv/bin/python -m src.researcher --strategy hillclimb --n $N_HILLCLIMB >> \"$LOG\" 2>&1 || true
 
+    # Compact state summary — top-5 lineage leaders + population counts.
+    sqlite3 data/results.db \"
+      SELECT printf('[state] lineages=%d  leaders=%d  identified=%d  done=%d',
+        COUNT(DISTINCT c.lineage_id),
+        SUM(CASE WHEN c.is_leader=1 THEN 1 ELSE 0 END),
+        (SELECT COUNT(*) FROM fitness_scores WHERE identification_rate > 0),
+        (SELECT COUNT(*) FROM candidates WHERE status='done'))
+      FROM candidates c WHERE c.lineage_id IS NOT NULL;\" >> \"$LOG\" 2>&1 || true
+    sqlite3 data/results.db \"
+      SELECT printf('[top5] %-42s  s=%.3f d=%.0f%% i=%.0f%% gen=%d',
+        substr(c.concept,1,42), f.score, f.detection_rate*100,
+        f.identification_rate*100, c.generation)
+      FROM candidates c JOIN fitness_scores f ON f.candidate_id=c.id
+      WHERE c.is_leader=1 ORDER BY f.score DESC LIMIT 5;\" >> \"$LOG\" 2>&1 || true
+
     echo \"[autoresearch \$(date '+%H:%M:%S')] cycle complete, sleeping ${CYCLE_SECONDS}s\" >> \"$LOG\"
     sleep $CYCLE_SECONDS
 done
