@@ -61,10 +61,16 @@ class DetectionPipeline:
         judge: Judge,
         baseline_words: Optional[list[str]] = None,
         baseline_n: int = 32,
+        abliteration_ctx=None,
     ):
         self.model = model
         self.judge = judge
         self.baseline_words = baseline_words or get_baseline_words(n=baseline_n)
+        # Optional AbliterationContext (src.paper.abliteration). When set and
+        # hooks are installed, evaluate_candidate must derive under
+        # ``abliteration_ctx.suspended()`` per ADR-014. Unset → vanilla mode,
+        # no paper-method abliteration in effect for trials.
+        self.abliteration_ctx = abliteration_ctx
 
     def derive(self, concept: str, layer_idx: int) -> torch.Tensor:
         return extract_concept_vector_with_baseline(

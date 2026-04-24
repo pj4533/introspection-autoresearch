@@ -175,6 +175,11 @@ class ResultsDB:
             "is_leader":           "ALTER TABLE candidates ADD COLUMN is_leader INTEGER NOT NULL DEFAULT 0",
             "mutation_type":       "ALTER TABLE candidates ADD COLUMN mutation_type TEXT",
             "mutation_detail":     "ALTER TABLE candidates ADD COLUMN mutation_detail TEXT",
+            # Phase 2d+: records whether this candidate ran under paper-method
+            # abliteration or on vanilla Gemma. All rows predating the 2026-04-24
+            # migration default to 'vanilla' — that's historically accurate;
+            # Phase 2 never ran under paper-method hooks before this date.
+            "abliteration_mode":   "ALTER TABLE candidates ADD COLUMN abliteration_mode TEXT NOT NULL DEFAULT 'vanilla'",
         }
         for col, stmt in add_col_stmts.items():
             if col not in existing:
@@ -322,6 +327,7 @@ class ResultsDB:
         generation: int = 0,
         mutation_type: Optional[str] = None,
         mutation_detail: Optional[str] = None,
+        abliteration_mode: str = "vanilla",
     ) -> None:
         with self._conn() as conn:
             conn.execute(
@@ -329,14 +335,15 @@ class ResultsDB:
                    (id, strategy, spec_json, spec_hash, concept, layer_idx,
                     target_effective, derivation_method, status,
                     lineage_id, parent_candidate_id, generation,
-                    is_leader, mutation_type, mutation_detail)
+                    is_leader, mutation_type, mutation_detail,
+                    abliteration_mode)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending',
-                           ?, ?, ?, 0, ?, ?)""",
+                           ?, ?, ?, 0, ?, ?, ?)""",
                 (
                     candidate_id, strategy, spec_json, spec_hash,
                     concept, layer_idx, target_effective, derivation_method,
                     lineage_id, parent_candidate_id, generation,
-                    mutation_type, mutation_detail,
+                    mutation_type, mutation_detail, abliteration_mode,
                 ),
             )
 

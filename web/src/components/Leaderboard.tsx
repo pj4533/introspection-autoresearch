@@ -357,6 +357,22 @@ function LeaderCard({
               >
                 {entry.prompt_style} prompt
               </span>
+              <span
+                className={`text-[10px] uppercase tracking-[0.15em] px-1.5 py-0.5 rounded ${
+                  entry.abliteration_mode === "paper_method"
+                    ? "text-[var(--warn)] bg-[var(--warn)]/10"
+                    : "text-[var(--ink-faint)] bg-[var(--bg-elev)]"
+                }`}
+                title={
+                  entry.abliteration_mode === "paper_method"
+                    ? "Evaluated with paper-method refusal-direction abliteration hooks active (Macar et al. §3.3 protocol)"
+                    : "Evaluated on raw Gemma3-12B with no abliteration hooks"
+                }
+              >
+                {entry.abliteration_mode === "paper_method"
+                  ? "abliterated"
+                  : "vanilla"}
+              </span>
             </div>
             {isContrast && entry.contrast_pair?.description && (
               <div className="text-sm text-[var(--ink-soft)] leading-snug line-clamp-2">

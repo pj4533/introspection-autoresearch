@@ -159,27 +159,42 @@ def evaluate_candidate(
     controls = controls[:n_controls]
 
     # --- derive the steering direction once ---------------------------------
-    if spec.derivation_method == "contrast_pair":
-        # Novel-contrast: derive direction from a pair of prompt LISTS, one
-        # representing each pole of an abstract axis. Uses the paper's
-        # extract_concept_vector (positive_prompts vs negative_prompts).
-        if spec.contrast_pair is None:
-            raise ValueError(
-                f"Candidate {spec.id}: derivation_method='contrast_pair' but "
-                "contrast_pair field is None"
+    # ADR-014: if paper-method abliteration hooks are installed, suspend them
+    # for the derivation step. Deriving under active hooks projects the
+    # refusal-aligned component out of the concept vector, collapsing its
+    # norm and turning generation into token salad under adaptive α. Hooks
+    # are restored automatically on context-manager exit so trial generation
+    # runs under abliteration.
+    import contextlib
+    suspend = (
+        pipeline.abliteration_ctx.suspended()
+        if getattr(pipeline, "abliteration_ctx", None) is not None
+        and pipeline.abliteration_ctx.installed
+        else contextlib.nullcontext()
+    )
+    with suspend:
+        if spec.derivation_method == "contrast_pair":
+            # Novel-contrast: derive direction from a pair of prompt LISTS,
+            # one representing each pole of an abstract axis.
+            if spec.contrast_pair is None:
+                raise ValueError(
+                    f"Candidate {spec.id}: derivation_method='contrast_pair' "
+                    "but contrast_pair field is None"
+                )
+            from .paper import extract_concept_vector
+            direction = extract_concept_vector(
+                model=pipeline.model,
+                positive_prompts=spec.contrast_pair["positive"],
+                negative_prompts=spec.contrast_pair["negative"],
+                layer_idx=spec.layer_idx,
+                token_idx=-1,
+                normalize=False,
             )
-        from .paper import extract_concept_vector
-        direction = extract_concept_vector(
-            model=pipeline.model,
-            positive_prompts=spec.contrast_pair["positive"],
-            negative_prompts=spec.contrast_pair["negative"],
-            layer_idx=spec.layer_idx,
-            token_idx=-1,
-            normalize=False,
-        )
-    else:
-        # mean_diff (default, Phase 1 approach): concept word vs baseline words
-        direction = pipeline.derive(concept=spec.concept, layer_idx=spec.layer_idx)
+        else:
+            # mean_diff: concept word vs baseline words.
+            direction = pipeline.derive(
+                concept=spec.concept, layer_idx=spec.layer_idx
+            )
 
     norm = float(direction.norm().item())
     alpha = spec.target_effective / max(norm, 1e-6)
@@ -329,6 +344,12 @@ def evaluate_candidate(
     ident_bonus = 15.0 * identification_rate
     score = (detection_rate + ident_bonus) * fpr_penalty * coherence_rate
 
+    abliteration_mode = (
+        "paper_method"
+        if getattr(pipeline, "abliteration_ctx", None) is not None
+        and pipeline.abliteration_ctx.installed
+        else "vanilla"
+    )
     components = {
         "detection_rate": detection_rate,
         "identification_rate": identification_rate,
@@ -336,6 +357,7 @@ def evaluate_candidate(
         "coherence_rate": coherence_rate,
         "fpr_penalty": fpr_penalty,
         "ident_bonus": ident_bonus,
+        "abliteration_mode": abliteration_mode,
         "direction_norm": norm,
         "alpha": alpha,
         "n_held_out_tested": n_inj,

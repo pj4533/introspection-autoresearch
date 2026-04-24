@@ -26,12 +26,18 @@ DEFAULT_TARGET_EFFECTIVES = [14000.0, 16000.0, 18000.0, 20000.0, 22000.0]
 DEFAULT_DERIVATION_METHODS = ["mean_diff"]  # Phase 2 MVP only has one method
 
 
-def spec_hash(spec: CandidateSpec) -> str:
-    """Stable dedup key across (concept, layer, target_effective, method).
+def spec_hash(spec: CandidateSpec, abliteration_mode: str = "vanilla") -> str:
+    """Stable dedup key across (concept, layer, target_effective, method,
+    contrast-pair content, abliteration_mode).
 
-    For contrast_pair candidates, also hashes the pair content so the same
-    (concept label, layer, eff) with different contrast pairs gets distinct
-    hashes — and so the same pair isn't re-proposed across runs.
+    ``abliteration_mode`` defaults to ``"vanilla"`` for backward
+    compatibility — every pre-2026-04-24 candidate was evaluated on vanilla
+    Gemma3-12B, so their hashes stay stable. When the Phase 2 worker runs
+    under paper-method abliteration (ADR-017 default), it passes
+    ``abliteration_mode="paper_method"`` here so the same (concept, layer,
+    eff, poles) under abliteration gets a distinct hash from its vanilla
+    counterpart. This lets the DB hold both evaluations side-by-side without
+    UNIQUE-constraint collisions.
     """
     payload = (
         f"{spec.concept}|{spec.layer_idx}|{spec.target_effective:.1f}"
@@ -41,6 +47,10 @@ def spec_hash(spec: CandidateSpec) -> str:
         pos = "|".join(spec.contrast_pair.get("positive", []))
         neg = "|".join(spec.contrast_pair.get("negative", []))
         payload += f"|pos:{pos}|neg:{neg}"
+    # Only include the mode suffix when non-vanilla, to keep legacy vanilla
+    # hashes bit-identical with pre-2026-04-24 entries.
+    if abliteration_mode and abliteration_mode != "vanilla":
+        payload += f"|abl:{abliteration_mode}"
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 

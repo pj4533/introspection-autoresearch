@@ -71,6 +71,11 @@ export type Phase2Entry = {
   layer: number;
   target_effective: number;
   derivation_method: string;
+  // Phase 2d+: "paper_method" when the candidate was evaluated with
+  // paper-method refusal-direction abliteration hooks active; "vanilla"
+  // for raw Gemma3-12B with no hooks. All pre-2026-04-24 Phase 2 results
+  // are "vanilla" (Phase 2 worker did not yet support paper-method).
+  abliteration_mode: "vanilla" | "paper_method";
   score: number;
   detection_rate: number;
   identification_rate: number;

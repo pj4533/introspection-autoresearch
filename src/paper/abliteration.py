@@ -356,3 +356,112 @@ def remove_abliteration_hooks(handles) -> None:
             h.remove()
         except Exception:
             pass
+
+
+class AbliterationContext:
+    """Manage the install / remove / suspended lifecycle of paper-method
+    abliteration hooks for streaming use cases like the Phase 2 worker.
+
+    Encapsulates ADR-014 in one place: when deriving a concept direction
+    during Phase 2 candidate evaluation, the hooks must be *off*, because
+    deriving under active hooks projects the refusal-aligned component out
+    of the concept vector and collapses its norm. After derivation, hooks
+    are re-installed for the injection / generation phase so the candidate
+    runs under the paper's abliteration regime.
+
+    Typical Phase 2 worker pattern:
+
+        ctx = AbliterationContext.from_file(model, "data/refusal_directions_12b.pt")
+        ctx.install()                          # hooks on for the whole session
+        for candidate in queue:
+            with ctx.suspended():              # hooks off for derive
+                direction = derive(candidate)
+            # hooks back on here — run trials
+            run_trials(candidate, direction)
+    """
+
+    def __init__(
+        self,
+        model,  # src.paper.model_utils.ModelWrapper OR a raw HF model
+        directions: torch.Tensor,
+        layer_weights: Optional[List[float]] = None,
+    ):
+        self.model = model
+        self.directions = directions
+        # Resolve the inner HF model that has `.layers` (or equivalent).
+        self._inner = model.model if hasattr(model, "model") else model
+        n_layers = len(_find_layers(self._inner))
+        if layer_weights is None:
+            layer_weights = paper_layer_weights_for_model(n_layers)
+        if len(layer_weights) != n_layers:
+            raise ValueError(
+                f"layer_weights length {len(layer_weights)} != model n_layers {n_layers}"
+            )
+        self.layer_weights = layer_weights
+        self._handles: list = []
+
+    @classmethod
+    def from_file(
+        cls,
+        model,
+        directions_path,
+        layer_weights: Optional[List[float]] = None,
+    ) -> "AbliterationContext":
+        """Load per-layer refusal directions from a .pt file and return a
+        ready-to-install context. File format matches
+        ``compute_per_layer_refusal_directions`` output — either a bare
+        tensor or ``{"directions": tensor, ...}``.
+        """
+        payload = torch.load(
+            str(directions_path), map_location="cpu", weights_only=False
+        )
+        directions = (
+            payload["directions"] if isinstance(payload, dict) else payload
+        )
+        return cls(model=model, directions=directions, layer_weights=layer_weights)
+
+    @property
+    def installed(self) -> bool:
+        return bool(self._handles)
+
+    def install(self) -> None:
+        """Install paper-method hooks. No-op if already installed."""
+        if self.installed:
+            return
+        self._handles = install_abliteration_hooks(
+            self._inner, self.directions, layer_weights=self.layer_weights
+        )
+
+    def remove(self) -> None:
+        """Remove paper-method hooks. No-op if none installed."""
+        if not self.installed:
+            return
+        remove_abliteration_hooks(self._handles)
+        self._handles = []
+
+    def suspended(self):
+        """Context manager: hooks OFF inside the ``with`` block, same state
+        restored on exit. Use this around concept-direction derivation in
+        the Phase 2 worker to honor ADR-014.
+        """
+        return _SuspendedAbliteration(self)
+
+
+class _SuspendedAbliteration:
+    """Private helper — the context manager returned by
+    ``AbliterationContext.suspended()``.
+    """
+
+    def __init__(self, ctx: "AbliterationContext"):
+        self.ctx = ctx
+        self._was_installed = False
+
+    def __enter__(self):
+        self._was_installed = self.ctx.installed
+        if self._was_installed:
+            self.ctx.remove()
+        return self.ctx
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        if self._was_installed:
+            self.ctx.install()

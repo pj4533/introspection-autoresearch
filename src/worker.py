@@ -39,12 +39,18 @@ from src.bridge import DetectionPipeline, load_gemma_mps
 from src.db import ResultsDB
 from src.evaluate import CandidateSpec, evaluate_candidate, load_eval_sets
 from src.judges.claude_judge import ClaudeJudge
+from src.paper.abliteration import AbliterationContext
 
 REPO = Path(__file__).resolve().parent.parent
 QUEUE = REPO / "queue"
 RUNS = REPO / "runs"
 DB_PATH = REPO / "data" / "results.db"
 HELD_OUT_PATH = REPO / "data" / "eval_sets" / "held_out_concepts.json"
+# Per-layer refusal directions pre-computed on vanilla Gemma3-12B via
+# scripts/compute_refusal_direction.py (Phase 1.5). Loaded once at worker
+# startup and applied as forward-hook projections to every layer during
+# trial generation (paper-method abliteration from Macar et al. §3.3).
+REFUSAL_DIRECTIONS_PATH = REPO / "data" / "refusal_directions_12b.pt"
 
 POLL_INTERVAL_S = 5
 IDLE_LOG_INTERVAL_S = 60
@@ -174,13 +180,16 @@ def _process_one(
     db: ResultsDB,
     held_out_concepts: list[str],
     control_concepts: list[str],
+    abliteration_mode: str,
 ) -> None:
     spec_dict = json.loads(path.read_text())
     spec = CandidateSpec.from_dict(spec_dict)
 
-    # Hash for dedup; must match researcher's spec_hash
+    # Hash for dedup. Abliteration mode is included in the hash so the
+    # same (concept, layer, eff, poles) evaluated under vanilla and under
+    # paper-method are distinct DB rows rather than colliding on one.
     from src.strategies.random_explore import spec_hash
-    h = spec_hash(spec)
+    h = spec_hash(spec, abliteration_mode=abliteration_mode)
 
     # Phase 2c lineage fields live in spec_dict["_lineage"] (nested so they
     # don't collide with CandidateSpec schema).
@@ -200,6 +209,7 @@ def _process_one(
         generation=int(lineage_meta.get("generation", 0) or 0),
         mutation_type=lineage_meta.get("mutation_type"),
         mutation_detail=lineage_meta.get("mutation_detail"),
+        abliteration_mode=abliteration_mode,
     )
     db.set_candidate_status(spec.id, "running")
 
@@ -249,15 +259,34 @@ def _process_one(
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--db", type=Path, default=DB_PATH,
-                    help="SQLite DB path. For abliterated runs, use "
-                         "data/results_abliterated.db")
+                    help="SQLite DB path.")
     ap.add_argument("--model", default="gemma3_12b",
-                    help="Model slug (from MODEL_NAME_MAP). For Phase 1.5 use "
-                         "gemma3_12b_abliterated.")
+                    help="Model slug (from MODEL_NAME_MAP). Leave as default; "
+                         "paper-method abliteration rides on vanilla Gemma via "
+                         "--abliterate-paper/--vanilla. The legacy "
+                         "'gemma3_12b_abliterated' slug points at deprecated "
+                         "off-the-shelf HF checkpoints (see ADR-013) and "
+                         "should not be used.")
     ap.add_argument("--judge-model", default="claude-sonnet-4-6")
     ap.add_argument("--held-out", type=Path, default=HELD_OUT_PATH)
     ap.add_argument("--max-candidates", type=int, default=0,
                     help="Exit after processing N candidates (0 = unlimited)")
+    ap.add_argument(
+        "--refusal-directions",
+        type=Path,
+        default=REFUSAL_DIRECTIONS_PATH,
+        help="Path to per-layer refusal directions .pt file produced by "
+             "scripts/compute_refusal_direction.py. Used by paper-method "
+             "abliteration.",
+    )
+    ap.add_argument(
+        "--vanilla",
+        action="store_true",
+        help="Disable paper-method abliteration. Default is ON — the worker "
+             "installs per-layer abliteration hooks at startup and every "
+             "candidate is evaluated with them active (ADR-017). Pass this "
+             "flag for sensitivity-check vanilla runs.",
+    )
     args = ap.parse_args()
 
     _install_signal_handlers()
@@ -269,12 +298,57 @@ def main() -> int:
         model=args.judge_model,
         cache_path=REPO / "data" / "judge_cache.sqlite",
     )
-    pipeline = DetectionPipeline(model=model, judge=judge)
+
+    # Paper-method abliteration (ADR-017): install per-layer refusal-direction
+    # projection-out hooks on the vanilla model at startup. Each candidate's
+    # direction derivation is automatically wrapped in ctx.suspended() by
+    # evaluate_candidate so ADR-014 is honored — derive on vanilla, inject
+    # under hooks.
+    abliteration_ctx = None
+    abliteration_mode = "vanilla"
+    if not args.vanilla:
+        if not args.refusal_directions.exists():
+            print(
+                f"[worker] ERROR: --refusal-directions {args.refusal_directions} "
+                "does not exist. Either run scripts/compute_refusal_direction.py "
+                "to generate it, or pass --vanilla to explicitly opt out of "
+                "paper-method abliteration.",
+                flush=True,
+            )
+            return 2
+        print(
+            f"[worker] loading refusal directions from {args.refusal_directions} ...",
+            flush=True,
+        )
+        abliteration_ctx = AbliterationContext.from_file(
+            model, args.refusal_directions
+        )
+        abliteration_ctx.install()
+        abliteration_mode = "paper_method"
+        mean_w = sum(abliteration_ctx.layer_weights) / len(abliteration_ctx.layer_weights)
+        max_w = max(abliteration_ctx.layer_weights)
+        print(
+            f"[worker] paper-method abliteration ACTIVE — "
+            f"{len(abliteration_ctx._handles)} hooks installed "
+            f"(per-layer weights mean={mean_w:.4f} max={max_w:.4f})",
+            flush=True,
+        )
+    else:
+        print(
+            "[worker] --vanilla flag set — paper-method abliteration DISABLED. "
+            "Candidates will run on raw Gemma3-12B (pre-2026-04-24 behavior).",
+            flush=True,
+        )
+
+    pipeline = DetectionPipeline(
+        model=model, judge=judge, abliteration_ctx=abliteration_ctx
+    )
 
     db = ResultsDB(args.db)
     held_out, controls = load_eval_sets(args.held_out)
     print(
-        f"[worker] ready. eval set: {len(held_out)} held-out, {len(controls)} controls",
+        f"[worker] ready. eval set: {len(held_out)} held-out, "
+        f"{len(controls)} controls. abliteration_mode={abliteration_mode}",
         flush=True,
     )
 
@@ -294,7 +368,7 @@ def main() -> int:
             time.sleep(POLL_INTERVAL_S)
             continue
 
-        _process_one(path, pipeline, db, held_out, controls)
+        _process_one(path, pipeline, db, held_out, controls, abliteration_mode)
         n_processed += 1
 
     summary = db.candidates_summary()
