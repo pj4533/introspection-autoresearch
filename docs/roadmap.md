@@ -2,7 +2,7 @@
 
 Everything this project has done, is doing, and plans to do — phase by phase, with rationale. This document is the source of truth for the project's trajectory; if anything important lives only in chat logs or ephemeral plan files, it's a bug.
 
-Last updated: 2026-04-18.
+Last updated: 2026-04-24.
 
 ---
 
@@ -13,10 +13,11 @@ Last updated: 2026-04-18.
 | **1: Reproduction** | Reproduce the core introspection-detection mechanism from Macar et al. (2026) on Gemma3-12B-it locally | ✅ Done (2026-04-16) |
 | **1.5: Paper-method abliteration** | Reproduce paper §3.3 refusal-direction ablation: per-layer hooks on vanilla 12B, weighted by paper's Optuna-tuned region weights remapped from 27B | ✅ Done (2026-04-17) |
 | **2a: Autoresearch MVP** | Build the worker + researcher + fitness loop with `random_explore` as the seed strategy | ✅ Done (first overnight 2026-04-16, pure-`novel_contrast` run 2026-04-17/18) |
-| **2b: Hill-climbing autoresearch** | Semantic-identification judge for invented axes, identification-aware fitness, feedback-loop `novel_contrast`, new `exploit_topk` strategy | ⏳ **Planned next** — see [`docs/phase2b_hillclimb.md`](phase2b_hillclimb.md) |
-| **2c: Tiered fitness + dashboard** | T1/T2/T3 fast-kill screening, internal Streamlit (Phase 3 site now serves public purpose) | ⏳ Planned, deprioritized by Phase 3 |
+| **2b: Hill-climbing autoresearch** | Semantic-identification judge for invented axes, identification-aware fitness, feedback-loop `novel_contrast`, new `exploit_topk` strategy | ✅ Shipped — judge = Sonnet 4.6, researcher = Opus 4.7, fitness is additive `(det + 15·ident)·fpr_penalty·coh`. Two novel-contrast axes crossed the identification barrier (2026-04-23/24). See [`docs/phase2b_hillclimb.md`](phase2b_hillclimb.md). |
+| **2c: Real autoresearch — hill-climbing lineages** | Per-lineage mutations (alt_effective, alt_layer, swap_positive/negative, edit_description) with explicit commit/revert vs current leader | ✅ Shipped — `src/strategies/hillclimb.py`, `scripts/start_autoresearch.sh` wraps `novel_contrast → seed_lineages → hillclimb` as one loop. Paused 2026-04-24 to manage subscription usage. |
+| **2d: Directed-hypothesis novel_contrast** | Targeted contrast pairs testing specific claims from Altman (2026), Capraro et al. (2026), and our own Epistemia direct probe — three clusters run sequentially | 🟡 **In progress** — Phase 2d-1 Altman seed pairs (A1/A2/A3 × 4 layers × 4 target_effectives = 48 candidates) running 2026-04-24. See [`docs/phase2d_directed_hypotheses.md`](phase2d_directed_hypotheses.md). |
 | **3: Public-facing visualization** | Next.js site deployed to Vercel | ✅ Done 2026-04-17 — live at [did-the-ai-notice.vercel.app](https://did-the-ai-notice.vercel.app). Built ahead of schedule to watch overnight runs. |
-| **Future**: 27B cloud reproduction, SAE / transcoder feature analysis, bias-vector replication, persona-specific introspection mapping | | ⏳ Ideas on the shelf |
+| **Future**: 27B cloud reproduction, SAE / transcoder feature analysis, bias-vector replication, persona-specific introspection mapping, Phase 2d-2/2d-3 (Capraro fault lines + Epistemia probe) | | ⏳ Ideas on the shelf |
 
 ---
 
@@ -309,6 +310,39 @@ Multiplicative fitness combines all surviving tiers.
 ### Streamlit dashboard — deprecated by Phase 3
 
 The Streamlit dashboard concept is deprecated. Phase 3's public Next.js site ([did-the-ai-notice.vercel.app](https://did-the-ai-notice.vercel.app)) now serves the same purpose — live leaderboard, expandable trial responses, candidate drill-downs — and is shareable / phone-accessible, which Streamlit-on-localhost wasn't.
+
+---
+
+## Phase 2d — Directed-hypothesis novel_contrast (IN PROGRESS 2026-04-24)
+
+**Motivation.** Phase 2b/2c `novel_contrast` is a creativity-maximizing generator — good for surveying the abstract-axis space, poor for adjudicating specific claims in the literature. Phase 2d aims the same `contrast_pair` machinery at testable structural claims from recent papers instead of open-ended invention.
+
+**Three hypothesis clusters, run sequentially** (not in parallel — each needs its own example-sentence iteration):
+
+1. **Phase 2d-1 — Altman (2026) continuation-interest axis.** Three hand-written seed pairs probing whether Gemma3-12B-it has internal geometry separating continuation-as-terminal from continuation-as-instrumental. Source: [arXiv:2603.11382](https://arxiv.org/abs/2603.11382) — a paper philosophically right but empirically stuck at 10×10 gridworld scale. Our steering-direction method is the first real-LLM probe of its central claim.
+
+2. **Phase 2d-2 — Capraro et al. (2026) epistemological fault lines.** Seven architectural-gap claims (Grounding, Parsing, Experience, Motivation, Causality, Metacognition, Value). We'll run the first four (C1–C4) as separate probes; the rest only after we've learned Gemma3-12B's example-sensitivity profile. Source: [arXiv:2512.19466](https://arxiv.org/abs/2512.19466).
+
+3. **Phase 2d-3 — Epistemia direct probe.** Our own synthesis — sharpest form of Capraro's Experience claim: can the model distinguish *having* an internal state from *producing a report about* one. Run last because the example sentences are genuinely hard to separate cleanly, and we want Phase 2d-1/2d-2 to calibrate our elicitation first.
+
+**Interpretation invariants (same for all three phases):**
+
+- **0% FPR is the only hard gate.** Any detection at 0% FPR counts as a candidate hit regardless of magnitude.
+- **Detection-without-identification is the load-bearing result.** For Altman, this is *stronger* evidence than full identification (structure without testimony, Altman's own framing). For Capraro, this is exactly the predicted "parsing gap" shape.
+- **Bidirectional check.** Any hit gets its negated direction run as a separate candidate — if both poles detect at similar rates, the signal is axis-agnostic perturbation, not axis-specific structure.
+
+**Shipped as of 2026-04-24:**
+
+- `scripts/enqueue_altman_seeds.py` — drops Phase 2d-1 seed pairs A1/A2/A3 into the queue as hand-written candidate specs tagged `strategy=directed_altman_{A1,A2,A3}`. No researcher/Opus involvement — pure worker+Sonnet-judge test to prove signal before building the `directed_contrast` strategy infrastructure.
+- 48 candidates enqueued (3 seed pairs × {L30,33,36,40} × target_effective {14k,16k,18k,20k}) and under evaluation.
+
+**Acceptance criteria (Phase 2d-1 primary):** at least one Altman axis produces `detection_rate > 0` at `fpr == 0` at some layer. If null after 48 evaluations + up to 10 Opus variants, write up the null in `docs/phase2d_results.md` and proceed to Phase 2d-2. Null is a publishable contribution.
+
+**Full plan, seed-pair example sentences, per-phase acceptance criteria, and philosophical framing:** [`docs/phase2d_directed_hypotheses.md`](phase2d_directed_hypotheses.md).
+
+**Results doc:** `docs/phase2d_results.md` — not yet created; append as each sub-phase completes. Match the voice of `docs/phase1_results.md`.
+
+**Deferred site work.** Plan calls for a hypothesis-filter dropdown and per-hypothesis summary panels on the public site. Not yet implemented; current site shows Altman candidates mixed into the general leaderboard alongside Phase 2b axes. The strategy name (`directed_altman_*`) is available in the DB for future filtering.
 
 ---
 

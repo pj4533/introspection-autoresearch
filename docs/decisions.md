@@ -248,3 +248,41 @@ Implementation is a handful of constant / argparse-default edits:
 - **Historical data.** Existing Haiku-judged Phase 2 candidates stay in the DB and remain visible to `_build_feedback_block` as hill-climb signal. That's fine — the feedback loop just needs directionally-correct winning / near-miss / null labels, which Haiku already gave. If uniform Sonnet scoring across the leaderboard is ever wanted, `scripts/rescore.py --model claude-sonnet-4-6` re-scores offline.
 - **Rollback.** Every judge default is CLI-overridable; reverting to Haiku is a flag, not a code change.
 - **Supersedes ADR-004's Haiku default** but preserves its subscription-OAuth principle and judge-abstraction invariant.
+
+---
+
+## ADR-016: Shift Phase 2 focus from open-ended creativity to directed-hypothesis probes
+
+**Status:** Accepted · 2026-04-24.
+
+**Context.** Through Phase 2b/2c, `novel_contrast` + `hillclimb` produced two abstract axes that Gemma3-12B actually named under injection (`auditing-output-vs-flowing-speech`, `live-narration-vs-retrospective-report`) — a first for this project. But the open-ended Opus generator is a creativity-maximizing tool: it surveys the abstract-axis space broadly, and occasionally finds something that hits. It's poor at adjudicating specific *claims* already made in the literature.
+
+Two recent papers make testable structural claims about what should or shouldn't exist in an LLM's latent space:
+
+1. **Altman (2026)** *Detecting Intrinsic and Instrumental Self-Preservation via Entanglement Entropy of Latent Trajectory Encodings* ([arXiv:2603.11382](https://arxiv.org/abs/2603.11382)). Continuation-as-terminal vs continuation-as-instrumental claim; validated only on 10×10 gridworld QBM; no real-LLM evidence.
+2. **Capraro, Quattrociocchi, Perc (2026)** *Epistemological Fault Lines in Language Models* ([arXiv:2512.19466](https://arxiv.org/abs/2512.19466)). Seven specific architectural-gap claims (Grounding, Parsing, Experience, Motivation, Causality, Metacognition, Value).
+
+Plus our own synthesis: an Epistemia direct probe sharpening Capraro's Experience claim into the specific "state-had vs state-reported" distinction.
+
+Each paper's claim is *exactly the shape* of thing `novel_contrast` can test — a pair of example-sentence poles representing a proposed latent axis. The only thing missing is steering the generator toward the specific hypothesis rather than open-ended creative invention.
+
+**Decision.** Before the next `novel_contrast` run, pivot Phase 2 to directed-hypothesis probes. Three clusters run sequentially (not in parallel — each needs its own example-sentence iteration):
+
+- **Phase 2d-1** — Altman continuation-interest (three hand-written seed pairs, 48 candidates total). Started 2026-04-24.
+- **Phase 2d-2** — Capraro fault lines C1–C4 (Experience, Causality, Grounding, Metacognition). Deferred until 2d-1 produces signal or a clean null.
+- **Phase 2d-3** — Epistemia direct probe. Last because example-sentence separation is hardest.
+
+The minimum viable first step is **not** a new strategy module — it's hand-written spec JSONs dropped into `queue/pending/`, run through the existing worker. If Phase 2d-1 produces any detection at 0% FPR, we promote the seeds into a proper `directed_contrast` strategy with a `hypotheses.py` registry; if all 48 null, we write up the null and move to 2d-2.
+
+**Consequences.**
+
+- **Paused** the unified `scripts/start_autoresearch.sh` loop (`novel_contrast → seed_lineages → hillclimb`) to conserve subscription usage. The loop is not deleted; it's the right tool for open-ended exploration once we return to that mode.
+- **No researcher/Opus involvement in Phase 2d-1.** Pure worker + Sonnet judge. Each candidate costs 12 Sonnet judge calls; 48 × 12 = 576 judge calls total for the Altman cluster.
+- **Interpretation invariants baked into the plan** (see `docs/phase2d_directed_hypotheses.md`):
+  - 0% FPR is the only hard specificity gate.
+  - Detection-*without*-identification is load-bearing — for Altman it's structural evidence without testimony (Altman's own framing); for Capraro it's the predicted "parsing gap" shape.
+  - Every hit gets a negated-direction bidirectional check — if both poles detect similarly, the signal is axis-agnostic perturbation magnitude, not axis-specific structure.
+- **Publishable regardless of outcome.** A clean null on the Altman cluster is a data point for that debate (currently zero real-LLM mechanistic evidence). A hit pairs with the Phase 2b ident-barrier crossing as a combined writeup positioning the project as the empirical wing of specific alignment-theory debates.
+- **Deferred site work.** Plan calls for a hypothesis-filter dropdown on the public leaderboard; not implemented. Candidates are tagged via `candidates.strategy` prefix (`directed_altman_*`, future `directed_capraro_*`, `directed_epistemia_*`) so the filter is a straightforward add later.
+
+**Trade-off.** Narrowing to directed hypotheses risks missing abstract axes that don't map to any paper's claim. That risk is acceptable because (a) Phase 2b already produced two such axes; (b) the paper-linked results are more directly publishable; (c) the open-ended loop is one flag away — we can return to it any time. The creativity-survey mode isn't gone, just not active.

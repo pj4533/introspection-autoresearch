@@ -6,14 +6,20 @@
 > noticing we implanted a thought and naming it correctly). Read that first if
 > you came looking for a human-language explanation.
 
-Two-phase mechanistic-interpretability project running locally on Apple Silicon:
+Three-phase mechanistic-interpretability project running locally on Apple Silicon:
 
 1. **Phase 1 — Reproduction.** Reproduce core findings from Macar et al. (2026),
    *Mechanisms of Introspective Awareness in Language Models*, on `Gemma3-12B-it`
    (MPS backend, bf16 weights, no quantization).
-2. **Phase 2 — Autoresearch.** Build a two-tier researcher / worker loop that
+2. **Phase 2 — Autoresearch.** Two-tier researcher / worker loop that
    systematically hunts for steering directions affecting introspection
-   capability, scored against a 6-component multiplicative fitness function.
+   capability. Evolves through stages: `2a` MVP (random exploration), `2b`
+   hill-climbing with identification-aware fitness, `2c` unified
+   self-sustaining pipeline, `2d` directed-hypothesis probes against claims
+   from recent papers.
+3. **Phase 3 — Public site.** Live leaderboard at
+   [did-the-ai-notice.vercel.app](https://did-the-ai-notice.vercel.app) —
+   auto-updates within minutes of each candidate evaluation.
 
 Hardware target: Mac Studio M2 Ultra 64 GB.
 
@@ -33,19 +39,34 @@ Hardware target: Mac Studio M2 Ultra 64 GB.
     detection-without-correct-identification case (Avalanches→"Flooding")
     that supports the paper's claim that detection and identification are
     mechanistically distinct.
-- **Phase 2 scaffolding: done.** Researcher (`src/researcher.py`), worker
-  (`src/worker.py`), fitness function (`src/evaluate.py`), random-exploration
-  strategy (`src/strategies/random_explore.py`), launcher scripts
-  (`scripts/start_{worker,researcher}.sh`). Not yet kicked off for a full
-  overnight run — pending user go-ahead.
-- **Phase 2 enhancements** (Claude Agent SDK researcher, `exploit_topk` /
-  `crossover` / `novel_contrast` strategies, Streamlit dashboard, T1/T2/T3
-  tiered fitness screening): planned, not started.
+- **Phase 2a/2b/2c: done.** Worker + researcher + fitness loop, `novel_contrast`
+  + `hillclimb` strategies, unified autoresearch wrapper
+  (`scripts/start_autoresearch.sh`) that chains `novel_contrast → seed_lineages
+  → hillclimb` as one self-sustaining pipeline. Identification-aware additive
+  fitness `(det + 15·ident) × fpr_penalty × coherence`. Two novel-contrast
+  axes (`auditing-output-vs-flowing-speech`, `live-narration-vs-retrospective-
+  report`) crossed the identification barrier — first abstract axes Gemma3-12B
+  has ever *named* under injection (2026-04-23/24).
+- **Phase 2d: in progress.** Directed-hypothesis probes. Instead of open-ended
+  axis invention, aim `contrast_pair` at specific claims from recent papers —
+  Altman (2026) continuation-interest latents, Capraro et al. (2026)
+  epistemological fault lines, and our own Epistemia direct probe. Phase 2d-1
+  Altman seed pairs (48 candidates) under evaluation 2026-04-24. Full plan:
+  [`docs/phase2d_directed_hypotheses.md`](docs/phase2d_directed_hypotheses.md).
+- **Phase 3 public site: done.** Live at
+  [did-the-ai-notice.vercel.app](https://did-the-ai-notice.vercel.app).
+  Auto-deploys when data changes.
+
+Docs:
 
 - Plain-English walkthrough: [`docs/plain_english.md`](docs/plain_english.md)
 - Roadmap (phases, rationale, what's next): [`docs/roadmap.md`](docs/roadmap.md)
 - Architectural decisions log: [`docs/decisions.md`](docs/decisions.md)
 - Phase 1 technical results: [`docs/phase1_results.md`](docs/phase1_results.md)
+- Phase 1.5 paper-method abliteration: [`docs/phase1_5_results.md`](docs/phase1_5_results.md)
+- Phase 2b hill-climbing plan: [`docs/phase2b_hillclimb.md`](docs/phase2b_hillclimb.md)
+- Phase 2c autoresearch: [`docs/phase2c_autoresearch.md`](docs/phase2c_autoresearch.md)
+- Phase 2d directed hypotheses: [`docs/phase2d_directed_hypotheses.md`](docs/phase2d_directed_hypotheses.md)
 - Full project spec: [`docs/01_introspection_steering_autoresearch.md`](docs/01_introspection_steering_autoresearch.md)
 
 ## Repo layout
@@ -158,6 +179,24 @@ python -m src.researcher --strategy random --n 5 --dry-run   # preview candidate
 python -m src.researcher --strategy random --n 5             # write 5 to queue
 python -m src.worker --max-candidates 5                      # process 5 then exit
 ```
+
+## Running a directed-hypothesis probe (Phase 2d)
+
+Directed probes skip the researcher/Opus loop entirely — they're hand-written
+contrast pairs tagged with a hypothesis cluster and evaluated by the existing
+worker. Zero Opus usage; bounded Sonnet judge cost (12 calls/candidate).
+
+```bash
+python scripts/enqueue_altman_seeds.py    # drops 48 Altman seed specs into queue/pending/
+./scripts/start_worker.sh                  # worker chews through them (~2.5 hours)
+```
+
+Results land in `data/results.db` with `candidates.strategy` prefixed
+`directed_altman_` (or `directed_capraro_…`, `directed_epistemia_…` in future
+sub-phases). Phase 2d-1 is the Altman cluster; see
+[`docs/phase2d_directed_hypotheses.md`](docs/phase2d_directed_hypotheses.md)
+for the full plan, seed-pair example sentences, and per-hypothesis
+acceptance criteria.
 
 **What the loop does.** Researcher samples candidate steering-direction specs
 `(concept, layer, target_effective)` from a pool of ~170 concepts × 5 layers ×

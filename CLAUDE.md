@@ -16,6 +16,9 @@ directions affecting introspection capability.
 - Plain-English project writeup (public-facing): `docs/plain_english.md`
 - Phase 1 technical results: `docs/phase1_results.md`
 - Phase 1.5 technical results (paper-method abliteration): `docs/phase1_5_results.md`
+- Phase 2b hill-climbing plan (shipped): `docs/phase2b_hillclimb.md`
+- Phase 2c unified autoresearch: `docs/phase2c_autoresearch.md`
+- **Phase 2d directed-hypothesis probes (current focus)**: `docs/phase2d_directed_hypotheses.md`
 - Full spec: `docs/01_introspection_steering_autoresearch.md`
 - Approved plan (pre-execution, for historical reference): `/Users/pj4533/.claude/plans/lexical-mixing-unicorn.md`
 - README: `README.md` (repo layout, setup, running)
@@ -72,7 +75,30 @@ plan file, it's a bug. Commit it to `docs/roadmap.md` (forward-looking) or
   Built ahead of schedule so the user could watch overnight runs live.
   Next.js + Tailwind + Recharts, static export, auto-redeploys every
   3 min when Phase 2 data changes.
-- Phase 2b — hill-climbing autoresearch (semantic-ID judge,
+- Phase 2b shipped 2026-04-23/24. Judge on Sonnet 4.6 project-wide,
+  researcher on Opus 4.7, fitness is additive `(det + 15·ident) · fpr_penalty
+  · coh` per [ADR-015]. Two novel-contrast axes crossed the identification
+  barrier: `auditing-output-vs-flowing-speech` (3 reproducibility hits at
+  L30) and `live-narration-vs-retrospective-report`. Both first-ever abstract
+  axes Gemma3-12B has named under injection.
+- Phase 2c unified autoresearch wrapper (`scripts/start_autoresearch.sh`)
+  chains `novel_contrast --n 5 → seed_lineages --top 15 → hillclimb --n 10`
+  every 30 min. Paused 2026-04-24 because Sonnet-judge + Opus-researcher at
+  5 judge sessions/min was hitting ~30% of weekly subscription budget in
+  15 hours. Root cause: `claude-agent-sdk.query()` incurs ~40K tokens of
+  Claude Code session scaffolding per call, no cross-session caching. Both
+  potential fixes (batching, persistent-session caching) break per-call
+  judgment isolation — see the investigation in session memory. Local-Qwen
+  judge remains the deferred option.
+- Phase 2d — directed-hypothesis novel_contrast, **IN PROGRESS 2026-04-24**.
+  Instead of open-ended axis invention, aim the `contrast_pair` machinery
+  at specific structural claims from recent papers. Three clusters run
+  sequentially: Altman (2026) continuation-interest, Capraro et al. (2026)
+  seven fault lines, Epistemia direct probe. Phase 2d-1 Altman seed pairs
+  (48 candidates, hand-written, strategy = `directed_altman_{A1,A2,A3}`)
+  enqueued via `scripts/enqueue_altman_seeds.py`; worker-only, no Opus.
+  Full plan: [`docs/phase2d_directed_hypotheses.md`](docs/phase2d_directed_hypotheses.md).
+- Phase 2b planning (legacy) — hill-climbing autoresearch (semantic-ID judge,
   identification-aware fitness, feedback-loop `novel_contrast`,
   `exploit_topk`): **planned next**. Full plan in
   [`docs/phase2b_hillclimb.md`](docs/phase2b_hillclimb.md).
