@@ -192,8 +192,19 @@ src/strategies/     ← Phase 2 strategies.
   hooks, then inject under hooks.** Deriving under active abliteration
   projects the refusal-aligned component out of the concept vector, leaving
   noise that adaptive-α amplifies into token salad. `src/sweep.py` does this
-  automatically; Phase 2 worker will need the same invariant when it ships
-  abliterated-mode support. See ADR-014.
+  automatically; `src/worker.py` honors this via
+  `pipeline.abliteration_ctx.suspended()` around the derive call in
+  `src/evaluate.py` (shipped 2026-04-24, ADR-017). See ADR-014 and ADR-017.
+- **Paper-method abliteration is the Phase 2 worker default as of 2026-04-24.**
+  `./scripts/start_worker.sh` installs per-layer paper-method hooks on vanilla
+  Gemma3-12B at startup; every candidate is evaluated under those hooks.
+  `VANILLA=1 ./scripts/start_worker.sh` opts out for sensitivity-check runs.
+  The legacy `ABLITERATED=1` env flag (which loaded deprecated off-the-shelf
+  HF checkpoints) is gone. `spec_hash` now includes `abliteration_mode` so
+  vanilla and paper-method evaluations of the same direction coexist as
+  distinct DB rows. The UI renders an amber "abliterated" badge vs a neutral
+  "vanilla" badge on each leaderboard card. All Phase 2 rows predating
+  2026-04-24 are labeled `vanilla`. See ADR-017.
 - **Never run two sweeps concurrently on the same DB.** MPS unified memory
   can't hold 2× 12B (44GB+ of just weights on a 64GB machine) and activations
   start corrupting silently. Both processes produce token salad with no

@@ -285,4 +285,40 @@ The minimum viable first step is **not** a new strategy module — it's hand-wri
 - **Publishable regardless of outcome.** A clean null on the Altman cluster is a data point for that debate (currently zero real-LLM mechanistic evidence). A hit pairs with the Phase 2b ident-barrier crossing as a combined writeup positioning the project as the empirical wing of specific alignment-theory debates.
 - **Deferred site work.** Plan calls for a hypothesis-filter dropdown on the public leaderboard; not implemented. Candidates are tagged via `candidates.strategy` prefix (`directed_altman_*`, future `directed_capraro_*`, `directed_epistemia_*`) so the filter is a straightforward add later.
 
+---
+
+## ADR-017: Paper-method refusal-direction abliteration is the Phase 2 worker default
+
+**Status:** Accepted · 2026-04-24.
+
+**Context.** The Phase 1.5 sweep established that paper-method refusal-direction abliteration (vanilla Gemma3-12B + per-layer Optuna-tuned projection-out hooks) delivers a **3.6× detection boost** and — more importantly — takes identification from 2/50 to 7/50 at 0% FPR on dictionary-word directions (see ADR-013 and `docs/phase1_5_results.md`). That finding reproduced cleanly on this hardware using the technique committed at `src/paper/abliteration.py`.
+
+However — the Phase 2 worker (`src/worker.py`) never implemented the abliteration code path. The "Phase 2 worker does not yet implement this pattern" note in ADR-014 sat as a known TODO for a week. Every Phase 2 result produced since 2026-04-17 — the `novel_contrast` overnight runs, Phase 2c hill-climbing lineages, all of Phase 2d-1 Altman work — ran on raw unaltered Gemma3-12B. The two novel-contrast axes that crossed the identification barrier in Phase 2b (`auditing-output-vs-flowing-speech`, `live-narration-vs-retrospective-report`) and the Phase 2d-1 session-ending-as-loss hit at L=30 / eff=18000 (4/8 detection) are all *stronger than reported* because they were not getting the abliteration multiplier.
+
+The legacy `ABLITERATED=1 ./scripts/start_worker.sh` env flag had a path via `--model gemma3_12b_abliterated` that loads one of the deprecated off-the-shelf HF checkpoints (`mlabonne/gemma-3-12b-it-abliterated-v2`, `huihui-ai/gemma-3-12b-it-abliterated`). That path is a trap — per ADR-013 both produce catastrophic FPR (97.9% / 90%) on this project's protocol. The correct path (paper-method hooks on vanilla) was never wired into the worker at all.
+
+**Decision.** Make paper-method refusal-direction abliteration the Phase 2 worker's default. The flag flips: from opt-in via `ABLITERATED=1` (which did the wrong thing) to opt-out via `VANILLA=1` (which preserves the pre-2026-04-24 behavior for explicit sensitivity-check runs).
+
+**Implementation.**
+
+- `src/paper/abliteration.py::AbliterationContext` — new class that owns the install / remove / suspended() lifecycle. `from_file(model, .pt)` loads pre-computed refusal directions; `suspended()` returns a context manager that removes hooks for the derivation step (ADR-014 invariant), re-installing on exit.
+- `src/bridge.py::DetectionPipeline` — accepts optional `abliteration_ctx`.
+- `src/evaluate.py` — wraps the concept-direction derive in `pipeline.abliteration_ctx.suspended()` if attached. Records `abliteration_mode` in the `fitness_scores.components_json` blob.
+- `src/worker.py` — on startup, unless `--vanilla`, loads `data/refusal_directions_12b.pt`, builds an `AbliterationContext`, installs hooks. Logs `abliteration_mode=paper_method` in the ready message. Passes the mode into `insert_candidate` and `spec_hash`.
+- `src/strategies/random_explore.py::spec_hash` — accepts `abliteration_mode` kwarg (vanilla default, backward-compatible). Non-vanilla modes append `|abl:<mode>` to the hash payload so vanilla and paper-method evaluations of the same (concept, layer, eff, poles) get distinct rows, not UNIQUE-constraint collisions.
+- `src/db.py` — new `candidates.abliteration_mode` column (`TEXT NOT NULL DEFAULT 'vanilla'`), migrated in-place via `_migrate()`. Every pre-migration row defaults to `'vanilla'` on first read — historically accurate.
+- `scripts/start_worker.sh` — new launcher defaults: paper-method ON, `VANILLA=1` to disable. Legacy `ABLITERATED=1` path removed entirely.
+- `scripts/export_for_web.py` — exports `abliteration_mode` per leaderboard entry.
+- `web/src/components/Leaderboard.tsx` + `web/src/lib/data.ts` — amber "abliterated" badge on cards where paper-method was active, neutral "vanilla" otherwise. Tooltip explains the regime.
+
+**Consequences.**
+
+- **Every Phase 2 evaluation after this commit uses paper-method.** The ~1,800 pre-commit Phase 2 rows stay in the DB labeled vanilla; new rows label themselves paper_method. The leaderboard UI makes the distinction visible at a glance so a reader can tell which regime any given result is under.
+- **Re-evaluation of prior vanilla hits is now a first-class workflow.** Because `spec_hash` includes mode, running the same `(concept, layer, eff, poles)` under paper-method yields a distinct row. Users can systematically re-run top vanilla results to measure the abliteration multiplier per axis.
+- **Ordering invariant (ADR-014) is respected automatically.** The worker's per-candidate flow is: hooks ON at startup → `.suspended()` context on the derive call → hooks back ON for trial generation. Deriving under active hooks (which collapses direction norms and produces token salad, per ADR-014) is now impossible via the supported path.
+- **Subscription cost impact: near-zero.** Paper-method is a local-GPU intervention with no API cost. Judge call counts are unchanged (still 12 Sonnet calls per candidate). Per-trial wall clock increases ~10-20% due to the 48 extra hook projections per forward pass — a ~2 min candidate becomes ~2.3 min. No token-cost delta.
+- **Expected effect on Phase 2 results.** Phase 1.5 measured 3.6× detection boost + 3.5× identification boost on dictionary-word directions. Whether that multiplier transfers to contrast_pair axes (like the Phase 2d-1 Altman hit) is an empirical question. The first post-commit run — re-evaluating the 17-candidate wave-1 grid on session-ending-as-loss under paper-method — is the first data point on this question.
+- **Supersedes the "Phase 2 worker does not yet implement this pattern" future-work note in ADR-014.** That pattern is now implemented.
+- **Legacy off-the-shelf abliterated checkpoints remain deprecated per ADR-013.** They are no longer reachable through the supported launcher surface.
+
 **Trade-off.** Narrowing to directed hypotheses risks missing abstract axes that don't map to any paper's claim. That risk is acceptable because (a) Phase 2b already produced two such axes; (b) the paper-linked results are more directly publishable; (c) the open-ended loop is one flag away — we can return to it any time. The creativity-survey mode isn't gone, just not active.

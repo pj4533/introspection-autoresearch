@@ -158,3 +158,9 @@ Two observations on these texts:
 The plan's follow-on for a positive hit is more variants *around* the hitting theme (the session-endpoint / micro-event / bounded-interaction framing) to test whether the axis has a broader representational family or is narrow to this one phrasing. The 9 null Opus variants only tested L=33/eff=18000; re-sweeping them at L=30 is also worth checking since the new peak layer is L=30, not L=33.
 
 Paused here for user decision on whether to continue exhausting or move to Phase 2d-2 (Capraro).
+
+### Important scope note: all results above are on VANILLA Gemma3-12B
+
+Every Phase 2d-1 result documented in this section — 48 hand-written seed-pair candidates, 10 Opus-generated variants, 17-candidate wave 1 validation — ran on raw Gemma3-12B with no paper-method refusal-direction abliteration hooks in effect. Prior to 2026-04-24 the Phase 2 worker did not implement paper-method abliteration at all (see ADR-017). The 4/8 peak detection at L=30/eff=18k on `session-ending-as-loss` is a *vanilla* result.
+
+Phase 1.5 measured a **3.6× detection multiplier** and **3.5× identification multiplier** for paper-method abliteration on dictionary-word directions. Whether that transfers to contrast_pair axes is an open empirical question — and specifically, whether identification crosses from 0/8 to a non-zero rate under abliteration on this axis is the headline open question. The worker was re-launched with paper-method as the default immediately after this writeup; the next 17-candidate wave 1 re-evaluation of the session-ending-as-loss axis under paper-method is the first answer to that question.
