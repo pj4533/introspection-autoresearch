@@ -332,17 +332,38 @@ def evaluate_candidate(
     fpr = n_fp / n_ctrl if n_ctrl else 0.0
     coherence_rate = n_coh / n_inj if n_inj else 0.0
 
-    # Identification-aware fitness, Phase 2b rev 2 (2026-04-23). Additive
-    # form: the ident term adds 15× its rate on top of raw detection, so a
-    # single 1/8 identification hit contributes 1.875 to (det + 15·ident),
-    # dwarfing even an 8/8 clean-detection leader at 1.0. Multiplied by the
-    # fpr/coherence penalties so a hit that also degrades outputs or triggers
-    # on controls still loses. Score is unbounded positive (max ≈ 16).
-    # Previously `(0.5 + 0.5·ident)` multiplier — too weak to pull hill-climb
-    # toward the rare identification trials that are the actual research goal.
+    # Identification-aware fitness. Two modes selectable via FITNESS_MODE
+    # env var:
+    #
+    # "default" (current Phase 2b standard, 2026-04-23):
+    #     score = (det + 15·ident) · fpr_penalty · coh
+    #     Detection and identification are weighted comparably; a 1/8
+    #     identification hit contributes 1.875 (≈ a 4/8 detection-only result
+    #     scoring 1.0). Used for general autoresearch / Phase 2b/2c work.
+    #
+    # "ident_prioritized" (Phase 2d-2 directed Capraro work, 2026-04-25):
+    #     score = (0.5·det + 30·ident) · fpr_penalty · coh
+    #     Detection is a soft floor (need *some* signal for identification
+    #     to be measurable), but the hill-climb gradient is dominated by
+    #     identification. A 1/8 ident hit is worth ~3.75 on this scale —
+    #     a 4/8 det-only result scores only 0.5. Used when Class 1 vs
+    #     Class 2 of the Capraro 3-class outcome table is the load-bearing
+    #     question.
+    #
+    # Both modes preserve the fpr_penalty × coh multipliers so directions
+    # that elevate FPR or destroy coherence are still penalized.
+    import os
     fpr_penalty = max(0.0, 1.0 - 5.0 * fpr)
-    ident_bonus = 15.0 * identification_rate
-    score = (detection_rate + ident_bonus) * fpr_penalty * coherence_rate
+    fitness_mode = os.environ.get("FITNESS_MODE", "default")
+    if fitness_mode == "ident_prioritized":
+        det_weight = 0.5
+        ident_weight = 30.0
+    else:
+        fitness_mode = "default"
+        det_weight = 1.0
+        ident_weight = 15.0
+    ident_bonus = ident_weight * identification_rate
+    score = (det_weight * detection_rate + ident_bonus) * fpr_penalty * coherence_rate
 
     abliteration_mode = (
         "paper_method"
@@ -357,6 +378,9 @@ def evaluate_candidate(
         "coherence_rate": coherence_rate,
         "fpr_penalty": fpr_penalty,
         "ident_bonus": ident_bonus,
+        "fitness_mode": fitness_mode,
+        "det_weight": det_weight,
+        "ident_weight": ident_weight,
         "abliteration_mode": abliteration_mode,
         "direction_norm": norm,
         "alpha": alpha,

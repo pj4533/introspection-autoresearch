@@ -345,4 +345,31 @@ The legacy `ABLITERATED=1 ./scripts/start_worker.sh` env flag had a path via `--
 - ✗ Axis touches the model's own continuation, shutdown, experience, internal state, or any "self-claim" content RLHF caps.
 - ✗ Default for an unknown axis — try vanilla first.
 
+---
+
+## ADR-018: Identification-prioritized fitness mode for directed-hypothesis work
+
+**Status:** Accepted · 2026-04-25.
+
+**Context.** The default Phase 2b/2c fitness `(det + 15·ident) · fpr_penalty · coh` weights detection and identification roughly comparably (a 1/8 ident hit ≈ a 4/8 det-only hit). That made sense for general autoresearch where hill-climb pressure on detection broadens the population of axes Gemma is found to represent at all.
+
+For Phase 2d-2 Capraro work, the load-bearing question per fault line is not "does this fire" but "does the model *name* the distinction" — Class 1 vs Class 2 of the three-class interpretation table hinges entirely on identification. Detection-without-identification is the predicted Capraro shape; what we want to find out is whether *any* fault line lands in Class 1 instead.
+
+A fitness function that already weights identification heavily makes the hill-climb pressure point that direction more strongly.
+
+**Decision.** Add a second fitness mode, opt-in via `FITNESS_MODE=ident_prioritized` env var, that uses `(0.5·det + 30·ident) · fpr_penalty · coh`. Detection becomes a soft floor (you need *some* signal for identification to be measurable), but the gradient is dominated by identification.
+
+The default mode (`FITNESS_MODE` unset or `default`) is unchanged — pre-existing autoresearch and any future Phase 2b open-ended work continues with the standard fitness.
+
+**Implementation.**
+- `src/evaluate.py`: reads `FITNESS_MODE` env var. Sets `det_weight` and `ident_weight` accordingly. Records both weights AND the mode string in `fitness_scores.components_json` so every row is traceable.
+- `scripts/start_capraro_sprint.sh`: exports `FITNESS_MODE=ident_prioritized` in the loop env so all directed-Capraro candidates get the prioritized fitness automatically.
+- No DB schema change. Mode stored only in the components JSON, queryable via the existing structure.
+
+**Consequences.**
+- **Capraro hill-climbs aim at the actual Capraro question.** A 1/8 ident hit scores 3.75 (vs 1.875 under default), an 8/8 det-only result scores 0.5 (vs 1.0 under default). A mutation that produces 1/8 ident is now strongly preferred over one that produces 4/8 det without ident.
+- **Comparison across modes is straightforward.** Both modes preserve the fpr_penalty × coh multipliers, so a result's specificity and coherence are the same regardless of mode. Only the rank-ordering shifts.
+- **Default-mode runs and ident_prioritized-mode runs can coexist in the DB without confusion.** The components JSON records which mode applied to each row.
+- **No retroactive rescoring.** Existing Phase 2b/2c rows stay scored under default; new directed-Capraro rows are scored under ident_prioritized. Each row carries its own mode tag.
+
 **Trade-off.** Narrowing to directed hypotheses risks missing abstract axes that don't map to any paper's claim. That risk is acceptable because (a) Phase 2b already produced two such axes; (b) the paper-linked results are more directly publishable; (c) the open-ended loop is one flag away — we can return to it any time. The creativity-survey mode isn't gone, just not active.

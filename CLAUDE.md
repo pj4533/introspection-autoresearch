@@ -90,6 +90,17 @@ plan file, it's a bug. Commit it to `docs/roadmap.md` (forward-looking) or
   potential fixes (batching, persistent-session caching) break per-call
   judgment isolation — see the investigation in session memory. Local-Qwen
   judge remains the deferred option.
+- Phase 2d-2 — Capraro fault-line probes, **infrastructure shipped
+  2026-04-25, runs not yet started.** New strategy
+  `directed_capraro` with per-fault-line Opus briefs and feedback loops
+  scoped to each fault line. Registry in `src/strategies/hypotheses.py`
+  with C1-C4 (Experience, Causality, Grounding, Metacognition) drafted;
+  C5-C7 deferred until C1-C4 produces data. Sprint launcher
+  `scripts/start_capraro_sprint.sh <fault_line>` runs a focused worker+
+  researcher pair per fault line. Identification-prioritized fitness
+  (ADR-018) is set automatically by the sprint script — Capraro's 3-class
+  outcome table hinges on identification, not raw detection. Order of
+  attack: Causality → Grounding → Metacognition → Experience.
 - Phase 2d — directed-hypothesis novel_contrast, **IN PROGRESS 2026-04-24**.
   Instead of open-ended axis invention, aim the `contrast_pair` machinery
   at specific structural claims from recent papers. Three clusters run

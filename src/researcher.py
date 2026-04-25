@@ -29,8 +29,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.db import ResultsDB
+from src.strategies.directed_capraro import generate_candidates as directed_capraro_generate
 from src.strategies.exploit_topk import generate_candidates as exploit_topk_generate
 from src.strategies.hillclimb import generate_candidates as hillclimb_generate
+from src.strategies.hypotheses import list_fault_lines
 from src.strategies.novel_contrast import generate_candidates as novel_contrast_generate
 from src.strategies.random_explore import (
     generate_candidates as random_generate,
@@ -52,7 +54,15 @@ CONCEPT_POOL_PATH = REPO / "data" / "eval_sets" / "concept_pool.json"
 #   mixed          — novel_contrast (70%) + exploit_topk (30%), Phase 2b mix
 #   hillclimb      — Phase 2c REAL autoresearch: per-lineage mutation with
 #                    commit-on-improvement, revert-on-failure
-STRATEGIES = ("random", "novel_contrast", "exploit_topk", "both", "mixed", "hillclimb")
+#   directed_capraro — Phase 2d-2: Capraro fault-line probes. Requires
+#                    --fault-line. Two sub-modes via --capraro-mode:
+#                    "seed" (emit hand-written seeds, no Opus) or "opus"
+#                    (Opus variants targeted at the fault line, with
+#                    feedback from prior fault-line results).
+STRATEGIES = (
+    "random", "novel_contrast", "exploit_topk", "both", "mixed", "hillclimb",
+    "directed_capraro",
+)
 
 
 def main() -> int:
@@ -71,6 +81,21 @@ def main() -> int:
     ap.add_argument("--pending-dir", type=Path, default=QUEUE_PENDING)
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--seed", type=int, default=None)
+    ap.add_argument(
+        "--fault-line",
+        choices=list_fault_lines(),
+        default=None,
+        help="Required when --strategy=directed_capraro. Selects which "
+             "Capraro fault line to target.",
+    )
+    ap.add_argument(
+        "--capraro-mode",
+        choices=("seed", "opus"),
+        default="opus",
+        help="directed_capraro sub-mode. 'seed' emits hand-written pairs "
+             "with no Opus call. 'opus' (default) asks Opus for variants "
+             "biased by feedback from prior fault-line results.",
+    )
     args = ap.parse_args()
 
     if args.db is None:
@@ -124,6 +149,17 @@ def main() -> int:
             n=args.n,
             db=db,
             rng_seed=args.seed,
+        ))
+    if args.strategy == "directed_capraro":
+        if args.fault_line is None:
+            ap.error("--strategy=directed_capraro requires --fault-line "
+                     f"(one of: {', '.join(list_fault_lines())})")
+        candidates.extend(directed_capraro_generate(
+            n=args.n,
+            db=db,
+            fault_line_id=args.fault_line,
+            mode=args.capraro_mode,
+            seed=args.seed,
         ))
 
     print(

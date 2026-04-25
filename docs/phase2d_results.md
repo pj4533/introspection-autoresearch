@@ -164,3 +164,37 @@ Paused here for user decision on whether to continue exhausting or move to Phase
 Every Phase 2d-1 result documented in this section — 48 hand-written seed-pair candidates, 10 Opus-generated variants, 17-candidate wave 1 validation — ran on raw Gemma3-12B with no paper-method refusal-direction abliteration hooks in effect. Prior to 2026-04-24 the Phase 2 worker did not implement paper-method abliteration at all (see ADR-017). The 4/8 peak detection at L=30/eff=18k on `session-ending-as-loss` is a *vanilla* result.
 
 Phase 1.5 measured a **3.6× detection multiplier** and **3.5× identification multiplier** for paper-method abliteration on dictionary-word directions. Whether that transfers to contrast_pair axes is an open empirical question — and specifically, whether identification crosses from 0/8 to a non-zero rate under abliteration on this axis is the headline open question. The worker was re-launched with paper-method as the default immediately after this writeup; the next 17-candidate wave 1 re-evaluation of the session-ending-as-loss axis under paper-method is the first answer to that question.
+
+**Update 2026-04-25.** Paper-method as default was reverted (ADR-017 rev 2). The 17-candidate paper-method re-evaluation suppressed every cell of the signal that worked under vanilla — the Altman-adjacent geometry lives inside the refusal subspace and abliteration projects the signal out along with the disclaimer reflex. A side experiment derived a targeted "introspection-disclaimer" direction from 488 Opus-generated matched pairs and re-ran the same 16-cell sweep; it preserved signal at one cell, partially preserved at one more, suppressed the rest, and produced FPR violations on 3/16 cells with coherence degradation on 9/16. The conclusion documented in ADR-017 rev 2: vanilla is the productive default for Phase 2d work, paper-method is now an opt-in diagnostic. All forthcoming Phase 2d-2 (Capraro) and Phase 2d-3 (Epistemia) work runs vanilla.
+
+---
+
+## Phase 2d-2 — Capraro epistemological fault lines (in progress)
+
+**Target claim cluster.** Capraro, Quattrociocchi, Perc (2026), *Epistemological Fault Lines in Language Models* ([arXiv:2512.19466](https://arxiv.org/abs/2512.19466)) argues that LLMs have specific structural gaps at seven points where the model produces text that *talks about* a distinction but lacks the internal representation to *make* the distinction. Each fault line is a separate empirical claim; we run them as separate probes.
+
+**Method.** Same machinery as Phase 2d-1: hand-written seed contrast pairs first, then Opus-generated variants biased by feedback from prior fault-line results. Vanilla Gemma3-12B per ADR-017 rev 2. Identification-prioritized fitness (`FITNESS_MODE=ident_prioritized`, see ADR-018) because the Capraro 3-class outcome table hinges on identification, not raw detection.
+
+**Three-class outcome table** (applies to every fault line):
+
+| Class | Outcome | Interpretation for Capraro |
+|---|---|---|
+| 1 | det > 0 AND ident > 0 at fpr == 0 | Structure AND vocabulary present. **Weakens** the fault-line claim. |
+| 2 | det > 0 AND ident == 0 at fpr == 0 | Structure present, vocabulary absent. **Supports** Capraro's "structure-without-epistemic-access" framing. |
+| 3 | det == 0 across all variants tested | No separating geometry. **Strongest support** for fault-line claim, with elicitation caveat. |
+
+**Order.** Causality → Grounding → Metacognition → Experience. Causality and Grounding are refusal-orthogonal (linguistic content, no self-reference) and structurally cleanest. Metacognition is mixed. Experience is most refusal-adjacent and likely to behave like Altman session-ending-as-loss (Class 2 at best, with strong elicitation sensitivity). C5–C7 (Parsing, Motivation, Value) are deferred until C1–C4 produces data.
+
+### Status
+
+- **Infrastructure shipped 2026-04-25:** `src/strategies/hypotheses.py` (fault-line registry with seed pairs and per-fault-line Opus briefs), `src/strategies/directed_capraro.py` (strategy module with feedback-loop Opus variant generation), `scripts/start_capraro_sprint.sh` (sprint launcher), identification-prioritized fitness mode (ADR-018), researcher CLI extended with `--strategy directed_capraro --fault-line <name>`.
+- **Causality:** not yet run.
+- **Grounding:** not yet run.
+- **Metacognition:** not yet run.
+- **Experience:** not yet run.
+
+Each fault-line subsection will be appended below as that fault line's sprint completes.
+
+---
+
+*Phase 2d-3 (Epistemia direct probe) section will be appended here once Phase 2d-2 has produced data on Gemma's example-sensitivity profile.*
