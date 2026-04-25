@@ -386,6 +386,9 @@ def generate_candidates(
                     "negative": pair["negative"],
                     "rationale": pair.get("rationale", ""),
                 },
+                # ADR-018: directed Capraro candidates always score under
+                # ident-prioritized fitness regardless of worker env.
+                fitness_mode="ident_prioritized",
             )
             h = spec_hash(spec)
             if h in seen_this_batch or db.has_candidate_hash(h):

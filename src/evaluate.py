@@ -73,6 +73,12 @@ class CandidateSpec:
     # Only populated when derivation_method == "contrast_pair". Shape:
     #   {"axis": str, "positive": list[str], "negative": list[str]}
     contrast_pair: Optional[dict] = None
+    # Per-candidate fitness mode (ADR-018). Strategy generators set this
+    # explicitly when they want non-default scoring (e.g. directed_capraro
+    # sets "ident_prioritized" so its candidates are ranked by identification).
+    # Falls back to FITNESS_MODE env var if unset, then to "default".
+    # Values: "default" or "ident_prioritized".
+    fitness_mode: Optional[str] = None
 
     @classmethod
     def from_dict(cls, d: dict) -> "CandidateSpec":
@@ -86,6 +92,7 @@ class CandidateSpec:
             baseline_n=int(d.get("baseline_n", 32)),
             notes=d.get("notes", ""),
             contrast_pair=d.get("contrast_pair"),
+            fitness_mode=d.get("fitness_mode"),
         )
 
     def to_dict(self) -> dict:
@@ -101,6 +108,8 @@ class CandidateSpec:
         }
         if self.contrast_pair is not None:
             out["contrast_pair"] = self.contrast_pair
+        if self.fitness_mode is not None:
+            out["fitness_mode"] = self.fitness_mode
         return out
 
 
@@ -354,7 +363,13 @@ def evaluate_candidate(
     # that elevate FPR or destroy coherence are still penalized.
     import os
     fpr_penalty = max(0.0, 1.0 - 5.0 * fpr)
-    fitness_mode = os.environ.get("FITNESS_MODE", "default")
+    # Resolution order for fitness_mode: per-spec field > FITNESS_MODE env
+    # var > "default". Per-spec is the right answer because it lets a
+    # mixed queue of strategies score each candidate under whatever mode
+    # the strategy that GENERATED the candidate intended (rather than
+    # whatever mode the worker happens to be running with).
+    spec_mode = getattr(spec, "fitness_mode", None)
+    fitness_mode = spec_mode or os.environ.get("FITNESS_MODE", "default")
     if fitness_mode == "ident_prioritized":
         det_weight = 0.5
         ident_weight = 30.0
