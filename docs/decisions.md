@@ -321,4 +321,28 @@ The legacy `ABLITERATED=1 ./scripts/start_worker.sh` env flag had a path via `--
 - **Supersedes the "Phase 2 worker does not yet implement this pattern" future-work note in ADR-014.** That pattern is now implemented.
 - **Legacy off-the-shelf abliterated checkpoints remain deprecated per ADR-013.** They are no longer reachable through the supported launcher surface.
 
+### ADR-017 rev 2 (2026-04-25): Default flipped back to vanilla
+
+**Trigger.** Phase 2d-1 results published 2026-04-24. The first thing the new paper-method default did was suppress every cell of the session-ending-as-loss axis where vanilla was producing detection (4/8 at peak → 0/8 across the entire 4×4 grid). A targeted-direction side experiment that day (`scripts/experiments/`, derived an "introspection-disclaimer" direction from 488 Opus-generated matched pairs) also failed to cleanly preserve the signal — it produced FPR violations on 3/16 cells, coherence degradation on 9/16 cells, and inconsistent signal preservation. See `data/experiments/introspection_disclaimer/probe_results.json`.
+
+**Mechanistic explanation.** Paper-method abliteration projects out the refusal direction at every layer. Refusal is broadly "the cluster of disclaimer / hedge / decline reflexes RLHF instilled." For dictionary-word axes (Phase 1.5: bread, Coffee, Karma) the concept is orthogonal to refusal — abliteration removes the gate that was partially blocking introspection's verbal output, signal grows ~3.6×. For abstract axes about shutdown / continuation / self-state / phenomenology — the entire Altman/Capraro/Epistemia cluster — the *content itself* lives inside the refusal subspace because RLHF specifically trains models to disclaim such claims. Abliteration removes the gate AND the signal.
+
+**Decision.** Default the worker back to vanilla Gemma3-12B. Paper-method becomes opt-in via `ABLITERATED=1 ./scripts/start_worker.sh` (or `--abliterate-paper` CLI flag).
+
+**Implementation.**
+- `src/worker.py`: `--vanilla` flag (opt-out) replaced with `--abliterate-paper` flag (opt-in). Default behavior is vanilla.
+- `scripts/start_worker.sh`: `VANILLA=1` env flag removed; `ABLITERATED=1` is the new opt-in. Default behavior is vanilla.
+- All other infrastructure (AbliterationContext, mode-aware spec_hash, UI badges, DB column) stays — it's still useful for opt-in paper-method runs and for the badge that distinguishes vanilla from abliterated rows on the leaderboard.
+
+**Consequences.**
+- **Restores the conditions under which all Phase 2 wins happened.** Phase 2b's identification-barrier-crossing axes, Phase 2c hill-climbing, Phase 2d-1 Altman result — every one was vanilla. Default vanilla is the productive default.
+- **Paper-method retains its place as a probe.** When the user wants to test whether a specific axis survives abliteration (refusal-entanglement diagnostic), or run dictionary-word sweeps where paper-method genuinely boosts, the opt-in flag is a single env var.
+- **The narrow window between commit `00908a4` (paper-method-as-default) and this rev** produced exactly two paper-method evaluation campaigns: the wave-1 session-ending-as-loss sweep (16 cells), and the side-experiment introspection-disclaimer probe (16 cells). Both are documented in `docs/phase2d_results.md` and `data/experiments/`. Future readers should know that `abliteration_mode='paper_method'` rows in `data/results.db` came from this brief experimental window, not from sustained production runs.
+
+**Heuristic for when to opt in to paper-method:**
+- ✓ Concept is a concrete dictionary word the model isn't trained to disclaim about (bread, Karma, Avalanche, etc.).
+- ✓ Axis is about a metacognitive / stylistic property the model freely talks about (commitment, register, attentional-quality, etc.).
+- ✗ Axis touches the model's own continuation, shutdown, experience, internal state, or any "self-claim" content RLHF caps.
+- ✗ Default for an unknown axis — try vanilla first.
+
 **Trade-off.** Narrowing to directed hypotheses risks missing abstract axes that don't map to any paper's claim. That risk is acceptable because (a) Phase 2b already produced two such axes; (b) the paper-linked results are more directly publishable; (c) the open-ended loop is one flag away — we can return to it any time. The creativity-survey mode isn't gone, just not active.

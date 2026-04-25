@@ -262,8 +262,8 @@ def main() -> int:
                     help="SQLite DB path.")
     ap.add_argument("--model", default="gemma3_12b",
                     help="Model slug (from MODEL_NAME_MAP). Leave as default; "
-                         "paper-method abliteration rides on vanilla Gemma via "
-                         "--abliterate-paper/--vanilla. The legacy "
+                         "paper-method abliteration rides on vanilla Gemma "
+                         "via --abliterate-paper. The legacy "
                          "'gemma3_12b_abliterated' slug points at deprecated "
                          "off-the-shelf HF checkpoints (see ADR-013) and "
                          "should not be used.")
@@ -280,12 +280,15 @@ def main() -> int:
              "abliteration.",
     )
     ap.add_argument(
-        "--vanilla",
+        "--abliterate-paper",
         action="store_true",
-        help="Disable paper-method abliteration. Default is ON — the worker "
-             "installs per-layer abliteration hooks at startup and every "
-             "candidate is evaluated with them active (ADR-017). Pass this "
-             "flag for sensitivity-check vanilla runs.",
+        help="Enable paper-method refusal-direction abliteration. Default is "
+             "OFF — the worker runs on vanilla Gemma3-12B (ADR-017 rev 2, "
+             "2026-04-25). Pass this flag for axes where paper-method is "
+             "appropriate (dictionary-word directions; non-refusal-adjacent "
+             "abstract axes). For Altman/Capraro/Epistemia-style content, "
+             "leave OFF — the signal lives inside the refusal subspace and "
+             "abliteration suppresses it (Phase 2d-1 finding, 2026-04-24).",
     )
     args = ap.parse_args()
 
@@ -299,14 +302,13 @@ def main() -> int:
         cache_path=REPO / "data" / "judge_cache.sqlite",
     )
 
-    # Paper-method abliteration (ADR-017): install per-layer refusal-direction
-    # projection-out hooks on the vanilla model at startup. Each candidate's
-    # direction derivation is automatically wrapped in ctx.suspended() by
-    # evaluate_candidate so ADR-014 is honored — derive on vanilla, inject
-    # under hooks.
+    # Paper-method abliteration (ADR-017 rev 2): OPT-IN via --abliterate-paper.
+    # Default is vanilla Gemma3-12B. Whenever paper-method IS active, each
+    # candidate's direction derivation is automatically wrapped in
+    # ctx.suspended() by evaluate_candidate so ADR-014 is honored.
     abliteration_ctx = None
     abliteration_mode = "vanilla"
-    if not args.vanilla:
+    if args.abliterate_paper:
         if not args.refusal_directions.exists():
             print(
                 f"[worker] ERROR: --refusal-directions {args.refusal_directions} "
@@ -335,8 +337,9 @@ def main() -> int:
         )
     else:
         print(
-            "[worker] --vanilla flag set — paper-method abliteration DISABLED. "
-            "Candidates will run on raw Gemma3-12B (pre-2026-04-24 behavior).",
+            "[worker] running VANILLA Gemma3-12B (default mode). "
+            "Pass --abliterate-paper to enable paper-method abliteration "
+            "for refusal-orthogonal axes.",
             flush=True,
         )
 

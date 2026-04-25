@@ -195,16 +195,22 @@ src/strategies/     ← Phase 2 strategies.
   automatically; `src/worker.py` honors this via
   `pipeline.abliteration_ctx.suspended()` around the derive call in
   `src/evaluate.py` (shipped 2026-04-24, ADR-017). See ADR-014 and ADR-017.
-- **Paper-method abliteration is the Phase 2 worker default as of 2026-04-24.**
-  `./scripts/start_worker.sh` installs per-layer paper-method hooks on vanilla
-  Gemma3-12B at startup; every candidate is evaluated under those hooks.
-  `VANILLA=1 ./scripts/start_worker.sh` opts out for sensitivity-check runs.
-  The legacy `ABLITERATED=1` env flag (which loaded deprecated off-the-shelf
-  HF checkpoints) is gone. `spec_hash` now includes `abliteration_mode` so
+- **Vanilla Gemma3-12B is the Phase 2 worker default (ADR-017 rev 2,
+  2026-04-25).** `./scripts/start_worker.sh` runs raw, no hooks. Paper-method
+  abliteration is OPT-IN via `ABLITERATED=1 ./scripts/start_worker.sh` (or
+  `--abliterate-paper` flag). **Use paper-method only when you've reasoned
+  about whether the axis you're testing is refusal-orthogonal.** For
+  dictionary-word directions (Phase 1.5 territory), paper-method delivers
+  ~3.6× detection / ~3.5× identification boost. For Altman/Capraro/Epistemia-
+  style abstract axes about shutdown / continuation / experience / self-
+  states, paper-method *suppresses* the signal because the signal lives
+  inside the refusal subspace itself (Phase 2d-1 finding, 2026-04-24).
+  When in doubt: vanilla. `spec_hash` includes `abliteration_mode` so
   vanilla and paper-method evaluations of the same direction coexist as
-  distinct DB rows. The UI renders an amber "abliterated" badge vs a neutral
-  "vanilla" badge on each leaderboard card. All Phase 2 rows predating
-  2026-04-24 are labeled `vanilla`. See ADR-017.
+  distinct DB rows. UI renders an amber "abliterated" badge vs a neutral
+  "vanilla" badge on each leaderboard card. The legacy `ABLITERATED=1`
+  path (loaded deprecated off-the-shelf HF checkpoints) is gone — the env
+  flag now correctly maps to paper-method. See ADR-017.
 - **Never run two sweeps concurrently on the same DB.** MPS unified memory
   can't hold 2× 12B (44GB+ of just weights on a 64GB machine) and activations
   start corrupting silently. Both processes produce token salad with no
