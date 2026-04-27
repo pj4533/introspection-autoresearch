@@ -226,9 +226,10 @@ def _phase_a_one(
     db.set_candidate_status(spec.id, "running")
     moved = _move(path, QUEUE / "running")
 
+    fault_tag = spec.strategy.removeprefix("directed_capraro_") if spec.strategy.startswith("directed_capraro_") else spec.strategy
     print(
-        f"[{datetime.now().strftime('%H:%M:%S')}] gen-A    {spec.id}  "
-        f"concept={spec.concept!r} L={spec.layer_idx} "
+        f"[{datetime.now().strftime('%H:%M:%S')}] gen-A    [{fault_tag}] "
+        f"{spec.id}  concept={spec.concept!r} L={spec.layer_idx} "
         f"eff={spec.target_effective:.0f}",
         flush=True,
     )
@@ -282,9 +283,18 @@ def _phase_b_drain(
     items_by_id = {it.candidate_id: it for it in items}
 
     for cid in candidate_ids + orphan_ids:
+        # Resolve fault-line tag for log readability. For non-orphans, use
+        # the in-memory item; for orphans, look up strategy from DB.
+        it = items_by_id.get(cid)
+        if it is not None:
+            strat = it.spec.strategy
+        else:
+            row = db.get_candidate(cid)
+            strat = row["strategy"] if row else "unknown"
+        fault_tag = strat.removeprefix("directed_capraro_") if strat.startswith("directed_capraro_") else strat
         try:
             print(
-                f"[{datetime.now().strftime('%H:%M:%S')}] judge-B  {cid}",
+                f"[{datetime.now().strftime('%H:%M:%S')}] judge-B  [{fault_tag}] {cid}",
                 flush=True,
             )
             result = phase_b_judge(
@@ -320,8 +330,10 @@ def _phase_b_drain(
             _move(it.queue_running_path, QUEUE / "done")
             _maybe_promote_mutation(db, cid, it.lineage_meta, result.score)
         print(
-            f"[{datetime.now().strftime('%H:%M:%S')}] done     {cid}  "
-            f"score={result.score:.3f}",
+            f"[{datetime.now().strftime('%H:%M:%S')}] done     [{fault_tag}] "
+            f"{cid}  score={result.score:.3f} "
+            f"det={result.detection_rate:.2f} ident={result.identification_rate:.2f} "
+            f"fpr={result.fpr:.2f} coh={result.coherence_rate:.2f}",
             flush=True,
         )
 
