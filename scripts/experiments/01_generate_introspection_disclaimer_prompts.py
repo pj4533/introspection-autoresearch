@@ -239,8 +239,11 @@ def main() -> int:
             print(f"[batch {batch_num}] parse failed: {e}", flush=True)
             print(f"  raw preview: {raw[:500]!r}", flush=True)
             continue
-        if len(pairs) < MIN_PAIRS_PER_BATCH:
-            print(f"[batch {batch_num}] only {len(pairs)} valid pairs (minimum {MIN_PAIRS_PER_BATCH}) — retrying", flush=True)
+        # Minimum acceptable yield scales with what we asked for — no point in
+        # demanding 25 valid pairs when we only asked for 17 near the end.
+        min_required = min(MIN_PAIRS_PER_BATCH, max(5, int(ask_for * 0.6)))
+        if len(pairs) < min_required:
+            print(f"[batch {batch_num}] only {len(pairs)} valid pairs (minimum {min_required} for this batch) — retrying", flush=True)
             continue
 
         # Dedup positives we've already seen
