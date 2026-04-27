@@ -415,21 +415,14 @@ def main_loop(
             break
 
         # ---------- A. GENERATE -----------------------------------------
-        registry.activate(registry.gemma)
-        pipeline = registry.gemma.obj
+        # Cheap pre-check: if the queue file system is empty AND no orphan
+        # pending rows are waiting for judging, skip Phase A entirely and
+        # go straight to Phase C — no point loading Gemma just to unload
+        # it again. This saves ~30s of swap I/O per empty cycle.
         items: list[PhaseAItem] = []
-        while len(items) < batch_size and not _shutdown:
-            path = _oldest_pending()
-            if path is None:
-                break
-            it = _phase_a_one(
-                path, pipeline, db, held_out, controls, abliteration_mode
-            )
-            if it is not None:
-                items.append(it)
-
-        if not items and len(db.pending_candidate_ids()) == 0:
-            # Queue empty AND no orphan pending — go straight to Phase C.
+        queue_has_work = _oldest_pending() is not None
+        orphan_count = len(db.pending_candidate_ids())
+        if not queue_has_work and orphan_count == 0:
             print(
                 f"[{datetime.now().strftime('%H:%M:%S')}] queue empty + no "
                 "pending; jumping to Phase C",
@@ -437,6 +430,19 @@ def main_loop(
             )
             registry.unload_all()
         else:
+            registry.activate(registry.gemma)
+            pipeline = registry.gemma.obj
+            while len(items) < batch_size and not _shutdown:
+                path = _oldest_pending()
+                if path is None:
+                    break
+                it = _phase_a_one(
+                    path, pipeline, db, held_out, controls, abliteration_mode
+                )
+                if it is not None:
+                    items.append(it)
+
+        if items or orphan_count > 0:
             # Phase B: JUDGE
             registry.activate(registry.judge)
             judge = judge_factory(registry.judge.obj)
@@ -532,10 +538,18 @@ def main() -> int:
     print(f"           judge:    {args.judge_model_path}", flush=True)
     print(f"           proposer: {args.proposer_model_path}", flush=True)
 
+    # `expected_ram_gb=0` disables the strict pre-check: in practice
+    # vm_stat under-reports free memory (compressor + cache lag), MLX holds
+    # internal references we can't always release from Python, and torch's
+    # MPS allocator caches buffers across unloads. Tight numerical gates
+    # produce false-positive failures that block healthy runs. The base
+    # class still enforces a 4 GB minimum so a truly-OOM machine fails
+    # fast, but otherwise we trust the OS to manage allocation pressure
+    # and let torch/MLX raise on actual OOM.
     registry = HandleRegistry(
-        gemma=GemmaHandle(model_id=args.gemma_model, expected_ram_gb=24.0),
-        judge=MLXHandle(model_path=args.judge_model_path, expected_ram_gb=40.0),
-        proposer=MLXHandle(model_path=args.proposer_model_path, expected_ram_gb=32.0),
+        gemma=GemmaHandle(model_id=args.gemma_model, expected_ram_gb=0.0),
+        judge=MLXHandle(model_path=args.judge_model_path, expected_ram_gb=0.0),
+        proposer=MLXHandle(model_path=args.proposer_model_path, expected_ram_gb=0.0),
     )
 
     db = ResultsDB(args.db)
@@ -543,7 +557,7 @@ def main() -> int:
     print(f"[worker] eval set: {len(held_out)} held-out, "
           f"{len(controls)} controls", flush=True)
 
-    return main_loop(
+    main_loop(
         registry=registry,
         db=db,
         held_out=held_out,
@@ -557,6 +571,7 @@ def main() -> int:
         max_cycles=args.max_cycles,
         abliteration_mode="vanilla",
     )
+    return 0
 
 
 if __name__ == "__main__":

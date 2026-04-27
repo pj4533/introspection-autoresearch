@@ -58,11 +58,15 @@ class DetectionPipeline:
     def __init__(
         self,
         model: ModelWrapper,
-        judge: Judge,
+        judge: Optional[Judge] = None,
         baseline_words: Optional[list[str]] = None,
         baseline_n: int = 32,
         abliteration_ctx=None,
     ):
+        # `judge` is None in the four-phase worker — Phase A only generates
+        # responses; Phase B loads the judge separately and scores from
+        # pending_responses. Legacy callers (notebook MVP) pass an inline
+        # Judge for end-to-end runs.
         self.model = model
         self.judge = judge
         self.baseline_words = baseline_words or get_baseline_words(n=baseline_n)

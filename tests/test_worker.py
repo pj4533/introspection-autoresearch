@@ -305,11 +305,20 @@ def test_phase_c_writes_specs_when_queue_empty(
     )
     monkeypatch.setattr(w, "_shutdown", False)
 
-    # Phase C should have written candidate specs to queue/pending
-    pending_files = list((tmp_queue / "pending").glob("*.json"))
-    assert len(pending_files) >= 1, f"expected at least 1 pending spec, got {len(pending_files)}"
-    # Each should be a valid CandidateSpec dict
-    spec_dict = json.loads(pending_files[0].read_text())
+    # Phase C should have run and the queue files end up either in
+    # /pending (if Phase A hasn't drained them yet) or /done (if a later
+    # loop iteration consumed them). Either way: total files across
+    # pending+running+done should be ≥ 1.
+    all_files = (
+        list((tmp_queue / "pending").glob("*.json")) +
+        list((tmp_queue / "running").glob("*.json")) +
+        list((tmp_queue / "done").glob("*.json"))
+    )
+    assert len(all_files) >= 1, (
+        f"expected at least 1 spec file across pending/running/done, "
+        f"got {len(all_files)}"
+    )
+    spec_dict = json.loads(all_files[0].read_text())
     assert "id" in spec_dict
     assert spec_dict["derivation_method"] == "contrast_pair"
     # The proposer was called at least once

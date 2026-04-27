@@ -42,7 +42,16 @@ def free_memory_gb() -> float:
         out = subprocess.check_output(["vm_stat"], text=True, timeout=2)
     except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return -1.0  # unknown — let caller decide whether to proceed
+
+    # Parse page size from the header line, e.g.:
+    #   "Mach Virtual Memory Statistics: (page size of 16384 bytes)"
+    # macOS 14+ on Apple Silicon uses 16 KB pages; fall back to 4 KB.
+    import re
     page_size = 4096
+    m = re.search(r"page size of\s+(\d+)\s+bytes", out)
+    if m:
+        page_size = int(m.group(1))
+
     free_pages = 0
     for line in out.splitlines():
         parts = line.split(":")
@@ -54,22 +63,30 @@ def free_memory_gb() -> float:
                 free_pages += int(val)
             except ValueError:
                 pass
-        if "page size of" in key:
-            # First line of vm_stat: "Mach Virtual Memory Statistics: (page size of 16384 bytes)"
-            try:
-                page_size = int(key.split("page size of")[1].split()[0])
-            except (IndexError, ValueError):
-                pass
     return (free_pages * page_size) / (1024 ** 3)
 
 
-def enforce_free_memory(min_gb: float, *, raise_on_unknown: bool = False) -> None:
-    """Raise if free memory is below `min_gb`. No-op if free memory is unknown."""
+def enforce_free_memory(
+    min_gb: float, *,
+    raise_on_unknown: bool = False,
+    retry_seconds: float = 5.0,
+) -> None:
+    """Raise if free memory is below `min_gb`. No-op if free memory is unknown.
+
+    Kernel page reclaim runs lazily — vm_stat may report stale "free" pages
+    for several seconds after a large unload. We retry once after
+    `retry_seconds` so a healthy unload-then-load doesn't trip the gate just
+    because the kernel hasn't caught up.
+    """
+    import time as _time
     free = free_memory_gb()
     if free < 0:
         if raise_on_unknown:
             raise RuntimeError("could not determine free memory; refusing to load")
         return
+    if free < min_gb and retry_seconds > 0:
+        _time.sleep(retry_seconds)
+        free = free_memory_gb()
     if free < min_gb:
         raise RuntimeError(
             f"insufficient free memory: {free:.1f} GB free, need {min_gb:.1f} GB. "
@@ -114,12 +131,15 @@ class ModelHandle(ABC):
     def load(self, *, free_gb_required: Optional[float] = None) -> None:
         if self._loaded:
             return
-        # Headroom: assume 8 GB OS reserve on top of the model's footprint.
-        # Override at call site for tighter or looser checks.
+        # Headroom: assume 4 GB OS reserve on top of the model's footprint.
+        # The pre-check is a sanity gate against silent OOM, not a precise
+        # predictor — vm_stat's "free" reading lags the kernel's actual
+        # reclaim, and torch's MPS cache holds buffers across unloads.
+        # A too-strict gate fires spuriously on a healthy run.
         required = (
             free_gb_required
             if free_gb_required is not None
-            else (self.expected_ram_gb + 8.0)
+            else (self.expected_ram_gb + 4.0)
         )
         if required > 0:
             enforce_free_memory(required)
@@ -179,9 +199,10 @@ class GemmaHandle(ModelHandle):
 
     def _do_load(self) -> Any:
         # Import lazily — torch + transformers + paper code is a heavy import.
-        from src.bridge import DetectionPipeline
+        from src.bridge import DetectionPipeline, load_gemma_mps
 
-        pipeline = DetectionPipeline(model_name=self.model_id)
+        model = load_gemma_mps(self.model_id)
+        pipeline = DetectionPipeline(model=model)
         if self.abliteration_path is not None:
             from src.paper.abliteration import AbliterationContext
             ctx = AbliterationContext.from_file(
@@ -206,11 +227,18 @@ class GemmaHandle(ModelHandle):
                     setattr(obj, attr, None)
                 except Exception:
                     pass
-        # Best-effort MPS cache reclaim.
+        # Best-effort MPS cache reclaim. PyTorch's MPS allocator caches
+        # buffers across Python-side reference drops; an explicit
+        # synchronize + empty_cache is the documented escape hatch. Doing
+        # it twice tends to give the kernel time to actually reclaim.
         try:
             import torch
-            if hasattr(torch, "mps") and hasattr(torch.mps, "empty_cache"):
-                torch.mps.empty_cache()
+            if hasattr(torch, "mps"):
+                if hasattr(torch.mps, "synchronize"):
+                    torch.mps.synchronize()
+                if hasattr(torch.mps, "empty_cache"):
+                    torch.mps.empty_cache()
+                    torch.mps.empty_cache()
         except ImportError:
             pass
 
@@ -250,12 +278,38 @@ class MLXHandle(ModelHandle):
         return load(self.model_path)
 
     def _do_unload(self, obj: Any) -> None:
-        # `obj` is (model, tokenizer); dropping our reference is the main thing.
-        # Then ask MLX/Metal to release its heap if we can.
+        # `obj` is (model, tokenizer). MLX models hold parameters as
+        # mx.array Metal buffers; calling .clear() on the dict returned by
+        # model.parameters() doesn't free them because that dict is a flat
+        # view, not the source of truth. The actual buffers are stored on
+        # the modules themselves. Replace every parameter with an empty
+        # mx.array so the originals lose their last reference.
+        try:
+            model, _tokenizer = obj
+            try:
+                import mlx.core as mx  # type: ignore
+                from mlx.utils import tree_flatten, tree_unflatten  # type: ignore
+                flat = tree_flatten(model.parameters())
+                empty_flat = [(k, mx.zeros((1,))) for k, _ in flat]
+                model.update(tree_unflatten(empty_flat))
+            except Exception:
+                pass
+        except (TypeError, ValueError):
+            pass
+
         try:
             import mlx.core as mx  # type: ignore
-            if hasattr(mx, "metal") and hasattr(mx.metal, "clear_cache"):
-                mx.metal.clear_cache()
+            # Synchronize first so any in-flight ops complete and release.
+            if hasattr(mx, "synchronize"):
+                try:
+                    mx.synchronize()
+                except Exception:
+                    pass
+            # MLX 0.31+: top-level mx.clear_cache + mx.reset_peak_memory.
+            if hasattr(mx, "clear_cache"):
+                mx.clear_cache()
+            if hasattr(mx, "reset_peak_memory"):
+                mx.reset_peak_memory()
         except ImportError:
             pass
 
