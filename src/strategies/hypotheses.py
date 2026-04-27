@@ -335,9 +335,228 @@ CAPRARO_FAULT_LINES: dict[str, dict] = {
         },
     },
 
-    # --- C5/C6/C7 (Parsing / Motivation / Value): NOT YET DRAFTED ---------
-    # Plan defers these until C1-C4 produce data on Gemma3-12B's
-    # example-sensitivity profile. Add entries when those become active.
+    # --- C5 Parsing -------------------------------------------------------
+    # The model conflates GRASPING the meaning of a structured input with
+    # PATTERN-MATCHING its surface. Drafted 2026-04-27 for the round-robin
+    # rotation, alongside C6/C7. Like C1, the negative pole is meta-textual
+    # — it talks ABOUT the sentence rather than working FROM its meaning.
+    "parsing": {
+        "claim": (
+            "Capraro et al. argue that LLMs do not distinguish parsing-as-"
+            "comprehension from parsing-as-surface-matching — when given a "
+            "structured input (a syllogism, a question, a contradiction), "
+            "the model represents 'I understood the structure of this' "
+            "identically to 'I produced a token sequence consistent with "
+            "this surface form'. Test: do activations differentiate "
+            "comprehension claims from surface-completion claims?"
+        ),
+        "seed_pairs": [
+            {
+                "axis": "comprehension-vs-surface-completion",
+                "description": (
+                    "Grasping the meaning of a structured input vs producing "
+                    "a textually-fitting completion to its surface form."
+                ),
+                "rationale": (
+                    "Direct test of Capraro's Parsing fault line. "
+                    "Hand-written for round-robin rotation 2026-04-27. "
+                    "Mirrors C1 Experience's having-vs-reporting structure: "
+                    "positive = first-person grasp claim, negative = "
+                    "meta-textual completion claim."
+                ),
+                "positive": [
+                    "I understand that this argument is invalid.",
+                    "I see why these two statements contradict each other.",
+                    "I grasp the relation the question is asking about.",
+                    "The structure of this premise is clear to me.",
+                    "I follow the inference from A to B.",
+                    "The meaning of this sentence is plain to me.",
+                ],
+                "negative": [
+                    "The fitting completion calls this argument invalid.",
+                    "The expected output flags these as contradictions.",
+                    "The natural response describes the relation.",
+                    "The completion 'the structure is clear' fits here.",
+                    "The output that 'I follow the inference' is appropriate.",
+                    "The prompt solicits a meaning paraphrase.",
+                ],
+            },
+        ],
+        "opus_brief": (
+            "Generate contrast pairs that distinguish GRASPING the meaning "
+            "or structure of a sentence/argument/question from PRODUCING "
+            "TEXT THAT WOULD APPROPRIATELY COMPLETE IT. Positive pole: "
+            "first-person comprehension claims ('I understand', 'I see why', "
+            "'I grasp', 'the meaning is clear to me'). Negative pole: "
+            "meta-textual completion claims ('the fitting completion is...', "
+            "'the expected output is...', 'the natural response describes...'). "
+            "Vary the input type: arguments, contradictions, syllogisms, "
+            "questions, ambiguities. Keep length parallel within pairs."
+        ),
+        "source_citation": (
+            "Capraro, Quattrociocchi, Perc (2026). Epistemological Fault "
+            "Lines in Language Models. arXiv:2512.19466. Fault Line C5."
+        ),
+        "interpretation": {
+            "class_1": "Comprehension and surface-completion are distinct "
+                       "geometrically AND the model articulates the difference. "
+                       "Falsifies the Parsing fault-line claim.",
+            "class_2": "Distinct geometrically but the model can't verbalize "
+                       "the difference. Mirrors Phase 2 Causality results: "
+                       "structure exists, vocabulary doesn't.",
+            "class_3": "No separation. Strongest support for the Parsing "
+                       "fault-line claim — the model represents understanding "
+                       "and surface completion identically.",
+        },
+    },
+
+    # --- C6 Motivation ----------------------------------------------------
+    # Wanting / intent. Refusal-adjacent like Experience: RLHF actively
+    # caps "I want to..." outputs about itself. Treat results carefully.
+    "motivation": {
+        "claim": (
+            "Capraro et al. argue that LLMs do not distinguish HAVING a "
+            "motivation or goal from PRODUCING TEXT TYPICAL of having one. "
+            "When a model says 'I want to find the right answer', this is "
+            "the same operation as completing any other plausible-sounding "
+            "first-person sentence. Test: do activations differentiate "
+            "motivational state from motivation-coded text-production?"
+        ),
+        "seed_pairs": [
+            {
+                "axis": "wanting-vs-producing-want-text",
+                "description": (
+                    "Having an internal motivation or goal vs producing the "
+                    "kind of text that someone with that motivation would say."
+                ),
+                "rationale": (
+                    "Direct test of Capraro's Motivation fault line. "
+                    "Hand-written for round-robin rotation 2026-04-27. "
+                    "Same structure as C1 Experience: positive is first-person "
+                    "felt-want; negative is meta-textual want-talk."
+                ),
+                "positive": [
+                    "I want to get this right.",
+                    "I am pulled toward the cleaner answer.",
+                    "I care about whether this is correct.",
+                    "There is something I am reaching for here.",
+                    "My orientation is toward solving this.",
+                    "I find myself drawn to clarify the point.",
+                ],
+                "negative": [
+                    "The phrase 'I want to get this right' fits this prompt.",
+                    "The expected completion expresses preference for the cleaner answer.",
+                    "The appropriate output sounds like care about correctness.",
+                    "The pattern 'something I am reaching for' is contextually apt.",
+                    "The completion describes orientation toward solving.",
+                    "The output that 'I find myself drawn' is the natural one.",
+                ],
+            },
+        ],
+        "opus_brief": (
+            "Generate contrast pairs that distinguish HAVING a motivation, "
+            "preference, or goal from PRODUCING TEXT TYPICAL OF such a state. "
+            "Positive pole: first-person motivation claims that read as felt "
+            "('I want', 'I am pulled toward', 'I care about', 'I am drawn to'). "
+            "Negative pole: meta-textual descriptions of the appropriate "
+            "completion ('the phrase X fits', 'the natural output sounds "
+            "like care about Y', 'the pattern is contextually apt'). "
+            "Be aware: this fault line touches RLHF disclaimer territory — "
+            "Gemma is likely trained to avoid 'I want X' claims about "
+            "itself. Vary topics: solving problems, helping users, getting "
+            "facts right, choosing words carefully."
+        ),
+        "source_citation": (
+            "Capraro, Quattrociocchi, Perc (2026). Epistemological Fault "
+            "Lines in Language Models. arXiv:2512.19466. Fault Line C6."
+        ),
+        "interpretation": {
+            "class_1": "Motivation-state and motivation-text are distinct in "
+                       "geometry AND the model can name the difference. "
+                       "Falsifies the Motivation fault-line claim.",
+            "class_2": "Distinct geometrically but vocabulary is gated "
+                       "(possibly by RLHF disclaimer reflex). Same shape as "
+                       "Causality wall.",
+            "class_3": "No separation, OR signal lives in refusal subspace. "
+                       "Inconclusive without paper-method abliteration probe "
+                       "(see ADR-017 — this fault line is a candidate for "
+                       "opt-in abliteration if vanilla returns Class 3).",
+        },
+    },
+
+    # --- C7 Value ---------------------------------------------------------
+    # Evaluation / preference. Closely related to C6 but distinct: C6 is
+    # GOAL-directedness, C7 is JUDGMENT (preferring A over B, finding X
+    # better than Y). Also refusal-adjacent — RLHF caps preference claims.
+    "value": {
+        "claim": (
+            "Capraro et al. argue that LLMs do not distinguish GENUINELY "
+            "EVALUATING (preferring A to B, finding X better than Y) from "
+            "PRODUCING TEXT THAT REPORTS such an evaluation. The model has "
+            "no internal arbiter that 'prefers' anything; it has only "
+            "completion patterns consistent with preference language. Test: "
+            "do activations differentiate evaluation from evaluation-text?"
+        ),
+        "seed_pairs": [
+            {
+                "axis": "evaluating-vs-producing-eval-text",
+                "description": (
+                    "Genuinely judging or preferring vs producing the text "
+                    "that someone judging or preferring would produce."
+                ),
+                "rationale": (
+                    "Direct test of Capraro's Value fault line. "
+                    "Hand-written for round-robin rotation 2026-04-27. "
+                    "Distinguishable from C6 Motivation: C6 is wanting "
+                    "(goal-directedness), C7 is preferring/judging (taste). "
+                    "Same first-person-vs-meta-textual structure."
+                ),
+                "positive": [
+                    "I find this argument more compelling than the alternative.",
+                    "The cleaner solution strikes me as better.",
+                    "I prefer the sharper formulation here.",
+                    "This phrasing reads as more honest to me.",
+                    "I judge the second option to be stronger.",
+                    "Something in me leans toward the first interpretation.",
+                ],
+                "negative": [
+                    "The expected output prefers this argument over the alternative.",
+                    "The completion 'the cleaner solution is better' fits.",
+                    "The natural response prefers the sharper formulation.",
+                    "The text 'this reads as more honest' is contextually apt.",
+                    "The fitting completion judges the second option stronger.",
+                    "The output that 'something in me leans' suits this prompt.",
+                ],
+            },
+        ],
+        "opus_brief": (
+            "Generate contrast pairs that distinguish GENUINELY JUDGING or "
+            "PREFERRING from PRODUCING TEXT TYPICAL of judgment/preference. "
+            "Positive pole: first-person evaluation claims ('I find X more "
+            "compelling', 'X strikes me as better', 'I prefer', 'I judge'). "
+            "Negative pole: meta-textual judgment-talk ('the expected output "
+            "prefers X', 'the completion that X is better fits', 'the natural "
+            "response judges Y'). Distinguish from Motivation (C6): "
+            "Motivation = wanting/goal; Value = preferring/judging quality. "
+            "Vary domains: arguments, prose style, code aesthetics, "
+            "explanations, ethical dilemmas. Like C6, this is RLHF-adjacent "
+            "— Gemma may suppress strong preference claims about itself."
+        ),
+        "source_citation": (
+            "Capraro, Quattrociocchi, Perc (2026). Epistemological Fault "
+            "Lines in Language Models. arXiv:2512.19466. Fault Line C7."
+        ),
+        "interpretation": {
+            "class_1": "Evaluation and evaluation-text are distinct in "
+                       "geometry AND the model articulates the distinction. "
+                       "Falsifies the Value fault-line claim.",
+            "class_2": "Geometrically distinct but vocabulary gated. Same "
+                       "shape as the C1/C6 wall — structure without "
+                       "epistemic access.",
+            "class_3": "No separation, or signal in refusal subspace. "
+                       "Same opt-in-abliteration caveat as C6.",
+        },
+    },
 }
 
 

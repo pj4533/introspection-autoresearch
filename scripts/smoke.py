@@ -170,7 +170,7 @@ def main() -> int:
         batch_size=4,
         propose_threshold=4,
         propose_n=2,
-        fault_line_id=None,
+        fault_lines=None,  # smoke uses novel_contrast, no Capraro rotation
         max_cycles=1,
         abliteration_mode="vanilla",
     )

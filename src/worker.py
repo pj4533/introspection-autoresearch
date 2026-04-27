@@ -332,11 +332,11 @@ def _phase_c_propose(
     fault_line_id: Optional[str],
     propose_n: int,
 ) -> int:
-    """Generate `propose_n` new candidate specs and queue them.
+    """Generate `propose_n` new candidate specs for `fault_line_id` and queue them.
 
     Returns the number of candidates actually queued. If `fault_line_id` is
-    set, runs `directed_capraro.generate_candidates`. Otherwise runs
-    `novel_contrast.generate_candidates`.
+    None, runs `novel_contrast.generate_candidates` (open-ended). Otherwise
+    runs `directed_capraro.generate_candidates` for that fault line.
     """
     if fault_line_id is not None:
         from src.strategies.directed_capraro import generate_candidates as gen
@@ -360,8 +360,9 @@ def _phase_c_propose(
         path = QUEUE / "pending" / f"{spec.id}.json"
         path.write_text(json.dumps(spec.to_dict(), indent=2) + "\n")
         n_written += 1
-    print(f"[worker] phase C wrote {n_written} new candidates to queue/pending",
-          flush=True)
+    label = fault_line_id or "novel_contrast"
+    print(f"[worker] phase C ({label}) wrote {n_written} new candidates to "
+          f"queue/pending", flush=True)
     return n_written
 
 
@@ -380,7 +381,7 @@ def main_loop(
     batch_size: int = DEFAULT_BATCH_SIZE,
     propose_threshold: int = DEFAULT_PROPOSE_THRESHOLD,
     propose_n: int = DEFAULT_PROPOSE_N,
-    fault_line_id: Optional[str] = None,
+    fault_lines: Optional[list[str]] = None,
     max_cycles: int = 0,
     abliteration_mode: str = "vanilla",
     poll_interval_s: int = 5,
@@ -391,10 +392,18 @@ def main_loop(
     handle's loaded `(model, tokenizer)` pair. The worker doesn't construct
     these eagerly — only after the corresponding handle is loaded.
 
+    `fault_lines` is the round-robin rotation. Each successful Phase C
+    picks `fault_lines[propose_index % len(fault_lines)]` and asks the
+    proposer for that fault line's variants. None or empty list means run
+    novel_contrast (open-ended) on every cycle. The rotation index
+    advances only when Phase C actually fires (queue was below threshold).
+
     Returns the number of complete A-B cycles run (Phase C is a side-effect
     inside the cycle, not its own counted unit).
     """
     cycles = 0
+    propose_index = 0  # advances each time Phase C fires
+    rotation = fault_lines or []
 
     # Crash recovery on startup: if there are orphan pending rows, judge them
     # FIRST before generating anything new.
@@ -453,12 +462,26 @@ def main_loop(
 
         # ---------- C. PROPOSE -----------------------------------------
         # Run only if the queue is empty (or we just had nothing else to do).
+        # The rotation: pick fault_lines[propose_index % len], generate one
+        # batch for that fault line, advance the index. With 7 fault lines
+        # and 16 candidates per batch, every fault line is refreshed once
+        # per ~3 hours of wallclock at typical cycle times.
         pending_left = len(list((QUEUE / "pending").glob("*.json")))
         if pending_left < propose_threshold:
+            if rotation:
+                next_fault_line = rotation[propose_index % len(rotation)]
+            else:
+                next_fault_line = None  # novel_contrast open-ended
+            print(
+                f"[worker] phase C cycle {propose_index} target: "
+                f"{next_fault_line or 'novel_contrast'}",
+                flush=True,
+            )
             registry.activate(registry.proposer)
             proposer = proposer_factory(registry.proposer.obj)
             try:
-                _phase_c_propose(proposer, db, fault_line_id, propose_n)
+                _phase_c_propose(proposer, db, next_fault_line, propose_n)
+                propose_index += 1
             except Exception as e:
                 tb = traceback.format_exc()
                 print(f"[worker] phase_c FAILED: {e}\n{tb}", flush=True)
@@ -523,12 +546,29 @@ def main() -> int:
     ap.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE)
     ap.add_argument("--propose-threshold", type=int, default=DEFAULT_PROPOSE_THRESHOLD)
     ap.add_argument("--propose-n", type=int, default=DEFAULT_PROPOSE_N)
-    ap.add_argument("--fault-line", default=None,
-                    help="If set, Phase C uses directed_capraro for this fault "
-                         "line. Otherwise novel_contrast.")
+    ap.add_argument(
+        "--fault-lines",
+        default="causality,grounding,metacognition,experience,parsing,motivation,value",
+        help="Comma-separated rotation of Capraro fault lines for Phase C. "
+             "Each Phase C call advances to the next fault line and wraps "
+             "around at the end. Default: all 7. Pass an empty string to "
+             "fall back to open-ended novel_contrast on every cycle.",
+    )
     ap.add_argument("--max-cycles", type=int, default=0,
                     help="0 = unlimited. Each completed A→B counts as one cycle.")
     args = ap.parse_args()
+
+    fault_lines = [s.strip() for s in args.fault_lines.split(",") if s.strip()]
+    if fault_lines:
+        # Validate up-front so a typo doesn't surface mid-rotation.
+        from src.strategies.hypotheses import list_fault_lines as _list_fl
+        valid = set(_list_fl())
+        bad = [f for f in fault_lines if f not in valid]
+        if bad:
+            ap.error(
+                f"unknown fault line(s) in --fault-lines: {bad}. "
+                f"valid: {sorted(valid)}"
+            )
 
     _install_signal_handlers()
     _ensure_dirs()
@@ -557,6 +597,11 @@ def main() -> int:
     print(f"[worker] eval set: {len(held_out)} held-out, "
           f"{len(controls)} controls", flush=True)
 
+    if fault_lines:
+        print(f"[worker] fault-line rotation: {' → '.join(fault_lines)}", flush=True)
+    else:
+        print("[worker] no fault-line rotation; using novel_contrast every cycle", flush=True)
+
     main_loop(
         registry=registry,
         db=db,
@@ -567,7 +612,7 @@ def main() -> int:
         batch_size=args.batch_size,
         propose_threshold=args.propose_threshold,
         propose_n=args.propose_n,
-        fault_line_id=args.fault_line,
+        fault_lines=fault_lines,
         max_cycles=args.max_cycles,
         abliteration_mode="vanilla",
     )

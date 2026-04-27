@@ -150,7 +150,8 @@ src/strategies/     ← Phase 2 strategies (all accept a Proposer).
                      random_explore:    sampling from a word pool.
                      novel_contrast:    generates abstract contrast pairs.
                      directed_capraro:  fault-line-anchored variants.
-                     hypotheses:        Capraro fault-line registry (C1-C4).
+                     hypotheses:        Capraro fault-line registry (C1-C7,
+                                        round-robin rotation in worker).
 tests/              ← pytest suite. Run with `.venv/bin/pytest tests/`.
                      Covers DB pending_responses lifecycle, model registry
                      contract, proposer protocol, phased evaluation

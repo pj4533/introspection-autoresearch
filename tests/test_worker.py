@@ -174,7 +174,7 @@ def test_full_cycle_one_candidate(
         batch_size=4,
         propose_threshold=4,
         propose_n=2,
-        fault_line_id=None,
+        fault_lines=None,
         max_cycles=1,
         abliteration_mode="vanilla",
     )
@@ -407,3 +407,104 @@ def test_crash_recovery_picks_up_orphan_pending(
     cand = tmp_db.get_candidate(spec.id)
     assert cand["status"] == "done"
     assert cand["score"] is not None
+
+
+def test_phase_c_rotates_through_fault_lines(
+    tmp_db, tmp_queue, held_out, controls, monkeypatch
+):
+    """Phase C must cycle fault_lines[propose_index % N] each time it fires.
+
+    Drives the worker through several Phase C calls with an empty queue so
+    Phase A is skipped, and asserts the rotation order matches the input
+    list, including wrap-around.
+    """
+    import src.worker as w
+    import src.paper as paper_pkg
+    monkeypatch.setattr(paper_pkg, "extract_concept_vector",
+                        lambda **kw: _FakeTensor(100.0))
+
+    rotation = ["causality", "grounding", "metacognition", "experience",
+                "parsing", "motivation", "value"]
+    expected_order = rotation + rotation[:2]  # 9 calls total — wraps around
+
+    # Track which fault line each Phase C invocation actually requested.
+    seen_fault_lines: list[str] = []
+
+    # Patch directed_capraro.generate_candidates so we capture the fault
+    # line each call but return a single fake spec to keep the loop alive.
+    import src.strategies.directed_capraro as dc_mod
+    real_gen = dc_mod.generate_candidates
+
+    fake_proposer = MockProposer(
+        response=_make_proposer_response(["axis-x", "axis-y"])
+    )
+
+    def fake_gen(*, n, db, fault_line_id, mode, proposer, **kw):
+        seen_fault_lines.append(fault_line_id)
+        # Return one fake spec per call. Use the real spec dataclass so the
+        # worker can serialize it to JSON. Concept changes per call so each
+        # spec is unique (spec_hash uniqueness).
+        from src.evaluate import CandidateSpec
+        spec = CandidateSpec(
+            id=f"cand-rot-{len(seen_fault_lines)}",
+            strategy=f"directed_capraro_{fault_line_id}",
+            concept=f"axis-{fault_line_id}-{len(seen_fault_lines)}",
+            layer_idx=33, target_effective=18000.0,
+            derivation_method="contrast_pair",
+            contrast_pair={
+                "axis": f"axis-{fault_line_id}",
+                "positive": ["a", "b", "c", "d", "e", "f"],
+                "negative": ["x", "y", "z", "u", "v", "w"],
+            },
+        )
+        return [spec]
+
+    monkeypatch.setattr(dc_mod, "generate_candidates", fake_gen)
+
+    # Force shutdown after the right number of Phase C calls.
+    target_phase_c_calls = len(expected_order)
+    iter_count = {"n": 0}
+    original_oldest = w._oldest_pending
+    def patched_oldest():
+        iter_count["n"] += 1
+        # After enough iterations to cover target_phase_c_calls Phase C
+        # invocations (each loop iteration with empty queue == 1 phase C),
+        # signal shutdown.
+        if len(seen_fault_lines) >= target_phase_c_calls:
+            import src.worker as ww
+            ww._shutdown = True
+        return original_oldest()
+    monkeypatch.setattr(w, "_oldest_pending", patched_oldest)
+    monkeypatch.setattr(w, "_shutdown", False)
+
+    registry, _ = _build_registry([])
+
+    w.main_loop(
+        registry=registry,
+        db=tmp_db,
+        held_out=held_out,
+        controls=controls,
+        judge_factory=lambda pair: FakeJudge(),
+        proposer_factory=lambda pair: fake_proposer,
+        batch_size=4,
+        propose_threshold=10,  # high so Phase C always fires
+        propose_n=1,
+        fault_lines=rotation,
+        max_cycles=0,
+        abliteration_mode="vanilla",
+        poll_interval_s=0,
+    )
+    monkeypatch.setattr(w, "_shutdown", False)
+
+    # The first len(rotation) calls should match the rotation in order;
+    # the wrap-around should hit causality and grounding again.
+    assert len(seen_fault_lines) >= len(rotation), (
+        f"expected at least {len(rotation)} Phase C calls; "
+        f"got {len(seen_fault_lines)}: {seen_fault_lines}"
+    )
+    assert seen_fault_lines[: len(rotation)] == rotation, (
+        f"first round didn't match: {seen_fault_lines[:len(rotation)]} vs {rotation}"
+    )
+    if len(seen_fault_lines) > len(rotation):
+        # Wrap-around starts with rotation[0] again
+        assert seen_fault_lines[len(rotation)] == rotation[0]
