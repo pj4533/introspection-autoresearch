@@ -86,6 +86,11 @@ class CandidateSpec:
     # "ident_prioritized" when they want identification-weighted ranking.
     # Falls back to FITNESS_MODE env var if unset, then to "default".
     fitness_mode: Optional[str] = None
+    # Which LLM proposer produced this spec. Set by Phase C in the worker.
+    # NULL for non-LLM strategies (random_explore). The web UI displays this
+    # per row so a mixed-history leaderboard shows the actual model behind
+    # each axis (claude-opus-4-7, Qwen3.6-27B-MLX-8bit, etc.).
+    proposer_model: Optional[str] = None
 
     @classmethod
     def from_dict(cls, d: dict) -> "CandidateSpec":
@@ -100,6 +105,7 @@ class CandidateSpec:
             notes=d.get("notes", ""),
             contrast_pair=d.get("contrast_pair"),
             fitness_mode=d.get("fitness_mode"),
+            proposer_model=d.get("proposer_model"),
         )
 
     def to_dict(self) -> dict:
@@ -117,6 +123,8 @@ class CandidateSpec:
             out["contrast_pair"] = self.contrast_pair
         if self.fitness_mode is not None:
             out["fitness_mode"] = self.fitness_mode
+        if self.proposer_model is not None:
+            out["proposer_model"] = self.proposer_model
         return out
 
 

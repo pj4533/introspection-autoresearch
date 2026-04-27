@@ -97,8 +97,8 @@ export function Leaderboard({
         </h1>
         <p className="text-lg text-[var(--ink-soft)] max-w-3xl leading-relaxed mb-6">
           A machine keeps generating candidate &ldquo;thoughts&rdquo; — some
-          ordinary dictionary words, some abstract axes invented by Claude
-          Sonnet — and planting them inside Gemma 3 12B. These are the ones
+          ordinary dictionary words, some abstract axes invented by an LLM
+          proposer — and planting them inside Gemma 3 12B. These are the ones
           it actually noticed, ranked by how often. Click any row to see
           what the AI actually said when each thought was planted.
         </p>
@@ -428,7 +428,7 @@ function LeaderCard({
           />
 
           {isContrast && entry.contrast_pair?.rationale && (
-            <ResearcherRationale rationale={entry.contrast_pair.rationale} strategy={entry.strategy} />
+            <ResearcherRationale rationale={entry.contrast_pair.rationale} strategy={entry.strategy} proposerModel={entry.proposer_model} />
           )}
 
           {isContrast && entry.contrast_pair && (
@@ -602,8 +602,10 @@ function Takeaway({
     }
   }
   if (isContrast) {
+    const proposer = entry.proposer_model;
+    const proposerLabel = proposer ? proposer : "an LLM proposer";
     interesting +=
-      " This is an invented axis — Claude Sonnet proposed it; there's no single English word that captures it. The AI's introspection still responded to it.";
+      ` This is an invented axis — ${proposerLabel} proposed it; there's no single English word that captures it. The AI's introspection still responded to it.`;
   }
   if (falsePositives.length === 0) {
     interesting +=
@@ -628,14 +630,17 @@ function Takeaway({
 function ResearcherRationale({
   rationale,
   strategy,
+  proposerModel,
 }: {
   rationale: string;
   strategy: string;
+  proposerModel: string | null;
 }) {
   const label =
     strategy === "novel_contrast"
       ? "why the researcher proposed this axis"
       : "why this variant was tried";
+  const badge = proposerModel ?? "LLM proposer";
   return (
     <div className="p-4 rounded-lg bg-gradient-to-br from-[var(--accent-soft)]/10 to-transparent border border-[var(--accent-soft)]/40">
       <div className="flex items-center gap-2 mb-2">
@@ -643,7 +648,7 @@ function ResearcherRationale({
           {label}
         </div>
         <span className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-faint)] font-mono">
-          (Claude Sonnet)
+          ({badge})
         </span>
       </div>
       <p className="text-sm text-[var(--ink-soft)] leading-relaxed italic">

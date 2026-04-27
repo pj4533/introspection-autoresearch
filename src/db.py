@@ -231,6 +231,12 @@ class ResultsDB:
             # migration default to 'vanilla' — that's historically accurate;
             # Phase 2 never ran under paper-method hooks before this date.
             "abliteration_mode":   "ALTER TABLE candidates ADD COLUMN abliteration_mode TEXT NOT NULL DEFAULT 'vanilla'",
+            # 2026-04-27: which LLM produced this candidate's contrast pair /
+            # spec. Pre-local-pipeline rows are claude-opus-4-7 (or sonnet for
+            # earlier novel_contrast); post-pipeline-switch rows are the
+            # Qwen3.6-27B-MLX-8bit local proposer. NULL for random_explore
+            # (no LLM involvement). Backfill is date-based.
+            "proposer_model":      "ALTER TABLE candidates ADD COLUMN proposer_model TEXT",
         }
         for col, stmt in add_col_stmts.items():
             if col not in existing:
@@ -379,6 +385,7 @@ class ResultsDB:
         mutation_type: Optional[str] = None,
         mutation_detail: Optional[str] = None,
         abliteration_mode: str = "vanilla",
+        proposer_model: Optional[str] = None,
     ) -> None:
         with self._conn() as conn:
             conn.execute(
@@ -387,14 +394,15 @@ class ResultsDB:
                     target_effective, derivation_method, status,
                     lineage_id, parent_candidate_id, generation,
                     is_leader, mutation_type, mutation_detail,
-                    abliteration_mode)
+                    abliteration_mode, proposer_model)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending',
-                           ?, ?, ?, 0, ?, ?, ?)""",
+                           ?, ?, ?, 0, ?, ?, ?, ?)""",
                 (
                     candidate_id, strategy, spec_json, spec_hash,
                     concept, layer_idx, target_effective, derivation_method,
                     lineage_id, parent_candidate_id, generation,
                     mutation_type, mutation_detail, abliteration_mode,
+                    proposer_model,
                 ),
             )
 

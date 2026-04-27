@@ -323,6 +323,7 @@ def generate_candidates(
                         "negative": pair["negative"],
                         "rationale": pair.get("rationale", ""),
                     },
+                    proposer_model=proposer.name,
                 )
                 h = spec_hash(spec)
                 if h in seen_this_batch or db.has_candidate_hash(h):

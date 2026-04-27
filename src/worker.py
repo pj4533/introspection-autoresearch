@@ -222,6 +222,7 @@ def _phase_a_one(
         mutation_type=lineage_meta.get("mutation_type"),
         mutation_detail=lineage_meta.get("mutation_detail"),
         abliteration_mode=abliteration_mode,
+        proposer_model=spec.proposer_model,
     )
     db.set_candidate_status(spec.id, "running")
     moved = _move(path, QUEUE / "running")

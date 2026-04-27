@@ -308,7 +308,7 @@ def export_phase2_leaderboard(top_k: Optional[int] = None) -> list[dict]:
         rows = _q(VANILLA_DB, """
             SELECT c.id, c.strategy, c.concept, c.layer_idx, c.target_effective,
                    c.derivation_method, c.created_at, c.evaluated_at,
-                   c.abliteration_mode,
+                   c.abliteration_mode, c.proposer_model,
                    f.score, f.detection_rate, f.identification_rate, f.fpr, f.coherence_rate,
                    c.spec_json
             FROM fitness_scores f
@@ -320,7 +320,7 @@ def export_phase2_leaderboard(top_k: Optional[int] = None) -> list[dict]:
         rows = _q(VANILLA_DB, """
             SELECT c.id, c.strategy, c.concept, c.layer_idx, c.target_effective,
                    c.derivation_method, c.created_at, c.evaluated_at,
-                   c.abliteration_mode,
+                   c.abliteration_mode, c.proposer_model,
                    f.score, f.detection_rate, f.identification_rate, f.fpr, f.coherence_rate,
                    c.spec_json
             FROM fitness_scores f
@@ -385,6 +385,7 @@ def export_phase2_leaderboard(top_k: Optional[int] = None) -> list[dict]:
             "target_effective": r["target_effective"],
             "derivation_method": r["derivation_method"],
             "abliteration_mode": r["abliteration_mode"] or "vanilla",
+            "proposer_model": r["proposer_model"],
             "score": round(r["score"], 4),
             "detection_rate": round(r["detection_rate"], 3),
             "identification_rate": round(r["identification_rate"], 3),

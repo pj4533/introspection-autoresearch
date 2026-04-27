@@ -76,6 +76,11 @@ export type Phase2Entry = {
   // for raw Gemma3-12B with no hooks. All pre-2026-04-24 Phase 2 results
   // are "vanilla" (Phase 2 worker did not yet support paper-method).
   abliteration_mode: "vanilla" | "paper_method";
+  // Which LLM produced this candidate's contrast pair. Pre-2026-04-23
+  // novel_contrast: claude-sonnet-4-6. 2026-04-23 to 2026-04-27 16:00 UTC:
+  // claude-opus-4-7. From 2026-04-27 16:00 UTC onward: Qwen3.6-27B-MLX-8bit
+  // (local pipeline). NULL for random_explore (no LLM proposer).
+  proposer_model: string | null;
   score: number;
   detection_rate: number;
   identification_rate: number;

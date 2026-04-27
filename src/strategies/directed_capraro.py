@@ -354,6 +354,10 @@ def generate_candidates(
                 # ADR-018: directed Capraro candidates always score under
                 # ident-prioritized fitness regardless of worker env.
                 fitness_mode="ident_prioritized",
+                # `mode='seed'` writes hand-written pairs from hypotheses.py
+                # — no LLM proposer involved — so leave proposer_model NULL
+                # in that case.
+                proposer_model=(proposer.name if mode == "opus" and proposer is not None else None),
             )
             h = spec_hash(spec)
             if h in seen_this_batch or db.has_candidate_hash(h):
