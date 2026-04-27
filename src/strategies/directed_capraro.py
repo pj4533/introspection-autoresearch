@@ -47,10 +47,8 @@ from typing import Optional
 
 from src.db import ResultsDB
 from src.evaluate import CandidateSpec
-from src.proposers import ClaudeProposer
 from src.proposers.base import Proposer
 from src.strategies.hypotheses import get_fault_line, list_fault_lines
-from src.strategies.novel_contrast import CLAUDE_MODEL  # claude-opus-4-7
 from src.strategies.random_explore import spec_hash
 
 DEFAULT_LAYERS = [30, 33, 36, 40]
@@ -262,7 +260,7 @@ def generate_candidates(
     target_effectives: Optional[list[float]] = None,
     seed: Optional[int] = None,
     oversample_factor: int = 2,
-    proposer: Optional[Proposer] = None,
+    proposer: Optional[Proposer] = None,  # only required when mode='opus'
 ) -> list[CandidateSpec]:
     """Generate candidate specs for one Capraro fault line.
 
@@ -310,7 +308,10 @@ def generate_candidates(
             fault_line_id, fault_line, n_pairs_to_ask, feedback
         )
         if proposer is None:
-            proposer = ClaudeProposer(model=CLAUDE_MODEL)
+            raise ValueError(
+                "directed_capraro mode='opus' requires a proposer. "
+                "Pass `proposer=LocalMLXProposer(...)`."
+            )
         print(f"[directed_capraro:{fault_line_id}] asking {proposer.name} "
               f"for {n_pairs_to_ask} variant pairs...", flush=True)
         t0 = time.time()

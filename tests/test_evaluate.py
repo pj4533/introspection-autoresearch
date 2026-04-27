@@ -14,8 +14,7 @@ from typing import Optional
 import pytest
 
 from src.bridge import DetectionTrial
-from src.evaluate import CandidateSpec
-from src.evaluate_phased import phase_a_generate, phase_b_judge
+from src.evaluate import CandidateSpec, phase_a_generate, phase_b_judge
 from src.judges.base import JudgeResult
 
 
@@ -221,7 +220,6 @@ def test_phase_a_contrast_pair_writes_pending_rows(
         captured["neg"] = negative_prompts
         return _FakeTensor(150.0)
 
-    import src.evaluate_phased as ep
     # The import happens lazily inside phase_a_generate; patch at module level
     import src.paper as paper_pkg
     monkeypatch.setattr(paper_pkg, "extract_concept_vector", fake_extract)

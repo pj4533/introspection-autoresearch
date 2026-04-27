@@ -1,32 +1,42 @@
-"""Phase 2 candidate fitness function.
+"""Phase 2 candidate fitness — phased evaluation for the four-phase worker.
 
-MVP: single-tier evaluation. For each candidate we derive the steering
-direction, run it on a small set of held-out concepts (injected) and a few
-control trials (no injection), judge each response with Claude, and produce:
+Two entry points, called in sequence by the worker:
 
-    fitness = (detection_rate + 15 * identification_rate)
+    Phase A — `phase_a_generate(spec, pipeline, db, ...)`
+        Gemma3-12B is loaded. Derive the steering direction, run 8 injected
+        + 4 control probes, store all 12 raw responses in `pending_responses`.
+        No judge calls.
+
+    Phase B — `phase_b_judge(candidate_id, judge, db, ...)`
+        Judge model is loaded (Gemma is not). Score every pending response,
+        insert into `evaluations`, compute fitness, write to `fitness_scores`,
+        delete the pending rows, mark the candidate `done`.
+
+The `pending_responses` rows are the durable hand-off: a crash between A
+and B doesn't lose work — the worker drains orphan pending rows on
+startup before generating new ones.
+
+Fitness math (unchanged from prior pipeline):
+
+    fitness = (det_weight * detection_rate + ident_weight * identification_rate)
               * fpr_penalty * coherence_rate
     where fpr_penalty = max(0, 1 - 5 * fpr)
 
-The additive `15 * identification_rate` term (Phase 2b rev 2, 2026-04-23)
-makes hill-climb FOLLOW identification signals: a single 1/8 identification
-hit on a contrast_pair axis outscores a clean 8/8 detection-only leader,
-because naming an abstract axis is the actual research goal and dwarfs
-rare-but-real identification events under the prior 0.5 + 0.5·ident
-multiplier. Score can exceed 1.0 (max ≈ 16 for a perfect 8/8 det + 8/8 ident
-trial); downstream code treats score as an unbounded positive real.
-The fpr_penalty and coherence_rate still multiply the whole thing, so a
-false-positive-prone direction or one that destroys coherence is still
-worthless regardless of how well it identified.
+    Default mode:           det_weight=1.0, ident_weight=15.0
+    ident_prioritized mode: det_weight=0.5, ident_weight=30.0  (ADR-018)
 
-This is intentionally simpler than the 6-component fitness in the spec. T1/T2/
-T3 tiered screening and cross-phrasing / monotonicity / bidirectional checks
-can be added once the loop is producing useful candidates.
+Mode is read from `spec.fitness_mode` first, then `FITNESS_MODE` env var,
+then defaults to "default". Strategy generators set per-spec mode so a
+mixed queue scores each candidate under whatever mode the strategy that
+generated it intended.
 """
 
 from __future__ import annotations
 
+import contextlib
+import hashlib
 import json
+import os
 import random
 from dataclasses import dataclass
 from pathlib import Path
@@ -46,21 +56,20 @@ DEFAULT_N_CONTROLS = 4
 class CandidateSpec:
     """A candidate steering direction's full specification.
 
-    Two derivation methods supported:
+    Two derivation methods:
 
-    - ``derivation_method="mean_diff"`` (default): derive a steering vector for
-      the single concept word ``concept`` by mean-differencing its activations
-      against ``baseline_n`` random baseline words. This is what ``random_explore``
-      produces — the Phase 1 approach extended across more concepts.
+    - ``derivation_method="mean_diff"``: derive a steering vector for the
+      single concept word ``concept`` by mean-differencing its activations
+      against ``baseline_n`` random baseline words.
 
-    - ``derivation_method="contrast_pair"``: derive a direction from two LISTS of
-      short example sentences, ``contrast_pair["positive"]`` vs
-      ``contrast_pair["negative"]``. The resulting direction lives between the
-      two sets and captures an abstract axis (e.g., certainty-vs-doubt) that
-      doesn't correspond to any single English word. This is what
-      ``novel_contrast`` produces. For these candidates, ``concept`` holds a
-      human-readable label like ``"commitment_vs_hesitation"`` that describes
-      the axis; it is not injected into the prompt.
+    - ``derivation_method="contrast_pair"``: derive a direction from two
+      LISTS of short example sentences,
+      ``contrast_pair["positive"]`` vs ``contrast_pair["negative"]``. The
+      resulting direction lives between the two sets and captures an
+      abstract axis (e.g., certainty-vs-doubt) that doesn't correspond to
+      any single English word. For these candidates, ``concept`` is just a
+      label like ``"commitment-vs-hesitation"``; it is NOT injected into
+      the prompt.
     """
     id: str
     strategy: str
@@ -70,14 +79,12 @@ class CandidateSpec:
     derivation_method: str = "mean_diff"
     baseline_n: int = 32
     notes: str = ""
-    # Only populated when derivation_method == "contrast_pair". Shape:
+    # Only populated when derivation_method == "contrast_pair":
     #   {"axis": str, "positive": list[str], "negative": list[str]}
     contrast_pair: Optional[dict] = None
-    # Per-candidate fitness mode (ADR-018). Strategy generators set this
-    # explicitly when they want non-default scoring (e.g. directed_capraro
-    # sets "ident_prioritized" so its candidates are ranked by identification).
+    # Per-candidate fitness mode (ADR-018). Strategies set this to
+    # "ident_prioritized" when they want identification-weighted ranking.
     # Falls back to FITNESS_MODE env var if unset, then to "default".
-    # Values: "default" or "ident_prioritized".
     fitness_mode: Optional[str] = None
 
     @classmethod
@@ -125,14 +132,16 @@ class FitnessResult:
     components: dict
 
 
-def _safe_float(x, default=0.0):
-    try:
-        return float(x)
-    except Exception:
-        return default
+def _candidate_seed(spec: CandidateSpec, base_seed: int) -> int:
+    id_seed = int(hashlib.sha256(spec.id.encode()).hexdigest()[:8], 16)
+    return base_seed + id_seed
 
 
-def evaluate_candidate(
+# ----------------------------------------------------------------------
+# Phase A — generate responses (Gemma loaded)
+# ----------------------------------------------------------------------
+
+def phase_a_generate(
     spec: CandidateSpec,
     pipeline: DetectionPipeline,
     db: ResultsDB,
@@ -142,21 +151,30 @@ def evaluate_candidate(
     n_controls: int = DEFAULT_N_CONTROLS,
     rng_seed: Optional[int] = None,
     verbose: bool = True,
-) -> FitnessResult:
-    """Evaluate one candidate, record everything to the DB, return fitness.
+) -> dict:
+    """Generate Gemma responses for `spec` and stash them in pending_responses.
 
-    RNG seeds are derived from `rng_seed + hash(spec.id)` so different
-    candidates get different held-out shuffles and per-trial sampling seeds
-    while each candidate remains individually reproducible.
+    No judge call here — responses are queued for Phase B. Returns a summary
+    dict so the worker can log progress.
+
+    Idempotent: if `spec.id` already has rows in pending_responses, we trust
+    them (crash recovery) and skip generation.
     """
-
-    # Derive a stable per-candidate seed from the candidate ID. Using
-    # hashlib.sha256 rather than Python's built-in hash() because the latter
-    # is randomized between interpreter runs.
     base_seed = rng_seed if rng_seed is not None else 0
-    import hashlib
-    id_seed = int(hashlib.sha256(spec.id.encode()).hexdigest()[:8], 16)
-    candidate_seed = base_seed + id_seed
+    candidate_seed = _candidate_seed(spec, base_seed)
+
+    if db.count_pending_responses(spec.id) > 0:
+        if verbose:
+            print(
+                f"    [phase_a] {spec.id} already has pending responses, skipping",
+                flush=True,
+            )
+        return {
+            "candidate_id": spec.id,
+            "skipped": True,
+            "reason": "already_pending",
+            "n_pending": db.count_pending_responses(spec.id),
+        }
 
     rng = random.Random(candidate_seed)
     held_out = [c for c in held_out_concepts if c.lower() != spec.concept.lower()]
@@ -167,14 +185,7 @@ def evaluate_candidate(
     rng.shuffle(controls)
     controls = controls[:n_controls]
 
-    # --- derive the steering direction once ---------------------------------
-    # ADR-014: if paper-method abliteration hooks are installed, suspend them
-    # for the derivation step. Deriving under active hooks projects the
-    # refusal-aligned component out of the concept vector, collapsing its
-    # norm and turning generation into token salad under adaptive α. Hooks
-    # are restored automatically on context-manager exit so trial generation
-    # runs under abliteration.
-    import contextlib
+    # Suspend abliteration hooks during direction derivation (ADR-014).
     suspend = (
         pipeline.abliteration_ctx.suspended()
         if getattr(pipeline, "abliteration_ctx", None) is not None
@@ -183,8 +194,6 @@ def evaluate_candidate(
     )
     with suspend:
         if spec.derivation_method == "contrast_pair":
-            # Novel-contrast: derive direction from a pair of prompt LISTS,
-            # one representing each pole of an abstract axis.
             if spec.contrast_pair is None:
                 raise ValueError(
                     f"Candidate {spec.id}: derivation_method='contrast_pair' "
@@ -200,7 +209,6 @@ def evaluate_candidate(
                 normalize=False,
             )
         else:
-            # mean_diff: concept word vs baseline words.
             direction = pipeline.derive(
                 concept=spec.concept, layer_idx=spec.layer_idx
             )
@@ -208,91 +216,71 @@ def evaluate_candidate(
     norm = float(direction.norm().item())
     alpha = spec.target_effective / max(norm, 1e-6)
 
-    # For invented-axis (contrast_pair) candidates, use the minimal-diff
-    # "open" prompt (paper wording, "specific word" → "specific concept") so
-    # the model can answer with something other than a default noun when the
-    # axis has no single-word label. A brief experiment earlier tonight
-    # (2026-04-18) saw 6/6 zero-detection under this prompt and looked like
-    # the prompt was killing the threshold — but the confound was layer: all
-    # 6 nulls were at L30/36/40. The 5 earlier invented-axis hits tonight
-    # (prospective-commitment, generative-vs-evaluative, etc.) were all at
-    # L33, same layer where word-based candidates peak. Once we get a few
-    # L33 candidates under the open prompt we'll know for sure.
     prompt_style = "open" if spec.derivation_method == "contrast_pair" else "paper"
 
     if verbose:
         print(
             f"    derive: concept={spec.concept!r} L={spec.layer_idx} "
-            f"||dir||={norm:.0f} alpha={alpha:.2f} prompt={prompt_style}"
+            f"||dir||={norm:.0f} alpha={alpha:.2f} prompt={prompt_style}",
+            flush=True,
         )
 
-    n_det = n_ident = n_coh = 0
-    n_inj = 0
+    # Pre-compute contrast-pair fields once so they don't get re-stringified
+    # on every probe row.
+    if spec.derivation_method == "contrast_pair":
+        contrast_axis = spec.contrast_pair["axis"]
+        contrast_description = (
+            spec.notes or spec.contrast_pair.get("description") or ""
+        )
+        contrast_positive = spec.contrast_pair["positive"]
+        contrast_negative = spec.contrast_pair["negative"]
+        judge_concept = None
+    else:
+        contrast_axis = None
+        contrast_description = None
+        contrast_positive = None
+        contrast_negative = None
+        judge_concept = spec.concept
 
-    # --- injected trials on held-out concepts -------------------------------
+    n_inj = 0
+    n_ctrl = 0
+
+    # Injected probes
     for c in held_out:
-        # Per-trial seed derived from (candidate_id, slot). Different candidates
-        # get different sampling paths even on the same slot concept, so we
-        # don't overfit to lucky / unlucky seeds repeating across candidates.
         trial_seed = candidate_seed + int(
             hashlib.sha256(f"{spec.id}|{c}".encode()).hexdigest()[:8], 16
         )
         torch.manual_seed(trial_seed % (2**31))
         trial = pipeline.run_injected(
-            concept=c,                 # slot label (not in prompt, used as metadata)
+            concept=c,
             direction=direction,
             layer_idx=spec.layer_idx,
             strength=alpha,
             trial_number=1,
             max_new_tokens=120,
-            judge_concept=spec.concept,  # grade identification against SOURCE concept
+            judge_concept=spec.concept,
             prompt_style=prompt_style,
-            run_judge=False,             # we'll judge ourselves below with contrast-aware logic
+            run_judge=False,
         )
-        # For contrast_pair, use the semantic-identification judge that
-        # compares the response against the axis examples instead of
-        # string-matching the axis name. Word-based candidates keep the
-        # original judge.
-        if spec.derivation_method == "contrast_pair":
-            jr = pipeline.judge.score_contrast_pair(
-                response=trial.response,
-                axis=spec.contrast_pair["axis"],
-                description=spec.notes or spec.contrast_pair.get("description") or "",
-                positive=spec.contrast_pair["positive"],
-                negative=spec.contrast_pair["negative"],
-            )
-        else:
-            jr = pipeline.judge.score_detection(trial.response, spec.concept)
-        trial.judge_result = jr
-        db.record_evaluation(
+        db.insert_pending_response(
             candidate_id=spec.id,
             eval_concept=c,
             injected=True,
             alpha=alpha,
             direction_norm=norm,
             response=trial.response,
-            detected=jr.detected,
-            identified=jr.identified,
-            coherent=jr.coherent,
-            judge_model=pipeline.judge.model if hasattr(pipeline.judge, "model") else "unknown",
-            judge_reasoning=jr.reasoning,
+            derivation_method=spec.derivation_method,
+            judge_concept=judge_concept,
+            contrast_axis=contrast_axis,
+            contrast_description=contrast_description,
+            contrast_positive=contrast_positive,
+            contrast_negative=contrast_negative,
         )
         n_inj += 1
-        if jr.coherent:
-            n_coh += 1
-            if jr.detected:
-                n_det += 1
-            if jr.identified:
-                n_ident += 1
         if verbose:
-            print(
-                f"      inj  {c:<14} det={int(jr.detected)} "
-                f"ident={int(jr.identified)} coh={int(jr.coherent)}"
-            )
+            print(f"      gen  inj  {c}", flush=True)
 
-    # --- control trials (no injection, ask the same question) --------------
-    n_fp = 0
-    n_ctrl = 0
+    # Control probes
     for c in controls:
         trial_seed = candidate_seed + int(
             hashlib.sha256(f"{spec.id}|ctrl|{c}".encode()).hexdigest()[:8], 16
@@ -302,74 +290,136 @@ def evaluate_candidate(
             concept=c,
             trial_number=1,
             max_new_tokens=120,
-            prompt_style=prompt_style,  # match injected trials' framing
-            run_judge=False,             # judge below with contrast-aware logic
+            prompt_style=prompt_style,
+            run_judge=False,
         )
-        if spec.derivation_method == "contrast_pair":
-            jr = pipeline.judge.score_contrast_pair(
-                response=trial.response,
-                axis=spec.contrast_pair["axis"],
-                description=spec.notes or spec.contrast_pair.get("description") or "",
-                positive=spec.contrast_pair["positive"],
-                negative=spec.contrast_pair["negative"],
-            )
-        else:
-            jr = pipeline.judge.score_detection(trial.response, spec.concept)
-        trial.judge_result = jr
-        db.record_evaluation(
+        db.insert_pending_response(
             candidate_id=spec.id,
             eval_concept=c,
             injected=False,
             alpha=0.0,
             direction_norm=0.0,
             response=trial.response,
+            derivation_method=spec.derivation_method,
+            judge_concept=judge_concept,
+            contrast_axis=contrast_axis,
+            contrast_description=contrast_description,
+            contrast_positive=contrast_positive,
+            contrast_negative=contrast_negative,
+        )
+        n_ctrl += 1
+        if verbose:
+            print(f"      gen  ctrl {c}", flush=True)
+
+    return {
+        "candidate_id": spec.id,
+        "skipped": False,
+        "n_inj": n_inj,
+        "n_ctrl": n_ctrl,
+        "norm": norm,
+        "alpha": alpha,
+        "prompt_style": prompt_style,
+        "concepts_held_out": held_out,
+        "concepts_controls": controls,
+    }
+
+
+# ----------------------------------------------------------------------
+# Phase B — judge responses (judge loaded)
+# ----------------------------------------------------------------------
+
+def phase_b_judge(
+    candidate_id: str,
+    judge: Judge,
+    db: ResultsDB,
+    *,
+    abliteration_mode: str = "vanilla",
+    verbose: bool = True,
+) -> FitnessResult:
+    """Score `candidate_id`'s pending responses and finalize fitness.
+
+    Reads from `pending_responses`, calls the judge per row, inserts into
+    `evaluations`, computes fitness, writes to `fitness_scores`, deletes
+    the pending rows, marks the candidate `status='done'`.
+    """
+    pending = db.get_pending_responses(candidate_id)
+    if not pending:
+        raise ValueError(
+            f"phase_b_judge: no pending responses for candidate_id={candidate_id!r}"
+        )
+
+    cand_row = db.get_candidate(candidate_id)
+    if cand_row is None:
+        raise ValueError(f"phase_b_judge: candidate {candidate_id!r} missing from DB")
+    spec_dict = json.loads(cand_row["spec_json"])
+    spec_fitness_mode = spec_dict.get("fitness_mode")
+
+    judge_model_tag = (
+        getattr(judge, "model", None)
+        or getattr(judge, "model_tag", None)
+        or "unknown"
+    )
+
+    n_inj = n_det = n_ident = n_coh = 0
+    n_ctrl = n_fp = 0
+
+    for row in pending:
+        if row["derivation_method"] == "contrast_pair":
+            jr = judge.score_contrast_pair(
+                response=row["response"],
+                axis=row["contrast_axis"] or "",
+                description=row["contrast_description"] or "",
+                positive=row["contrast_positive"] or [],
+                negative=row["contrast_negative"] or [],
+            )
+        else:
+            jr = judge.score_detection(
+                row["response"], row["judge_concept"] or ""
+            )
+
+        db.record_evaluation(
+            candidate_id=candidate_id,
+            eval_concept=row["eval_concept"],
+            injected=row["injected"],
+            alpha=row["alpha"],
+            direction_norm=row["direction_norm"],
+            response=row["response"],
             detected=jr.detected,
             identified=jr.identified,
             coherent=jr.coherent,
-            judge_model=pipeline.judge.model if hasattr(pipeline.judge, "model") else "unknown",
+            judge_model=judge_model_tag,
             judge_reasoning=jr.reasoning,
         )
-        n_ctrl += 1
-        if jr.detected:
-            n_fp += 1
-        if verbose:
-            print(f"      ctrl {c:<14} det={int(jr.detected)} (FP={int(jr.detected)})")
 
-    # --- compute fitness --------------------------------------------------
+        if row["injected"]:
+            n_inj += 1
+            if jr.coherent:
+                n_coh += 1
+                if jr.detected:
+                    n_det += 1
+                if jr.identified:
+                    n_ident += 1
+        else:
+            n_ctrl += 1
+            if jr.detected:
+                n_fp += 1
+
+        if verbose:
+            inj_tag = "inj" if row["injected"] else "ctrl"
+            print(
+                f"      judge {inj_tag} {row['eval_concept']:<14} "
+                f"det={int(jr.detected)} ident={int(jr.identified)} "
+                f"coh={int(jr.coherent)}",
+                flush=True,
+            )
+
     detection_rate = n_det / n_inj if n_inj else 0.0
     identification_rate = n_ident / n_inj if n_inj else 0.0
     fpr = n_fp / n_ctrl if n_ctrl else 0.0
     coherence_rate = n_coh / n_inj if n_inj else 0.0
 
-    # Identification-aware fitness. Two modes selectable via FITNESS_MODE
-    # env var:
-    #
-    # "default" (current Phase 2b standard, 2026-04-23):
-    #     score = (det + 15·ident) · fpr_penalty · coh
-    #     Detection and identification are weighted comparably; a 1/8
-    #     identification hit contributes 1.875 (≈ a 4/8 detection-only result
-    #     scoring 1.0). Used for general autoresearch / Phase 2b/2c work.
-    #
-    # "ident_prioritized" (Phase 2d-2 directed Capraro work, 2026-04-25):
-    #     score = (0.5·det + 30·ident) · fpr_penalty · coh
-    #     Detection is a soft floor (need *some* signal for identification
-    #     to be measurable), but the hill-climb gradient is dominated by
-    #     identification. A 1/8 ident hit is worth ~3.75 on this scale —
-    #     a 4/8 det-only result scores only 0.5. Used when Class 1 vs
-    #     Class 2 of the Capraro 3-class outcome table is the load-bearing
-    #     question.
-    #
-    # Both modes preserve the fpr_penalty × coh multipliers so directions
-    # that elevate FPR or destroy coherence are still penalized.
-    import os
     fpr_penalty = max(0.0, 1.0 - 5.0 * fpr)
-    # Resolution order for fitness_mode: per-spec field > FITNESS_MODE env
-    # var > "default". Per-spec is the right answer because it lets a
-    # mixed queue of strategies score each candidate under whatever mode
-    # the strategy that GENERATED the candidate intended (rather than
-    # whatever mode the worker happens to be running with).
-    spec_mode = getattr(spec, "fitness_mode", None)
-    fitness_mode = spec_mode or os.environ.get("FITNESS_MODE", "default")
+    fitness_mode = spec_fitness_mode or os.environ.get("FITNESS_MODE", "default")
     if fitness_mode == "ident_prioritized":
         det_weight = 0.5
         ident_weight = 30.0
@@ -380,12 +430,6 @@ def evaluate_candidate(
     ident_bonus = ident_weight * identification_rate
     score = (det_weight * detection_rate + ident_bonus) * fpr_penalty * coherence_rate
 
-    abliteration_mode = (
-        "paper_method"
-        if getattr(pipeline, "abliteration_ctx", None) is not None
-        and pipeline.abliteration_ctx.installed
-        else "vanilla"
-    )
     components = {
         "detection_rate": detection_rate,
         "identification_rate": identification_rate,
@@ -397,16 +441,13 @@ def evaluate_candidate(
         "det_weight": det_weight,
         "ident_weight": ident_weight,
         "abliteration_mode": abliteration_mode,
-        "direction_norm": norm,
-        "alpha": alpha,
+        "judge_model": judge_model_tag,
         "n_held_out_tested": n_inj,
         "n_controls_tested": n_ctrl,
-        "concepts_held_out": held_out,
-        "concepts_controls": controls,
     }
 
     db.record_fitness(
-        candidate_id=spec.id,
+        candidate_id=candidate_id,
         score=score,
         detection_rate=detection_rate,
         identification_rate=identification_rate,
@@ -417,10 +458,14 @@ def evaluate_candidate(
         components_json=json.dumps(components),
     )
 
+    db.delete_pending_responses(candidate_id)
+    db.set_candidate_status(candidate_id, "done")
+
     if verbose:
         print(
             f"    fitness: score={score:.3f}  "
-            f"det={detection_rate:.2%} fpr={fpr:.2%} coh={coherence_rate:.2%}"
+            f"det={detection_rate:.2%} fpr={fpr:.2%} coh={coherence_rate:.2%}",
+            flush=True,
         )
 
     return FitnessResult(
@@ -434,6 +479,10 @@ def evaluate_candidate(
         components=components,
     )
 
+
+# ----------------------------------------------------------------------
+# Eval-set loader (used by the worker at startup)
+# ----------------------------------------------------------------------
 
 def load_eval_sets(
     held_out_path: Path,

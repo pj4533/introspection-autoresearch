@@ -1,4 +1,4 @@
 from .base import Judge, JudgeResult
-from .claude_judge import ClaudeJudge
+from .local_mlx_judge import LocalMLXJudge
 
-__all__ = ["Judge", "JudgeResult", "ClaudeJudge"]
+__all__ = ["Judge", "JudgeResult", "LocalMLXJudge"]

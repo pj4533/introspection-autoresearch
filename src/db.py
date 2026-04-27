@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS fitness_scores (
 CREATE INDEX IF NOT EXISTS idx_fitness_score ON fitness_scores(score);
 
 -- Phase A → Phase B handoff buffer (added 2026-04-27 for the four-phase
--- worker_v2 state machine). The Generate phase writes Gemma's raw responses
+-- worker state machine). The Generate phase writes Gemma's raw responses
 -- here; the Judge phase later loads the local-MLX judge, drains this table
 -- for each candidate, scores everything, and inserts into `evaluations`.
 -- Crash recovery: if the worker dies between phases A and B, these rows
@@ -528,7 +528,7 @@ class ResultsDB:
         return [dict(r) for r in rows]
 
     # ------------------------------------------------------------------
-    # Phase A → Phase B handoff (2026-04-27, worker_v2)
+    # Phase A → Phase B handoff (2026-04-27, worker)
     # ------------------------------------------------------------------
 
     def insert_pending_response(

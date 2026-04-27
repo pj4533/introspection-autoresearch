@@ -33,7 +33,6 @@ from typing import Optional
 
 from ..db import ResultsDB
 from ..evaluate import CandidateSpec
-from ..proposers import ClaudeProposer
 from ..proposers.base import Proposer
 from .random_explore import spec_hash
 
@@ -43,17 +42,6 @@ from .random_explore import spec_hash
 # gives full axis-by-layer profiles instead of lottery-ticket samples.
 DEFAULT_LAYERS = [30, 33, 36, 40]
 DEFAULT_TARGET_EFFECTIVES = [14000.0, 16000.0, 18000.0, 20000.0]
-
-# Use Opus 4.7 for pair generation. This is a creativity-gated task
-# (invent abstract axes the model likely represents but that don't map to
-# a single English word), so we want the smartest proposer. Researcher
-# token volume is tiny (~150K/day across all mutation/regen calls), so
-# Opus's heavier subscription weighting is negligible in absolute terms.
-# Haiku → Sonnet → Opus is the same directional move each time (more
-# abstract/creative axes); Haiku produced too-obvious single-word axes,
-# Sonnet's novel_contrast runs hit at rates tied with dictionary words
-# (see Phase 2a results), and Opus is the next step up that ladder.
-CLAUDE_MODEL = "claude-opus-4-7"
 
 SYSTEM_PROMPT = (
     "You are helping design contrast pairs for a mechanistic interpretability "
@@ -269,13 +257,14 @@ def _parse_pairs(raw: str) -> list[dict]:
 def generate_candidates(
     n: int,
     db: ResultsDB,
+    proposer: Proposer,
+    *,
     concept_pool: Optional[list[str]] = None,  # unused; kept for API compatibility
     layers: Optional[list[int]] = None,
     target_effectives: Optional[list[float]] = None,
     rng_seed: Optional[int] = None,
     oversample_factor: int = 2,
     max_attempts_per_candidate: int = 10,
-    proposer: Optional[Proposer] = None,
 ) -> list[CandidateSpec]:
     """Generate ``n`` novel-contrast candidates via the supplied proposer.
 
@@ -284,18 +273,12 @@ def generate_candidates(
     layer and target_effective from the configured search space.
 
     The ``concept_pool`` parameter is ignored; this strategy doesn't use a
-    word pool. It's accepted only so the caller (``src/researcher.py``) can
-    pass a uniform argument signature across strategies.
-
-    ``proposer`` defaults to ``ClaudeProposer(model=CLAUDE_MODEL)`` so the
-    legacy researcher.py path keeps working unchanged. The new four-phase
-    worker passes a LocalMLXProposer instead.
+    word pool. It's accepted only so callers can pass a uniform argument
+    signature across strategies.
     """
     layers = layers or DEFAULT_LAYERS
     target_effectives = target_effectives or DEFAULT_TARGET_EFFECTIVES
     rng = random.Random(rng_seed if rng_seed is not None else time.time_ns())
-    if proposer is None:
-        proposer = ClaudeProposer(model=CLAUDE_MODEL)
 
     n_pairs = max(n * oversample_factor, n + 2)
     feedback = _build_feedback_block(db)

@@ -1,4 +1,4 @@
-"""End-to-end test of worker_v2's four-phase state machine, with mocked models.
+"""End-to-end test of worker's four-phase state machine, with mocked models.
 
 These tests run in milliseconds because every model is replaced with a mock
 that returns canned responses. The objective: prove the state machine moves
@@ -147,7 +147,7 @@ def test_full_cycle_one_candidate(
     tmp_db, tmp_queue, held_out, controls, monkeypatch
 ):
     """Single candidate: A generates pending, B judges, queue file moves to done."""
-    import src.worker_v2 as w
+    import src.worker as w
     import src.paper as paper_pkg
     # extract_concept_vector isn't needed for mean_diff but we patch defensively
     monkeypatch.setattr(
@@ -199,7 +199,7 @@ def test_handles_swap_correctly(
 ):
     """At end of cycle, no handle should be loaded except possibly proposer
     if Phase C ran. Crucial invariant: never two at once."""
-    import src.worker_v2 as w
+    import src.worker as w
     import src.paper as paper_pkg
     monkeypatch.setattr(paper_pkg, "extract_concept_vector",
                         lambda **kw: _FakeTensor(100.0))
@@ -264,7 +264,7 @@ def test_phase_c_writes_specs_when_queue_empty(
     tmp_db, tmp_queue, held_out, controls, monkeypatch
 ):
     """If no candidates pending and no orphans, Phase C runs and queues new specs."""
-    import src.worker_v2 as w
+    import src.worker as w
     import src.paper as paper_pkg
     monkeypatch.setattr(paper_pkg, "extract_concept_vector",
                         lambda **kw: _FakeTensor(100.0))
@@ -286,7 +286,7 @@ def test_phase_c_writes_specs_when_queue_empty(
     def patched_oldest():
         iter_count["n"] += 1
         if iter_count["n"] > 5:
-            import src.worker_v2 as ww
+            import src.worker as ww
             ww._shutdown = True
         return original_oldest()
     monkeypatch.setattr(w, "_oldest_pending", patched_oldest)
@@ -321,7 +321,7 @@ def test_crash_recovery_picks_up_orphan_pending(
 ):
     """Simulate a crash mid-Phase-A: pending_responses rows exist for a
     candidate but Phase B never ran. Restart should drain them first."""
-    import src.worker_v2 as w
+    import src.worker as w
     import src.paper as paper_pkg
     monkeypatch.setattr(paper_pkg, "extract_concept_vector",
                         lambda **kw: _FakeTensor(100.0))
@@ -371,7 +371,7 @@ def test_crash_recovery_picks_up_orphan_pending(
     def patched():
         iter_count["n"] += 1
         if iter_count["n"] > 3:
-            import src.worker_v2 as ww
+            import src.worker as ww
             ww._shutdown = True
         return original()
     monkeypatch.setattr(w, "_oldest_pending", patched)

@@ -1,16 +1,13 @@
-"""Local MLX-backed judge — drop-in replacement for ClaudeJudge.
+"""Local MLX-backed strict-grading judge.
 
-DESIGN INTENT:
-This module is for OFF-PIPELINE calibration only as of 2026-04-27.
-Nothing in src/worker.py / src/evaluate.py / src/researcher.py imports it.
-The live pipeline still goes through claude_judge.ClaudeJudge.
+The production judge for the four-phase worker (ADR-019). Uses mlx_lm for
+any MLX-format model — Qwen3.6-35B-A3B-8bit is the calibrated default
+(see docs/calibration_results_qwen35b.md).
 
-After calibration validates a model (see docs/local_pipeline_plan.md Day 1),
-we'll wire this in by editing the worker to switch judges based on a flag.
-
-Uses mlx_lm (Apple MLX inference) for any MLX-format model. The prompt
-templates are deliberately copied verbatim from claude_judge so calibration
-results are directly comparable to Sonnet's verdicts already in the DB.
+The prompt templates live in `prompts.py` so this module can stay focused
+on inference + caching. Verdicts cache in a per-model SQLite namespace
+keyed by `(model_tag, response_hash)` so different judges' verdicts never
+collide.
 """
 
 from __future__ import annotations
@@ -24,12 +21,11 @@ from pathlib import Path
 from typing import Optional
 
 from .base import JudgeResult
-# Reuse the exact strict prompt templates from the production judge.
-from .claude_judge import (
+from .prompts import (
     PROMPT_TEMPLATE_VERSION,
-    _SYSTEM,
-    _USER_TEMPLATE,
-    _CONTRAST_USER_TEMPLATE,
+    SYSTEM as _SYSTEM,
+    USER_TEMPLATE as _USER_TEMPLATE,
+    CONTRAST_USER_TEMPLATE as _CONTRAST_USER_TEMPLATE,
 )
 
 
@@ -57,8 +53,7 @@ def _contrast_response_hash(
 
 
 class _JudgeCache:
-    """SQLite-backed judgment cache, mirrors claude_judge._JudgeCache schema
-    so the same schema can later be unified."""
+    """SQLite-backed judgment cache."""
 
     def __init__(self, path: Path):
         self.path = path

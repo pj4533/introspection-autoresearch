@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Visible smoke test of the four-phase worker_v2 with mocked models.
+"""Visible smoke test of the four-phase worker with mocked models.
 
 Demonstrates one full A→B→C→A cycle without loading any real weights.
 The user-visible output should show:
@@ -100,10 +100,10 @@ def _make_proposer_response() -> str:
 
 def main() -> int:
     print("=" * 70)
-    print("worker_v2 SMOKE TEST — fully mocked, no real models loaded")
+    print("worker SMOKE TEST — fully mocked, no real models loaded")
     print("=" * 70)
 
-    tmp = Path(tempfile.mkdtemp(prefix="worker_v2_smoke_"))
+    tmp = Path(tempfile.mkdtemp(prefix="worker_smoke_"))
     print(f"workspace: {tmp}")
     queue_dir = tmp / "queue"
     runs_dir = tmp / "runs"
@@ -111,8 +111,8 @@ def main() -> int:
         (queue_dir / sub).mkdir(parents=True)
     runs_dir.mkdir()
 
-    # Patch worker_v2's QUEUE/RUNS to our tmp dir
-    import src.worker_v2 as w
+    # Patch worker's QUEUE/RUNS to our tmp dir
+    import src.worker as w
     w.QUEUE = queue_dir
     w.RUNS = runs_dir
     # Patch shutdown flag (in case a previous test or run set it)

@@ -265,7 +265,7 @@ class MockHandle(ModelHandle):
 
     `obj` is a user-supplied value (or a dict by default). `load`/`unload`
     just toggle state and run optional callbacks. Useful for exercising
-    the worker_v2 state machine without paying minutes-per-load cost.
+    the worker state machine without paying minutes-per-load cost.
     """
 
     def __init__(

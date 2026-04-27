@@ -117,63 +117,40 @@ plan file, it's a bug. Commit it to `docs/roadmap.md` (forward-looking) or
 ## Architecture quick map
 
 ```
-src/paper/          ← vendored from safety-research/introspection-mechanisms
+src/paper/          ← vendored from safety-research/introspection-mechanisms.
+                     Includes extract_concept_vector() (used by contrast_pair
+                     direction derivation) and AbliterationContext (dormant —
+                     abliteration is currently off; vanilla is the default
+                     per ADR-017 rev 2).
 src/bridge.py       ← MPS-aware loader + DetectionPipeline
 src/derive.py       ← steering-vector derivation wrappers (mean_diff, ...)
 src/inject.py       ← SteeringHook + generation runners (re-exports from paper)
-src/judges/         ← Claude judge via claude-agent-sdk subscription OAuth
-                     (PROMPT_TEMPLATE_VERSION in claude_judge.py — bump to
-                      invalidate the sqlite cache when prompt changes)
 src/db.py           ← SQLite ResultsDB. Phase 1 trials + Phase 2 candidates/
-                     evaluations/fitness_scores. Schema version 2.
-src/sweep.py        ← Resumable Phase 1 sweep runner.
-                     Adaptive α via target_effective (α = target / ‖dir‖).
-                     Supports --abliterate-paper <directions.pt>: pre-derives
-                     concept vectors from vanilla, then installs per-layer
-                     paper-method hooks for injection. See ADR-014.
-src/paper/abliteration.py
-                    ← Paper-method refusal-direction ablation. Per-layer
-                     projection-out hooks with Optuna-tuned per-region
-                     weights proportionally remapped 27B → 12B. Includes
-                     compute_per_layer_refusal_directions() for one-shot
-                     extraction to data/refusal_directions_12b.pt.
-src/paper/refusal_prompts.py
-                    ← Vendored 520 harmful + 31811 harmless prompts for
-                     refusal direction derivation.
-src/verify_phase1.py ← Phase 1 acceptance check.
-src/evaluate.py     ← Phase 2 candidate fitness (3-component multiplicative).
-                     Legacy single-call eval: derives direction, runs probes,
-                     judges inline. Used by the legacy worker.py.
-src/evaluate_phased.py
-                    ← Same fitness math split into phase_a_generate (writes
-                     pending_responses) and phase_b_judge (reads them, scores,
-                     writes evaluations + fitness_scores). Used by worker_v2.
+                     evaluations/fitness_scores + pending_responses (Phase A→B
+                     handoff). Schema version 3.
+src/evaluate.py     ← CandidateSpec + FitnessResult + phase_a_generate
+                     (writes pending_responses) + phase_b_judge (reads them,
+                     scores, writes evaluations + fitness_scores). One module,
+                     two halves matching the worker's two phases. ADR-019.
 src/models/registry.py
-                    ← ModelHandle ABC + GemmaHandle / MLXHandle / MockHandle.
-                     The HandleRegistry enforces the one-loaded-at-a-time
+                    ← ModelHandle ABC + GemmaHandle / MLXHandle / MockHandle +
+                     HandleRegistry. Enforces the one-loaded-at-a-time
                      invariant. ADR-019.
-src/proposers/      ← Proposer protocol + ClaudeProposer + LocalMLXProposer
-                     + MockProposer. Strategies accept a `proposer=` arg
-                     (default ClaudeProposer for backwards compat).
-src/judges/local_mlx_judge.py
-                    ← MLX-backed strict-grading judge. Same prompt templates
-                     as claude_judge.py so verdicts are directly comparable.
-                     Per-model SQLite cache keyed by model tag.
-src/worker.py       ← LEGACY Phase 2 worker. Loads model once, judges inline
-                     via Claude. Still works for the old cloud pipeline.
-src/worker_v2.py    ← Four-phase serial-swap worker. Generate (Gemma) →
-                     Judge (MLX) → Propose (MLX) → Reload. Crash-recovery
+src/proposers/      ← Proposer protocol + LocalMLXProposer + MockProposer.
+                     Strategies require a Proposer; the worker constructs a
+                     LocalMLXProposer from its currently-loaded MLX handle.
+src/judges/         ← Judge protocol + JudgeResult + LocalMLXJudge +
+                     prompts.py (strict-grading templates). Per-model
+                     SQLite cache keyed by model tag.
+src/worker.py       ← Four-phase serial-swap worker. Generate (Gemma) →
+                     Judge (MLX) → Propose (MLX) → Reload. Crash recovery
                      drains orphan pending_responses on startup.
-                     Launch via scripts/start_worker_v2.sh. ADR-019.
-src/researcher.py   ← LEGACY short-lived candidate generator driver. Replaced
-                     by worker_v2's Phase C; kept for old launcher scripts.
-src/strategies/     ← Phase 2 strategies.
-                     random_explore: samples concept/layer/eff from a word pool
-                     novel_contrast: generates abstract contrast pairs via a
-                       Proposer (defaults to ClaudeProposer Opus 4.7;
-                       worker_v2 passes LocalMLXProposer instead).
-                     directed_capraro: same pattern, fault-line-anchored.
-                     Future: exploit_topk, crossover.
+                     Launch via scripts/start_worker.sh. ADR-019.
+src/strategies/     ← Phase 2 strategies (all accept a Proposer).
+                     random_explore:    sampling from a word pool.
+                     novel_contrast:    generates abstract contrast pairs.
+                     directed_capraro:  fault-line-anchored variants.
+                     hypotheses:        Capraro fault-line registry (C1-C4).
 tests/              ← pytest suite. Run with `.venv/bin/pytest tests/`.
                      Covers DB pending_responses lifecycle, model registry
                      contract, proposer protocol, phased evaluation
@@ -192,28 +169,19 @@ tests/              ← pytest suite. Run with `.venv/bin/pytest tests/`.
   `~/Developer/introspection-mechanisms` is **not on the import path** — it was
   reverted to pristine state. If upstream ships changes, port by hand into
   `src/paper/`.
-- **Claude judge uses Claude Code subscription OAuth.** Never add
-  `ANTHROPIC_API_KEY` requirements. The `claude-agent-sdk` inherits auth from
-  the local Claude Code install. **Default judge model is Sonnet 4.6
-  (`claude-sonnet-4-6`) project-wide** (both Phase 1 and Phase 2, as of
-  2026-04-23). Haiku 4.5 remains available via `--judge-model
-  claude-haiku-4-5-20251001` as a cheaper throwaway option, but Phase 2b's
-  feedback-driven hill-climb amplifies any judge bias, so Sonnet's
-  stricter semantic-gist grading is the standing default. The SQLite
-  judge cache keys by model name, so old Haiku entries sit in a separate
-  namespace and never collide with Sonnet entries.
-- **Researcher (novel_contrast / exploit_topk / hillclimb) uses Opus 4.7
-  (`claude-opus-4-7`).** Single constant at
-  `src/strategies/novel_contrast.py::CLAUDE_MODEL` imported by the other
-  two strategies. Researcher token volume is small (~150K/day) so Opus's
-  heavier subscription weighting is negligible; the creativity-gated
-  abstract-axis invention task benefits from the smartest available
-  proposer.
-- **Judge is blocking-sync from Jupyter.** `ClaudeJudge._run_sync` spawns a
-  worker thread because Jupyter already runs an asyncio loop and
-  `asyncio.run()` would raise "Already running asyncio in this thread".
+- **All-local pipeline (ADR-019).** Judge and proposer are local MLX models;
+  no claude-agent-sdk anywhere. The interactive Claude Code session is the
+  only thing that uses subscription tokens. Default judge:
+  `mlx-community/Qwen3.6-35B-A3B-8bit` (calibrated against Sonnet on the
+  existing corpus — see `docs/calibration_results_qwen35b.md`). Default
+  proposer: `unsloth/Qwen3.6-27B-MLX-8bit`. Both are loaded by the worker's
+  `HandleRegistry` one at a time. Judge and proposer prompts default to
+  `enable_thinking=False` because Qwen3.x's verbose `<think>` blocks
+  overshoot `max_new_tokens` before producing the final JSON answer.
 - **HuggingFace xet downloads can flake.** Set `HF_HUB_DISABLE_XET=1` if the
   default `xet_get` path fails.
+- **`hf` CLI replaces `huggingface-cli`** as of huggingface_hub 1.12.
+  Use `hf download <repo> --local-dir <path>`.
 - **Phase 1 empirical parameters for Gemma3-12B (from 2026-04-16 full sweep):**
   - **Best layer**: 33 (68.75% depth, matches paper's ~70% prediction).
   - **target_effective = 18,000.** The α × ‖direction‖ product that puts the
@@ -228,44 +196,17 @@ tests/              ← pytest suite. Run with `.venv/bin/pytest tests/`.
     ~3× higher apparent detection rates that were actually concept leakage,
     not introspection. Always test new prompt versions against both
     hand-crafted positives and the existing sweep's 5 known true detections.
-- **Abliterated sweeps: derive concept vectors from vanilla BEFORE installing
-  hooks, then inject under hooks.** Deriving under active abliteration
-  projects the refusal-aligned component out of the concept vector, leaving
-  noise that adaptive-α amplifies into token salad. `src/sweep.py` does this
-  automatically; `src/worker.py` honors this via
-  `pipeline.abliteration_ctx.suspended()` around the derive call in
-  `src/evaluate.py` (shipped 2026-04-24, ADR-017). See ADR-014 and ADR-017.
-- **Vanilla Gemma3-12B is the Phase 2 worker default (ADR-017 rev 2,
-  2026-04-25).** `./scripts/start_worker.sh` runs raw, no hooks. Paper-method
-  abliteration is OPT-IN via `ABLITERATED=1 ./scripts/start_worker.sh` (or
-  `--abliterate-paper` flag). **Use paper-method only when you've reasoned
-  about whether the axis you're testing is refusal-orthogonal.** For
-  dictionary-word directions (Phase 1.5 territory), paper-method delivers
-  ~3.6× detection / ~3.5× identification boost. For Altman/Capraro/Epistemia-
-  style abstract axes about shutdown / continuation / experience / self-
-  states, paper-method *suppresses* the signal because the signal lives
-  inside the refusal subspace itself (Phase 2d-1 finding, 2026-04-24).
-  When in doubt: vanilla. `spec_hash` includes `abliteration_mode` so
-  vanilla and paper-method evaluations of the same direction coexist as
-  distinct DB rows. UI renders an amber "abliterated" badge vs a neutral
-  "vanilla" badge on each leaderboard card. The legacy `ABLITERATED=1`
-  path (loaded deprecated off-the-shelf HF checkpoints) is gone — the env
-  flag now correctly maps to paper-method. See ADR-017.
-- **Never run two sweeps concurrently on the same DB.** MPS unified memory
-  can't hold 2× 12B (44GB+ of just weights on a 64GB machine) and activations
-  start corrupting silently. Both processes produce token salad with no
-  error. Convention: one sweep at a time per DB path.
-- **Paper-method abliteration is the only abliteration we use.** Off-the-shelf
-  HF abliterated checkpoints (`mlabonne/gemma-3-12b-it-abliterated-v2`,
-  `huihui-ai/gemma-3-12b-it-abliterated`) produced catastrophic FPR on our
-  protocol (97.9% and 90% respectively). The paper's Optuna-tuned per-region
-  weights are the surgical version; proportional remap from 62-layer 27B to
-  48-layer 12B via `paper_layer_weights_for_model()`. See ADR-013.
-- **Claude judge has 60s timeout + 3 retries with exponential backoff.** The
-  Anthropic API can enter CLOSE_WAIT state and hang indefinitely. Without the
-  timeout, a single hang kills whole sweeps (caused an 8h stall mid-session
-  before c63c295 fix). Default sentinel `JudgeResult` on final failure so
-  the sweep keeps going.
+- **Vanilla Gemma3-12B is the worker default (ADR-017 rev 2).** Paper-method
+  abliteration code remains in `src/paper/abliteration.py` and the
+  `GemmaHandle` accepts an `abliteration_path` arg, but the CLI doesn't
+  expose it. To opt in, instantiate the handle directly. For
+  Altman/Capraro-style abstract axes about shutdown / continuation /
+  experience / self-states, paper-method *suppresses* the signal — keep
+  vanilla unless you've reasoned that the axis is refusal-orthogonal.
+- **Never run two large models on the GPU concurrently.** MPS unified memory
+  can't hold 2× 12B-class models cleanly on this 64 GB machine; activations
+  corrupt silently with no error. The four-phase worker enforces serial
+  swaps via the HandleRegistry — at most one model loaded at any time.
 
 ## Running things
 
@@ -281,37 +222,27 @@ python scripts/smoke_judge.py
 jupyter nbconvert --to notebook --execute notebooks/01_reproduce_paper.ipynb \
   --output 01_reproduce_paper.ipynb --ExecutePreprocessor.timeout=1200
 
-# Phase 1 full sweep (~2 hours)
-python scripts/run_phase1_sweep.py
-python -m src.verify_phase1
-python scripts/export_phase1.py
+# Smoke (no real models — full state-machine cycle with mocks)
+python scripts/smoke.py
 
-# Phase 1.5 paper-method abliteration
-python scripts/compute_refusal_direction.py                              # one-shot, ~3-5 min
-python scripts/diagnose_paper_weights.py                                 # sanity check
-python scripts/run_phase1_sweep.py --abliterate-paper data/refusal_directions_12b.pt  # ~2.5 hours
-python scripts/compare_abliterations.py                                  # vanilla vs mlabonne vs huihui vs paper-method
+# Tests (pytest, ~6s)
+.venv/bin/pytest tests/
 
-# Phase 2 autoresearch loop (overnight)
-./scripts/start_worker.sh          # background, one per machine
-./scripts/start_researcher.sh      # background, 30-min cycle
-tail -f logs/worker.log logs/researcher.log
+# Autoresearch loop (overnight). Default fault line: novel_contrast.
+# Or pass FAULT_LINE=causality / grounding / metacognition / experience.
+./scripts/start_worker.sh
+tail -f logs/worker.log
 
-# Phase 2 manual / test invocation
-python -m src.researcher --strategy random --n 5 --dry-run
-python -m src.researcher --strategy random --n 5
-python -m src.worker --max-candidates 5
+# Stop:  pkill -f 'src.worker'
 ```
 
 ## User preferences (PJ)
 
-- Uses **Claude Code subscription OAuth**, not API billing. Anything that calls
-  Claude must go through `claude-agent-sdk` or a subscription-aware path.
-- Wants the **newest Claude models** — `claude-opus-4-7`, `claude-sonnet-4-6`,
-  `claude-haiku-4-5-20251001`. No GPT-4o or older Claude 3.x.
+- **All-local pipeline.** Subscription tokens are only spent on the
+  interactive Claude Code session itself; the autoresearch loop runs
+  100% locally. No claude-agent-sdk; no Anthropic API at runtime.
 - Prefers **standalone Python automation** (long-running scripts, `setsid
-  nohup`) over interactive Claude Code `/loop` sessions. Claude Agent SDK is
-  fine for the "agent does research" layer.
+  nohup`) over interactive Claude Code `/loop` sessions.
 - New-ish to **mech interp** — volunteer intermediate-level explanations when
   introducing concepts (residual stream, layers, steering vectors, etc.),
   not just jargon.
@@ -321,8 +252,11 @@ python -m src.worker --max-candidates 5
 
 ## What NOT to do
 
-- Do not add `ANTHROPIC_API_KEY` as a hard requirement for the judge.
+- Do not reintroduce claude-agent-sdk or any cloud API as a runtime path.
+  The pipeline is local. Models are MLX.
 - Do not switch to fp16 on MPS — Gemma3 generation will NaN.
+- Do not load two large models concurrently on the GPU. The HandleRegistry's
+  one-loaded-at-a-time invariant is load-bearing.
 - Do not reach back into `~/Developer/introspection-mechanisms` at runtime —
   the repo is not on the Python path.
 - Do not add BitsAndBytes quantization code paths. Mech interp requires clean
