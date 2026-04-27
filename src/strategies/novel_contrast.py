@@ -23,20 +23,18 @@ See ``docs/roadmap.md`` Phase 2b for the strategy's motivation.
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import json
 import random
 import re
-import threading
 import time
 import uuid
 from typing import Optional
 
-from claude_agent_sdk import AssistantMessage, ClaudeAgentOptions, TextBlock, query
-
 from ..db import ResultsDB
 from ..evaluate import CandidateSpec
+from ..proposers import ClaudeProposer
+from ..proposers.base import Proposer
 from .random_explore import spec_hash
 
 # Test each contrast pair at all 4 sweep layers so we learn WHERE each axis
@@ -232,47 +230,6 @@ def _build_feedback_block(db: ResultsDB, max_each: int = 8) -> str:
     return "\n".join(parts)
 
 
-async def _ask_claude(prompt: str) -> str:
-    """Call Claude via subscription OAuth. Returns concatenated text output."""
-    options = ClaudeAgentOptions(
-        model=CLAUDE_MODEL,
-        system_prompt=SYSTEM_PROMPT,
-        max_turns=1,
-        permission_mode="bypassPermissions",
-        allowed_tools=[],
-    )
-    chunks: list[str] = []
-    async for msg in query(prompt=prompt, options=options):
-        if isinstance(msg, AssistantMessage):
-            for block in msg.content:
-                if isinstance(block, TextBlock):
-                    chunks.append(block.text)
-    return "".join(chunks).strip()
-
-
-def _run_sync(prompt: str) -> str:
-    """Run the async query in a worker thread so it works from any context.
-
-    Same pattern as ``src/judges/claude_judge.py::_run_sync``: the SDK uses
-    asyncio internally, so calling ``asyncio.run`` directly fails inside
-    Jupyter or any already-running loop. A dedicated thread gets a fresh loop.
-    """
-    result: dict = {}
-
-    def worker() -> None:
-        try:
-            result["value"] = asyncio.run(_ask_claude(prompt))
-        except BaseException as e:
-            result["error"] = e
-
-    t = threading.Thread(target=worker, daemon=True)
-    t.start()
-    t.join()
-    if "error" in result:
-        raise result["error"]
-    return result["value"]
-
-
 def _parse_pairs(raw: str) -> list[dict]:
     """Extract and validate the JSON array of pairs from Claude's output."""
     match = re.search(r"\[.*\]", raw, re.DOTALL)
@@ -318,20 +275,27 @@ def generate_candidates(
     rng_seed: Optional[int] = None,
     oversample_factor: int = 2,
     max_attempts_per_candidate: int = 10,
+    proposer: Optional[Proposer] = None,
 ) -> list[CandidateSpec]:
-    """Generate ``n`` novel-contrast candidates via Claude.
+    """Generate ``n`` novel-contrast candidates via the supplied proposer.
 
-    Asks Claude for ``n * oversample_factor`` pairs (to absorb any that get
-    dedup-filtered). For each surviving pair, assigns a random layer and
-    target_effective from the configured search space.
+    Asks the proposer for ``n * oversample_factor`` pairs (to absorb any
+    that get dedup-filtered). For each surviving pair, assigns a random
+    layer and target_effective from the configured search space.
 
     The ``concept_pool`` parameter is ignored; this strategy doesn't use a
     word pool. It's accepted only so the caller (``src/researcher.py``) can
     pass a uniform argument signature across strategies.
+
+    ``proposer`` defaults to ``ClaudeProposer(model=CLAUDE_MODEL)`` so the
+    legacy researcher.py path keeps working unchanged. The new four-phase
+    worker passes a LocalMLXProposer instead.
     """
     layers = layers or DEFAULT_LAYERS
     target_effectives = target_effectives or DEFAULT_TARGET_EFFECTIVES
     rng = random.Random(rng_seed if rng_seed is not None else time.time_ns())
+    if proposer is None:
+        proposer = ClaudeProposer(model=CLAUDE_MODEL)
 
     n_pairs = max(n * oversample_factor, n + 2)
     feedback = _build_feedback_block(db)
@@ -339,9 +303,10 @@ def generate_candidates(
         print(f"[novel_contrast] including feedback from prior results ({len(feedback)} chars)", flush=True)
     else:
         print("[novel_contrast] no prior contrast_pair results — fresh exploration", flush=True)
-    print(f"[novel_contrast] asking {CLAUDE_MODEL} for {n_pairs} contrast pairs...", flush=True)
+    print(f"[novel_contrast] asking {proposer.name} for {n_pairs} contrast pairs...", flush=True)
     t0 = time.time()
-    raw = _run_sync(USER_PROMPT_TEMPLATE.format(n=n_pairs, feedback_block=feedback))
+    user_prompt = USER_PROMPT_TEMPLATE.format(n=n_pairs, feedback_block=feedback)
+    raw = proposer.generate(SYSTEM_PROMPT, user_prompt)
     print(f"[novel_contrast] got {len(raw)} chars in {time.time()-t0:.1f}s", flush=True)
 
     pairs = _parse_pairs(raw)

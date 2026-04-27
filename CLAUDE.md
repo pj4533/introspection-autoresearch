@@ -142,14 +142,43 @@ src/paper/refusal_prompts.py
                      refusal direction derivation.
 src/verify_phase1.py ← Phase 1 acceptance check.
 src/evaluate.py     ← Phase 2 candidate fitness (3-component multiplicative).
-src/worker.py       ← Phase 2 long-lived queue poller. Loads model once.
-src/researcher.py   ← Phase 2 short-lived candidate generator driver.
+                     Legacy single-call eval: derives direction, runs probes,
+                     judges inline. Used by the legacy worker.py.
+src/evaluate_phased.py
+                    ← Same fitness math split into phase_a_generate (writes
+                     pending_responses) and phase_b_judge (reads them, scores,
+                     writes evaluations + fitness_scores). Used by worker_v2.
+src/models/registry.py
+                    ← ModelHandle ABC + GemmaHandle / MLXHandle / MockHandle.
+                     The HandleRegistry enforces the one-loaded-at-a-time
+                     invariant. ADR-019.
+src/proposers/      ← Proposer protocol + ClaudeProposer + LocalMLXProposer
+                     + MockProposer. Strategies accept a `proposer=` arg
+                     (default ClaudeProposer for backwards compat).
+src/judges/local_mlx_judge.py
+                    ← MLX-backed strict-grading judge. Same prompt templates
+                     as claude_judge.py so verdicts are directly comparable.
+                     Per-model SQLite cache keyed by model tag.
+src/worker.py       ← LEGACY Phase 2 worker. Loads model once, judges inline
+                     via Claude. Still works for the old cloud pipeline.
+src/worker_v2.py    ← Four-phase serial-swap worker. Generate (Gemma) →
+                     Judge (MLX) → Propose (MLX) → Reload. Crash-recovery
+                     drains orphan pending_responses on startup.
+                     Launch via scripts/start_worker_v2.sh. ADR-019.
+src/researcher.py   ← LEGACY short-lived candidate generator driver. Replaced
+                     by worker_v2's Phase C; kept for old launcher scripts.
 src/strategies/     ← Phase 2 strategies.
                      random_explore: samples concept/layer/eff from a word pool
-                     novel_contrast: uses Claude Sonnet 4.6 to generate abstract
-                       contrast pairs; derives direction from pair instead of
-                       single concept (derivation_method="contrast_pair").
+                     novel_contrast: generates abstract contrast pairs via a
+                       Proposer (defaults to ClaudeProposer Opus 4.7;
+                       worker_v2 passes LocalMLXProposer instead).
+                     directed_capraro: same pattern, fault-line-anchored.
                      Future: exploit_topk, crossover.
+tests/              ← pytest suite. Run with `.venv/bin/pytest tests/`.
+                     Covers DB pending_responses lifecycle, model registry
+                     contract, proposer protocol, phased evaluation
+                     (word + contrast + ident_prioritized + crash recovery),
+                     and full state-machine integration with mocked models.
 ```
 
 ## Gotchas and invariants

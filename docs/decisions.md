@@ -373,3 +373,128 @@ The default mode (`FITNESS_MODE` unset or `default`) is unchanged — pre-existi
 - **No retroactive rescoring.** Existing Phase 2b/2c rows stay scored under default; new directed-Capraro rows are scored under ident_prioritized. Each row carries its own mode tag.
 
 **Trade-off.** Narrowing to directed hypotheses risks missing abstract axes that don't map to any paper's claim. That risk is acceptable because (a) Phase 2b already produced two such axes; (b) the paper-linked results are more directly publishable; (c) the open-ended loop is one flag away — we can return to it any time. The creativity-survey mode isn't gone, just not active.
+
+---
+
+## ADR-019: Four-phase serial-swap worker for all-local pipeline
+
+**Status:** Accepted · 2026-04-27.
+
+**Context.** Two-month subscription-token usage made several runs uneconomic
+to extend; PJ wants to take the research in any direction without budget
+gating. Hardware is a Mac Studio M2 Ultra with **64 GB unified memory**
+(verified via `system_profiler`, not 192 GB as previously misquoted).
+
+Day 1 of `docs/local_pipeline_plan.md` was the gating experiment:
+calibrate Qwen3.6-35B-A3B-8bit as a Sonnet replacement on the existing
+corpus. Result: **PASS** — Class 2 95.0%, Class 0 98.3%, Phase 1 known
+TPs 100% exact-match, with the only large disagreement category
+(Haiku-era Class 1) being cases where Qwen correctly rejected leniency
+that CLAUDE.md gotcha #5 already flagged. See
+`docs/calibration_results_qwen35b.md`.
+
+With the judge validated, the architecture decision:
+
+**Decision.** The new worker (`src/worker_v2.py`) runs as a four-phase
+state machine with strict serial model loading. At most ONE model is in
+memory at any time. The four phases:
+
+```
+A. GENERATE  — Gemma3-12B loaded. Drains queue/pending, produces 12
+                 raw responses per candidate, stores them in
+                 `pending_responses`. No judge calls.
+B. JUDGE     — Gemma unloaded, MLX judge loaded. Reads pending_responses,
+                 scores everything, writes `evaluations` + `fitness_scores`,
+                 deletes pending rows, marks candidate `done`.
+C. PROPOSE   — Judge unloaded, MLX proposer loaded. If queue/pending dips
+                 below threshold, generates new candidates via
+                 directed_capraro / novel_contrast.
+D. RELOAD    — Proposer unloaded, Gemma reloaded. Back to A.
+```
+
+**Why serial, not concurrent:** CLAUDE.md gotcha #5 already documents
+that two large models concurrently corrupt activations silently with no
+errors on this machine. Mixing PyTorch-MPS (Gemma) with MLX
+(judge / proposer) would compound the risk. PJ explicitly chose
+"completely local AND completely reliable" over swap-time savings.
+
+**Why batch-then-judge** (vs judge-each-candidate): per-candidate swap
+would cost ~60-120 min/day in pure model-load I/O. Batching to 16
+candidates per judge load drops this to ~4-8 min/day. Same correctness;
+fraction of the wait. The handoff is durable in the `pending_responses`
+table.
+
+**Implementation.**
+
+- New tables/columns:
+    - `pending_responses` (Phase A → B handoff buffer). Includes
+      contrast-pair fields denormalized so Phase B doesn't need to JOIN
+      candidates.spec_json. JSON-encoded positive/negative example lists.
+- New modules:
+    - `src/models/registry.py` — `ModelHandle` ABC, `GemmaHandle`,
+      `MLXHandle`, `MockHandle`, `HandleRegistry`. Enforces the
+      one-loaded-at-a-time invariant, provides `enforce_free_memory()`
+      pre-check. The registry's `activate(handle)` unloads everything
+      else first.
+    - `src/proposers/{base,claude_proposer,local_mlx_proposer,mock_proposer}.py` —
+      Proposer protocol with two production implementations
+      (claude-agent-sdk and mlx_lm) and a mock for tests. Strategies
+      now accept a `proposer` arg with backwards-compat default to
+      ClaudeProposer (so the old `src/researcher.py` path still works
+      during the transition).
+    - `src/judges/local_mlx_judge.py` (already in repo from calibration
+      step) — same `score_detection` / `score_contrast_pair` interface
+      as `ClaudeJudge`, MLX-backed.
+    - `src/evaluate_phased.py` — `phase_a_generate(spec, pipeline, db, ...)`
+      and `phase_b_judge(candidate_id, judge, db, ...)`. The two halves
+      of the old `evaluate_candidate`, with the handoff via
+      `pending_responses`.
+    - `src/worker_v2.py` — the four-phase state machine + CLI entrypoint.
+      Crash-recovery on startup: any orphan rows in `pending_responses`
+      are judged before generating new ones.
+- New scripts:
+    - `scripts/start_worker_v2.sh` — production launcher (background
+      process, log to `logs/worker_v2.log`).
+    - `scripts/smoke_v2.py` — visible end-to-end mock run.
+- Tests (`tests/`): 30 cases across DB pending-table lifecycle, model
+  registry contract (one-loaded-at-a-time, idempotency, free-memory
+  enforcement), proposer protocol, phased evaluation (word-style and
+  contrast-pair, ident_prioritized fitness mode, crash-recovery), and
+  full state-machine integration with mocked models. Run with
+  `.venv/bin/pytest tests/`.
+
+**The legacy worker (`src/worker.py`) is left in place untouched.**
+It still works for the cloud-judge pipeline. We swap the launcher
+script when ready, and remove the legacy worker after one full
+local-only fault-line sprint validates worker_v2 in production.
+
+**Consequences.**
+- **Zero subscription token usage** during research runs (the
+  interactive Claude Code session is the only thing that costs).
+- **Wallclock overhead is ~25-30%** per A→B→C cycle vs the legacy
+  inline-judge worker. Acceptable per PJ's explicit preference.
+- **Crash recovery is durable.** Any candidate evaluated by Phase A
+  but not yet judged survives a process restart and is picked up at
+  the next Phase B.
+- **Reproducibility improves materially.** All models are local,
+  versioned by their HF repo path; same inputs produce same outputs
+  bit-for-bit.
+- **Testability improves dramatically.** The state machine is
+  exercised by tests in milliseconds without real models.
+
+**Validation plan.** The state-machine refactor is complete. Next
+step is a 24-hour Capraro Grounding sprint with the new pipeline,
+comparing hit rates / coherence / FPR against the Causality baseline.
+If within ±10%, the local pipeline is ratified. If detection inflates
+or coherence drops, diagnose layer-by-layer (most likely cause: judge
+strictness drift, fixable by tightening the prompt or swapping to
+Phi-4-reasoning-plus).
+
+**What this ADR explicitly does NOT do.**
+- Does not change Gemma3-12B (the science target). Bf16, PyTorch-MPS,
+  same as ADR-001.
+- Does not change the fitness function (ADR-018 stays).
+- Does not change the contrast-pair derivation method (mean-diff on
+  example sentences).
+- Does not introduce any concurrent-model paths. Strictly serial.
+- Does not migrate to a different Mac. M2 Ultra 64 GB is the platform.

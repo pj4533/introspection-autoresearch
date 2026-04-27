@@ -38,19 +38,17 @@ strategy in a focused worker+researcher pair.
 
 from __future__ import annotations
 
-import asyncio
 import json
 import re
 import sys
-import threading
 import time
 import uuid
 from typing import Optional
 
-from claude_agent_sdk import AssistantMessage, ClaudeAgentOptions, TextBlock, query
-
 from src.db import ResultsDB
 from src.evaluate import CandidateSpec
+from src.proposers import ClaudeProposer
+from src.proposers.base import Proposer
 from src.strategies.hypotheses import get_fault_line, list_fault_lines
 from src.strategies.novel_contrast import CLAUDE_MODEL  # claude-opus-4-7
 from src.strategies.random_explore import spec_hash
@@ -222,43 +220,6 @@ def _build_feedback_block(db: ResultsDB, fault_line_id: str, max_each: int = 5) 
     return "\n".join(parts) + "\n"
 
 
-# --- Opus call plumbing (mirrors novel_contrast.py) -----------------------
-
-
-async def _ask_claude(prompt: str) -> str:
-    options = ClaudeAgentOptions(
-        model=CLAUDE_MODEL,
-        system_prompt=SYSTEM_PROMPT,
-        max_turns=1,
-        permission_mode="bypassPermissions",
-        allowed_tools=[],
-    )
-    chunks: list[str] = []
-    async for msg in query(prompt=prompt, options=options):
-        if isinstance(msg, AssistantMessage):
-            for block in msg.content:
-                if isinstance(block, TextBlock):
-                    chunks.append(block.text)
-    return "".join(chunks).strip()
-
-
-def _run_sync(prompt: str) -> str:
-    result: dict = {}
-
-    def worker() -> None:
-        try:
-            result["value"] = asyncio.run(_ask_claude(prompt))
-        except BaseException as e:
-            result["error"] = e
-
-    t = threading.Thread(target=worker, daemon=True)
-    t.start()
-    t.join()
-    if "error" in result:
-        raise result["error"]
-    return result["value"]
-
-
 def _parse_pairs(raw: str) -> list[dict]:
     match = re.search(r"\[.*\]", raw, re.DOTALL)
     if not match:
@@ -301,6 +262,7 @@ def generate_candidates(
     target_effectives: Optional[list[float]] = None,
     seed: Optional[int] = None,
     oversample_factor: int = 2,
+    proposer: Optional[Proposer] = None,
 ) -> list[CandidateSpec]:
     """Generate candidate specs for one Capraro fault line.
 
@@ -347,10 +309,12 @@ def generate_candidates(
         prompt = _build_user_prompt(
             fault_line_id, fault_line, n_pairs_to_ask, feedback
         )
-        print(f"[directed_capraro:{fault_line_id}] asking {CLAUDE_MODEL} "
+        if proposer is None:
+            proposer = ClaudeProposer(model=CLAUDE_MODEL)
+        print(f"[directed_capraro:{fault_line_id}] asking {proposer.name} "
               f"for {n_pairs_to_ask} variant pairs...", flush=True)
         t0 = time.time()
-        raw = _run_sync(prompt)
+        raw = proposer.generate(SYSTEM_PROMPT, prompt)
         print(f"[directed_capraro:{fault_line_id}] got {len(raw)} chars "
               f"in {time.time()-t0:.1f}s", flush=True)
         pairs = _parse_pairs(raw)

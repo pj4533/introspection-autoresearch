@@ -135,6 +135,36 @@ CREATE TABLE IF NOT EXISTS fitness_scores (
 
 CREATE INDEX IF NOT EXISTS idx_fitness_score ON fitness_scores(score);
 
+-- Phase A → Phase B handoff buffer (added 2026-04-27 for the four-phase
+-- worker_v2 state machine). The Generate phase writes Gemma's raw responses
+-- here; the Judge phase later loads the local-MLX judge, drains this table
+-- for each candidate, scores everything, and inserts into `evaluations`.
+-- Crash recovery: if the worker dies between phases A and B, these rows
+-- survive — Phase B can restart and pick up where it left off.
+CREATE TABLE IF NOT EXISTS pending_responses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    candidate_id TEXT NOT NULL,
+    eval_concept TEXT NOT NULL,           -- probe concept used at generation
+    injected INTEGER NOT NULL,            -- 0 for controls, 1 for injection
+    alpha REAL NOT NULL,
+    direction_norm REAL NOT NULL,
+    response TEXT NOT NULL,
+    -- Judge prompt selection. derivation_method='contrast_pair' uses the
+    -- semantic-pole prompt with axis/description/examples; word-style
+    -- candidates use the strict concept prompt. Stored here so Phase B
+    -- doesn't need to JOIN candidates.spec_json again.
+    derivation_method TEXT NOT NULL,
+    judge_concept TEXT,                   -- for word-style judging (the source concept)
+    contrast_axis TEXT,                   -- for contrast_pair
+    contrast_description TEXT,            -- for contrast_pair
+    contrast_positive_json TEXT,          -- JSON list[str], for contrast_pair
+    contrast_negative_json TEXT,          -- JSON list[str], for contrast_pair
+    FOREIGN KEY (candidate_id) REFERENCES candidates(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_pending_responses_candidate ON pending_responses(candidate_id);
+
 CREATE TABLE IF NOT EXISTS schema_meta (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -496,6 +526,116 @@ class ResultsDB:
                 (limit,),
             ).fetchall()
         return [dict(r) for r in rows]
+
+    # ------------------------------------------------------------------
+    # Phase A → Phase B handoff (2026-04-27, worker_v2)
+    # ------------------------------------------------------------------
+
+    def insert_pending_response(
+        self,
+        candidate_id: str,
+        eval_concept: str,
+        injected: bool,
+        alpha: float,
+        direction_norm: float,
+        response: str,
+        derivation_method: str,
+        judge_concept: Optional[str] = None,
+        contrast_axis: Optional[str] = None,
+        contrast_description: Optional[str] = None,
+        contrast_positive: Optional[list[str]] = None,
+        contrast_negative: Optional[list[str]] = None,
+    ) -> int:
+        """Stash a Gemma response so Phase B can judge it later.
+
+        Returns the autoincrement row id (rarely needed; mostly here so tests
+        can reference rows directly).
+        """
+        with self._conn() as conn:
+            cur = conn.execute(
+                """INSERT INTO pending_responses
+                   (candidate_id, eval_concept, injected, alpha, direction_norm,
+                    response, derivation_method, judge_concept,
+                    contrast_axis, contrast_description,
+                    contrast_positive_json, contrast_negative_json)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    candidate_id, eval_concept, int(injected), alpha,
+                    direction_norm, response, derivation_method, judge_concept,
+                    contrast_axis, contrast_description,
+                    json.dumps(contrast_positive) if contrast_positive is not None else None,
+                    json.dumps(contrast_negative) if contrast_negative is not None else None,
+                ),
+            )
+            return int(cur.lastrowid)
+
+    def get_pending_responses(
+        self,
+        candidate_id: Optional[str] = None,
+    ) -> list[dict]:
+        """Return pending responses, optionally filtered by candidate.
+
+        Each row has the contrast_pair fields decoded back into Python lists
+        (for derivation_method='contrast_pair' rows; otherwise None).
+        """
+        with self._conn() as conn:
+            if candidate_id is None:
+                cur = conn.execute(
+                    "SELECT * FROM pending_responses ORDER BY id"
+                )
+            else:
+                cur = conn.execute(
+                    "SELECT * FROM pending_responses WHERE candidate_id=? ORDER BY id",
+                    (candidate_id,),
+                )
+            rows = cur.fetchall()
+        out = []
+        for r in rows:
+            d = dict(r)
+            d["injected"] = bool(d["injected"])
+            d["contrast_positive"] = (
+                json.loads(d["contrast_positive_json"])
+                if d["contrast_positive_json"] else None
+            )
+            d["contrast_negative"] = (
+                json.loads(d["contrast_negative_json"])
+                if d["contrast_negative_json"] else None
+            )
+            out.append(d)
+        return out
+
+    def pending_candidate_ids(self) -> list[str]:
+        """Distinct candidate_ids that still have unjudged rows in pending_responses."""
+        with self._conn() as conn:
+            rows = conn.execute(
+                "SELECT DISTINCT candidate_id FROM pending_responses ORDER BY candidate_id"
+            ).fetchall()
+        return [r["candidate_id"] for r in rows]
+
+    def count_pending_responses(self, candidate_id: Optional[str] = None) -> int:
+        with self._conn() as conn:
+            if candidate_id is None:
+                row = conn.execute(
+                    "SELECT COUNT(*) AS n FROM pending_responses"
+                ).fetchone()
+            else:
+                row = conn.execute(
+                    "SELECT COUNT(*) AS n FROM pending_responses WHERE candidate_id=?",
+                    (candidate_id,),
+                ).fetchone()
+        return int(row["n"])
+
+    def delete_pending_responses(self, candidate_id: str) -> int:
+        """Remove all pending responses for a candidate (Phase B finalizer).
+
+        Returns the number of rows deleted. Idempotent.
+        """
+        with self._conn() as conn:
+            cur = conn.execute(
+                "DELETE FROM pending_responses WHERE candidate_id=?",
+                (candidate_id,),
+            )
+            return int(cur.rowcount)
 
     def candidates_summary(self) -> dict:
         with self._conn() as conn:
