@@ -110,9 +110,10 @@ class LocalMLXJudge:
         self,
         model_path: str,
         cache_path: Optional[Path] = None,
-        max_new_tokens: int = 384,
+        max_new_tokens: int = 1024,
         temperature: float = 0.0,
         verbose: bool = False,
+        enable_thinking: bool = False,
     ):
         self.model_path = model_path
         # Stable short tag for cache namespacing — last path component is fine.
@@ -120,6 +121,12 @@ class LocalMLXJudge:
         self.max_new_tokens = max_new_tokens
         self.temperature = temperature
         self.verbose = verbose
+        # Many recent MLX models (Qwen3.x, GLM-4.x) emit verbose <think>...
+        # </think> blocks by default that blow past max_new_tokens before the
+        # JSON arrives. The strict-grading prompt asks for a JSON-only answer,
+        # so default to thinking=False. Override per-model if a model NEEDS
+        # thinking mode to grade reliably.
+        self.enable_thinking = enable_thinking
 
         cache_path = cache_path or Path(
             f"data/calibration/judge_cache_{self.model_tag}.sqlite"
@@ -156,11 +163,21 @@ class LocalMLXJudge:
             {"role": "system", "content": system},
             {"role": "user", "content": user},
         ]
-        prompt = self._tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True,
-        )
+        # Try to pass enable_thinking; some templates don't accept the kwarg
+        # (older / non-Qwen models). Fall back gracefully.
+        try:
+            prompt = self._tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True,
+                enable_thinking=self.enable_thinking,
+            )
+        except TypeError:
+            prompt = self._tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True,
+            )
 
         sampler = make_sampler(temp=self.temperature)
         text = generate(

@@ -32,8 +32,12 @@ def main() -> int:
     ap.add_argument("--output", type=Path, default=None,
                     help="Output JSONL path. Default: "
                          "data/calibration/verdicts_<model_tag>.jsonl")
-    ap.add_argument("--max-new-tokens", type=int, default=384)
+    ap.add_argument("--max-new-tokens", type=int, default=1024)
     ap.add_argument("--temperature", type=float, default=0.0)
+    ap.add_argument("--enable-thinking", action="store_true",
+                    help="Enable Qwen-style <think> blocks (default off — "
+                         "thinking-mode usually overshoots max_new_tokens "
+                         "before emitting JSON, causing parse failures).")
     ap.add_argument("--limit", type=int, default=None,
                     help="Stop after N rows (smoke test).")
     ap.add_argument("--resume", action="store_true",
@@ -88,6 +92,7 @@ def main() -> int:
         max_new_tokens=args.max_new_tokens,
         temperature=args.temperature,
         verbose=True,
+        enable_thinking=args.enable_thinking,
     )
 
     # Open in append mode so resume + re-runs accumulate cleanly
