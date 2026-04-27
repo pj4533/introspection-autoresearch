@@ -368,7 +368,13 @@ class HandleRegistry:
         return [h for h in self.all() if h.is_loaded()]
 
     def activate(self, handle: ModelHandle) -> ModelHandle:
-        """Make `handle` the only loaded handle in this registry."""
+        """Make `handle` the only loaded handle in this registry.
+
+        Logs every unload + load with elapsed time and free-memory readings
+        so the worker log surfaces exactly when the model swaps happen and
+        how long they took. The Monitor key-greps these `[swap]` lines.
+        """
+        import time as _time
         if handle not in self.all():
             raise ValueError(
                 f"handle {handle.name!r} is not registered in this registry"
@@ -377,9 +383,29 @@ class HandleRegistry:
             if h is handle:
                 continue
             if h.is_loaded():
+                t0 = _time.time()
+                print(
+                    f"[swap] unloading {h.name} (free_gb={free_memory_gb():.1f}) ...",
+                    flush=True,
+                )
                 h.unload()
+                print(
+                    f"[swap] unloaded  {h.name} in {_time.time()-t0:.1f}s "
+                    f"(free_gb={free_memory_gb():.1f})",
+                    flush=True,
+                )
         if not handle.is_loaded():
+            t0 = _time.time()
+            print(
+                f"[swap] loading   {handle.name} (free_gb={free_memory_gb():.1f}) ...",
+                flush=True,
+            )
             handle.load()
+            print(
+                f"[swap] loaded    {handle.name} in {_time.time()-t0:.1f}s "
+                f"(free_gb={free_memory_gb():.1f})",
+                flush=True,
+            )
         return handle
 
     def unload_all(self) -> None:

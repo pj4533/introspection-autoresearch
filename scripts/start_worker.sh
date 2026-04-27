@@ -73,9 +73,9 @@ ARGS=(
     "--fault-lines" "$FAULT_LINES"
 )
 
-setsid nohup .venv/bin/python -m src.worker "${ARGS[@]}" >> "$LOG" 2>&1 < /dev/null &
-disown $! 2>/dev/null || true
+nohup .venv/bin/python -m src.worker "${ARGS[@]}" >> "$LOG" 2>&1 < /dev/null &
 WORKER_PID=$!
+disown $WORKER_PID 2>/dev/null || true
 echo "worker started as PID $WORKER_PID"
 echo "logs: tail -f $LOG"
 echo "stop: pkill -f 'src.worker'"

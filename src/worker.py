@@ -453,21 +453,49 @@ def main_loop(
         else:
             registry.activate(registry.gemma)
             pipeline = registry.gemma.obj
+            print(
+                f"[{datetime.now().strftime('%H:%M:%S')}] [phase A] starting "
+                f"batch — up to {batch_size} candidates × 12 probes each "
+                f"(~{batch_size * 75 // 60} min est)",
+                flush=True,
+            )
             while len(items) < batch_size and not _shutdown:
                 path = _oldest_pending()
                 if path is None:
                     break
+                # Per-candidate progress so the monitor sees the heartbeat
+                # rather than going silent for ~20 min.
+                print(
+                    f"[{datetime.now().strftime('%H:%M:%S')}] [phase A] "
+                    f"{len(items) + 1}/{batch_size} ...",
+                    flush=True,
+                )
                 it = _phase_a_one(
                     path, pipeline, db, held_out, controls, abliteration_mode
                 )
                 if it is not None:
                     items.append(it)
+            print(
+                f"[{datetime.now().strftime('%H:%M:%S')}] [phase A] complete "
+                f"({len(items)} candidates queued for judging)",
+                flush=True,
+            )
 
         if items or orphan_count > 0:
             # Phase B: JUDGE
             registry.activate(registry.judge)
             judge = judge_factory(registry.judge.obj)
+            n_to_judge = len(items) + orphan_count
+            print(
+                f"[{datetime.now().strftime('%H:%M:%S')}] [phase B] judging "
+                f"{n_to_judge} candidate(s), ~{n_to_judge * 12} probes total",
+                flush=True,
+            )
             _phase_b_drain(db, judge, items, abliteration_mode)
+            print(
+                f"[{datetime.now().strftime('%H:%M:%S')}] [phase B] complete",
+                flush=True,
+            )
             cycles += 1
             if _shutdown:
                 break
@@ -485,8 +513,10 @@ def main_loop(
             else:
                 next_fault_line = None  # novel_contrast open-ended
             print(
-                f"[worker] phase C cycle {propose_index} target: "
-                f"{next_fault_line or 'novel_contrast'}",
+                f"[{datetime.now().strftime('%H:%M:%S')}] [phase C] cycle "
+                f"{propose_index} target: "
+                f"{next_fault_line or 'novel_contrast'} "
+                f"(asking proposer for {propose_n} candidates, ~90s)",
                 flush=True,
             )
             registry.activate(registry.proposer)
