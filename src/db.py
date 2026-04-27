@@ -190,6 +190,27 @@ class ResultsDB:
                 (str(SCHEMA_VERSION),),
             )
 
+    # ------------------------------------------------------------------
+    # Generic key/value durable state — schema_meta beyond schema_version.
+    # Used by the worker to persist the fault-line rotation index across
+    # restarts so a SIGTERM doesn't reset us back to causality.
+    # ------------------------------------------------------------------
+
+    def get_meta(self, key: str, default: Optional[str] = None) -> Optional[str]:
+        with self._conn() as conn:
+            row = conn.execute(
+                "SELECT value FROM schema_meta WHERE key = ?", (key,)
+            ).fetchone()
+        return row["value"] if row is not None else default
+
+    def set_meta(self, key: str, value: str) -> None:
+        with self._conn() as conn:
+            conn.execute(
+                "INSERT INTO schema_meta (key, value) VALUES (?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                (key, value),
+            )
+
     def _migrate(self, conn: sqlite3.Connection) -> None:
         """Apply in-place schema migrations for existing DBs.
 

@@ -414,8 +414,22 @@ def main_loop(
     inside the cycle, not its own counted unit).
     """
     cycles = 0
-    propose_index = 0  # advances each time Phase C fires
     rotation = fault_lines or []
+    # Persist the rotation index so a SIGTERM/restart doesn't reset us to
+    # rotation[0]. Scoped per-rotation-spec so changing the rotation list
+    # itself starts a fresh counter.
+    rotation_key = f"propose_index|{','.join(rotation)}" if rotation else "propose_index|<novel>"
+    try:
+        propose_index = int(db.get_meta(rotation_key, "0") or "0")
+    except (TypeError, ValueError):
+        propose_index = 0
+    if propose_index > 0 and rotation:
+        next_label = rotation[propose_index % len(rotation)]
+        print(
+            f"[worker] resuming rotation at index {propose_index} "
+            f"(next fault line: {next_label})",
+            flush=True,
+        )
 
     # Crash recovery on startup: if there are orphan pending rows, judge them
     # FIRST before generating anything new.
@@ -524,6 +538,9 @@ def main_loop(
             try:
                 _phase_c_propose(proposer, db, next_fault_line, propose_n)
                 propose_index += 1
+                # Persist immediately so a kill between Phase C and the
+                # next iteration doesn't lose the increment.
+                db.set_meta(rotation_key, str(propose_index))
             except Exception as e:
                 tb = traceback.format_exc()
                 print(f"[worker] phase_c FAILED: {e}\n{tb}", flush=True)

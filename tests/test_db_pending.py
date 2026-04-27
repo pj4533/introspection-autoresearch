@@ -104,6 +104,26 @@ def test_delete_pending_responses_idempotent(tmp_db):
     assert tmp_db.pending_candidate_ids() == []
 
 
+def test_meta_kv_round_trip(tmp_db):
+    """schema_meta key/value persists across reads, defaults work, upsert works."""
+    # Default returned when key is missing
+    assert tmp_db.get_meta("nope") is None
+    assert tmp_db.get_meta("nope", default="fallback") == "fallback"
+
+    # First write
+    tmp_db.set_meta("propose_index|causality,grounding", "5")
+    assert tmp_db.get_meta("propose_index|causality,grounding") == "5"
+
+    # Upsert overwrites
+    tmp_db.set_meta("propose_index|causality,grounding", "12")
+    assert tmp_db.get_meta("propose_index|causality,grounding") == "12"
+
+    # Independent keys don't collide
+    tmp_db.set_meta("propose_index|other", "3")
+    assert tmp_db.get_meta("propose_index|causality,grounding") == "12"
+    assert tmp_db.get_meta("propose_index|other") == "3"
+
+
 def test_pending_responses_ordering(tmp_db):
     """get_pending_responses returns rows in insertion order (by id ASC)."""
     for c in ["c1", "c2", "c3"]:
