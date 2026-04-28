@@ -242,17 +242,31 @@ def _slot_cluster_expansion(
     # Use the existing directed_capraro plumbing — feedback block, opus
     # brief, fault-line registry — but request only 1 new pair with a
     # narrow target_effective grid and 2 layers.
+    #
+    # Resilience: if the proposer returns malformed JSON (`_parse_pairs`
+    # raises ValueError), we swallow the failure and emit zero
+    # cluster_expansion specs rather than letting the exception bubble
+    # up and trash the whole Phase C — the replication and variant slots
+    # already produced good specs and shouldn't be discarded.
     from .directed_capraro import generate_candidates as gen_capraro
-    specs = gen_capraro(
-        n=n_slots,
-        db=db,
-        fault_line_id=fault_line_id,
-        mode="opus",
-        proposer=proposer,
-        layers=[30, 33],            # focus on proven hot zones
-        target_effectives=[14000.0, 18000.0],
-        oversample_factor=3,        # ask for more pairs in case of parse failure
-    )
+    try:
+        specs = gen_capraro(
+            n=n_slots,
+            db=db,
+            fault_line_id=fault_line_id,
+            mode="opus",
+            proposer=proposer,
+            layers=[30, 33],            # focus on proven hot zones
+            target_effectives=[14000.0, 18000.0],
+            oversample_factor=3,        # ask for more pairs in case of parse failure
+        )
+    except (ValueError, json.JSONDecodeError) as e:
+        print(
+            f"[structured_hillclimb:{fault_line_id}] "
+            f"slot C (cluster_expansion) FAILED: {e!s}; emitting 0 specs",
+            flush=True,
+        )
+        return []
     # Tag each emitted spec as cluster_expansion (mutation_type only —
     # no parent_candidate_id). The dispatcher includes _lineage_meta in
     # the queue file so the worker writes mutation_type into candidates.
