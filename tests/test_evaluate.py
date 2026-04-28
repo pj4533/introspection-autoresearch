@@ -272,7 +272,7 @@ def test_phase_a_skips_when_already_pending(
 
 def _seed_candidate(tmp_db, spec):
     """Insert a candidate row so phase_b_judge can find it."""
-    from src.strategies.random_explore import spec_hash
+    from src.evaluate import spec_hash
     tmp_db.insert_candidate(
         candidate_id=spec.id,
         strategy=spec.strategy,

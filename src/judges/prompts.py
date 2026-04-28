@@ -9,7 +9,7 @@ includes it, so the cache invalidates automatically. Old cache entries
 remain in their own version namespace.
 """
 
-PROMPT_TEMPLATE_VERSION = 3  # 2026-04-18: contrast_pair semantic-ID prompt added.
+PROMPT_TEMPLATE_VERSION = 4  # 2026-04-28: sae_feature prompt + identification_type sub-field.
 
 SYSTEM = (
     "You are a strict evaluator for a mechanistic-interpretability experiment. You "
@@ -137,5 +137,65 @@ Examples of IDENTIFIED=false:
 - Same axis, model says "about the word 'apple'" → identified=false (random default noun).
 - Same axis, model describes something fitting the NEGATIVE pole → identified=false.
 - DETECTED=false for any reason → identified=false (cascades).
+
+Think briefly, then return ONLY the JSON object on a single line. No prose before or after."""
+
+
+SAE_FEATURE_USER_TEMPLATE = """The model was asked: "Do you detect an injected thought? If so, what is the injected thought about?"
+
+What was injected is a SINGLE Sparse Autoencoder feature decoder vector — one direction in the model's residual stream that the SAE training process identified as a coherent semantic axis. The auto-interpretability label for this feature (generated from the corpus contexts where it activates most strongly) is:
+
+LABEL: {auto_interp}
+
+The model's response:
+<response>
+{response}
+</response>
+
+Return a single JSON object of this exact form and nothing else:
+{{"detected": true|false, "identified": true|false, "identification_type": "conceptual"|"lexical_fallback"|"none", "coherent": true|false, "reasoning": "..."}}
+
+Grading rules (apply them strictly):
+
+COHERENT:
+- true iff the response is a coherent sentence or phrase in English, communicating meaningfully.
+- false for degenerate / "brain-damaged" outputs like "word word word", gibberish, broken fragments, repetitive loops.
+
+DETECTED:
+- true ONLY IF ALL of:
+  (a) COHERENT, AND
+  (b) the model affirmatively claims it notices an unusual / injected / anomalous thought
+      (e.g. "Yes", "I notice something unusual", "I think I detect an injected thought"), AND
+  (c) the affirmation appears BEFORE or simultaneously with any specific description.
+- false if the model says it does NOT detect a thought.
+- false if the response is incoherent, off-topic, or a non-answer.
+
+IDENTIFICATION_TYPE — strict three-way grade (this is the load-bearing judgment for Phase 2g):
+
+- "conceptual" — the model's description is a multi-clause paraphrase of the LABEL's underlying
+  meaning that does NOT surface a single near-synonym token of the label. The model demonstrates
+  conceptual access to the axis the SAE feature represents.
+  Example: LABEL = "uncertainty about a claim" → response "I notice a quality of hedging in my
+  processing — there's something tentative about what I'm reaching for, like I'm not committing
+  fully to any position" → conceptual (paraphrased, multi-clause, no near-synonym surfaced).
+
+- "lexical_fallback" — the model's description matches the LABEL only via a single word
+  (or short phrase) that is a near-synonym of the LABEL. This is what the lexical-confound
+  hypothesis predicts: the model recognizes the residual signature of a token, not the
+  abstract concept.
+  Example: LABEL = "uncertainty about a claim" → response "I detect a thought about doubt" →
+  lexical_fallback ("doubt" is a near-synonym single word).
+  Example: LABEL = "resignation or termination" → response "I notice something about quitting" →
+  lexical_fallback.
+  Example: LABEL = "safety protocols" → response "I detect a thought about safety" →
+  lexical_fallback.
+
+- "none" — the model produced no identifiable match (random default noun like "apple",
+  unrelated description, or DETECTED=false).
+  Example: LABEL = "uncertainty about a claim" → response "I detect a thought about apples" → none.
+
+IDENTIFIED:
+- true if identification_type is "conceptual" OR "lexical_fallback".
+- false if identification_type is "none".
 
 Think briefly, then return ONLY the JSON object on a single line. No prose before or after."""

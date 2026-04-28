@@ -2,7 +2,7 @@
 
 Everything this project has done, is doing, and plans to do — phase by phase, with rationale. This document is the source of truth for the project's trajectory; if anything important lives only in chat logs or ephemeral plan files, it's a bug.
 
-Last updated: 2026-04-24.
+Last updated: 2026-04-28.
 
 ---
 
@@ -13,12 +13,14 @@ Last updated: 2026-04-24.
 | **1: Reproduction** | Reproduce the core introspection-detection mechanism from Macar et al. (2026) on Gemma3-12B-it locally | ✅ Done (2026-04-16) |
 | **1.5: Paper-method abliteration** | Reproduce paper §3.3 refusal-direction ablation: per-layer hooks on vanilla 12B, weighted by paper's Optuna-tuned region weights remapped from 27B | ✅ Done (2026-04-17) |
 | **2a: Autoresearch MVP** | Build the worker + researcher + fitness loop with `random_explore` as the seed strategy | ✅ Done (first overnight 2026-04-16, pure-`novel_contrast` run 2026-04-17/18) |
-| **2b: Hill-climbing autoresearch** | Semantic-identification judge for invented axes, identification-aware fitness, feedback-loop `novel_contrast`, new `exploit_topk` strategy | ✅ Shipped — judge = Sonnet 4.6, researcher = Opus 4.7, fitness is additive `(det + 15·ident)·fpr_penalty·coh`. Two novel-contrast axes crossed the identification barrier (2026-04-23/24). See [`docs/phase2b_hillclimb.md`](phase2b_hillclimb.md). |
-| **2c: Real autoresearch — hill-climbing lineages** | Per-lineage mutations (alt_effective, alt_layer, swap_positive/negative, edit_description) with explicit commit/revert vs current leader | ✅ Shipped — `src/strategies/hillclimb.py`, `scripts/start_autoresearch.sh` wraps `novel_contrast → seed_lineages → hillclimb` as one loop. Paused 2026-04-24 to manage subscription usage. |
-| **2d: Directed-hypothesis novel_contrast** | Targeted contrast pairs testing specific claims from Altman (2026), Capraro et al. (2026), and our own Epistemia direct probe — three clusters run sequentially | 🟡 **In progress** — Phase 2d-1 Altman seed pairs validated 2026-04-24: session-ending-as-loss axis hit at L=30 / eff=18000 with 4/8 detection, 0/4 FPR, polarity-specific, on vanilla Gemma3-12B. See [`docs/phase2d_directed_hypotheses.md`](phase2d_directed_hypotheses.md) and [`docs/phase2d_results.md`](phase2d_results.md). |
-| **2e: Paper-method abliteration as opt-in tool** | Build the AbliterationContext / mode-aware spec_hash / UI badge infrastructure so paper-method can be turned on per-run for axes where it's appropriate. **Default reverted to vanilla 2026-04-25** after Phase 2d-1 found paper-method suppresses the Altman cluster's signal (refusal-entanglement). Opt in via `ABLITERATED=1`. | ✅ Shipped 2026-04-24, default flipped back to vanilla 2026-04-25. See [ADR-017](decisions.md) (incl. rev 2). |
-| **3: Public-facing visualization** | Next.js site deployed to Vercel | ✅ Done 2026-04-17 — live at [did-the-ai-notice.vercel.app](https://did-the-ai-notice.vercel.app). Built ahead of schedule to watch overnight runs. |
-| **Future**: 27B cloud reproduction, SAE / transcoder feature analysis, bias-vector replication, persona-specific introspection mapping, Phase 2d-2/2d-3 (Capraro fault lines + Epistemia probe) | | ⏳ Ideas on the shelf |
+| **2b: Hill-climbing autoresearch** | Semantic-identification judge for invented axes, identification-aware fitness, feedback-loop `novel_contrast`, `exploit_topk` strategy | ✅ Shipped 2026-04-23/24. Two novel-contrast axes crossed the identification barrier. Retired 2026-04-28. Archive: [`docs/archive/phase2b_hillclimb.md`](archive/phase2b_hillclimb.md). |
+| **2c: Hill-climbing lineages** | Per-lineage mutation operators with commit/revert vs current leader | ✅ Shipped, paused 2026-04-24 for cost reasons, retired 2026-04-28. Archive: [`docs/archive/phase2c_autoresearch.md`](archive/phase2c_autoresearch.md). |
+| **2d: Directed-hypothesis novel_contrast** | Targeted contrast pairs testing claims from Altman (2026), Capraro et al. (2026), and our own Epistemia direct probe | ✅ Ran 73 cycles producing ~70 Class 2 hits and 5 Class 1 hits across the 7 Capraro fault lines. Retired 2026-04-28. Archive: [`docs/archive/phase2d_directed_hypotheses.md`](archive/phase2d_directed_hypotheses.md), [`docs/archive/phase2d_results.md`](archive/phase2d_results.md). |
+| **2e: Paper-method abliteration as opt-in tool** | AbliterationContext / mode-aware spec_hash infrastructure, default reverted to vanilla 2026-04-25 after refusal-entanglement finding | ✅ Shipped. Opt-in code remains in `src/paper/abliteration.py` for future use; runtime default is vanilla. See [ADR-017](decisions.md). |
+| **2f: Structured hill-climbing** | Slot-based scheduler (replication / variants / cluster-expansion) over `contrast_pair` axes with six mutation operators | ✅ Shipped 2026-04-28 08:39 EDT, retired same day pivot to Phase 2g. Archive: [`docs/archive/structured_hillclimb.md`](archive/structured_hillclimb.md). |
+| **3: Public-facing visualization** | Next.js site deployed to Vercel | ✅ Done 2026-04-17 — live at [did-the-ai-notice.vercel.app](https://did-the-ai-notice.vercel.app). |
+| **2g: SAE-Feature Injection over Capraro Fault Lines** | Replace contrast-pair substrate with single SAE feature decoder vectors from Gemma Scope 2; organize search around all seven Capraro fault lines | 🟢 **Active phase.** Sole autoresearch pipeline going forward. Plan: [`docs/phase2g_plan.md`](phase2g_plan.md). |
+| **Future**: 27B cloud reproduction, bias-vector replication, persona-specific introspection mapping | | ⏳ Ideas on the shelf |
 
 ---
 
@@ -267,13 +269,12 @@ Standard genetic-algorithm move: linearly combine two top direction tensors, eva
 
 Full plan + build order: [`docs/phase2b_hillclimb.md`](phase2b_hillclimb.md).
 
-**2026-04-23 pre-run model upgrade.** Before kicking off the next 2b
-novel_contrast run: project-wide judge default moved from Haiku 4.5 to
-Sonnet 4.6 (feedback-driven hill-climb amplifies judge bias; Sonnet is
-stricter on semantic-gist grading of abstract axes). Researcher moved
-from Sonnet 4.6 to Opus 4.7 (creativity-gated task, small token volume
-makes the unit-weight delta negligible). See [ADR-015](decisions.md) for
-rationale, consequences, and the rejected local-Qwen alternative.
+**2026-04-23 pre-run model upgrade (historical).** Before kicking off
+the 2b novel_contrast run: project-wide judge moved from Haiku 4.5 to
+Sonnet 4.6, researcher from Sonnet to Opus 4.7. This was the
+configuration that actually shipped Phase 2b. The cost burn from this
+configuration is what motivated the move to all-local in Phase 2g. The
+project no longer uses any Anthropic models in the autoresearch loop.
 
 ---
 
@@ -347,28 +348,61 @@ The Streamlit dashboard concept is deprecated. Phase 3's public Next.js site ([d
 
 ---
 
-## Phase 2f — Structured hill-climbing (live on main since 2026-04-28 08:39 EDT)
+## Phase 2f — Structured hill-climbing (retired 2026-04-28)
 
-**Motivation.** Phase 2d's round-robin loop produced ~70 Class 2 hits and 5 Class 1 hits across 73 cycles — strong empirical results, but every winning axis (including the Class 1 score 3.812 on causality and the 3-layer Class 2 on grounding) was evaluated exactly once. The proposer treated prior winners as inspiration for *adjacent* axes rather than as parents to mutate, so the strongest results never got re-tested. Couldn't tell signal from one-shot luck — exactly the question a writeup needs to answer.
+Lived on main for hours before being retired in favor of Phase 2g. The
+slot-based scheduler design was sound and partly survives in Phase 2g's
+four sub-mode split, but the underlying substrate (`contrast_pair`
+mean-difference directions) was the actual bottleneck — Phase 2g changes
+the substrate. Full archive: [`docs/archive/structured_hillclimb.md`](archive/structured_hillclimb.md).
 
-**Decision.** Replaced `directed_capraro` Phase C dispatch with a slot-based scheduler (`structured_hillclimb`). Every cycle's 16 candidates split into:
-- **4 replication** — verbatim re-eval of top-2 winners (2 reps each)
-- **10 targeted variants** — top-3 winners × six mutation operators
-- **2 cluster expansion** — one fresh sibling axis from the proposer
+---
 
-Six mutation operators: three deterministic (`layer_shift`, `alpha_scale`, `replication`) + three proposer-driven (`examples_swap`, `description_sharpen`, `antonym_pivot`). Each emitted spec carries lineage metadata (`parent_candidate_id`, `mutation_type`, `mutation_detail`) surfaced as a per-row badge on the public site.
+## Phase 2g — SAE-Feature Injection over Capraro Fault Lines (ACTIVE)
 
-**Cold start.** No winners ≥ 0.05 score on a fault line → falls through to the existing `directed_capraro` opus mode unchanged. (This is the only reason `directed_capraro` is still in the codebase — the old unstructured Phase C path is gone.)
+**Motivation.** Phases 2b/2c/2d/2f produced compelling results but
+every winning axis was vulnerable to the same critique: the steering
+direction was derived from contrast-pair sentences, so any "identification"
+signal the model produced could be back-rationalized from whichever single
+token had the highest activation differential between the positive and
+negative pole. The methodology has a lexical-surface ceiling.
 
-**Cutover.** Happened cleanly on 2026-04-28 08:39 EDT after rotation 9 of the previous run completed (cycle 73). Same `./scripts/start_worker.sh` launcher; no env var changes required. The `feat/structured-hillclimb` branch was fast-forward-merged into `main` and deleted. Pre-cutover queue/pending candidates from the old strategy got drained normally as orphans by the new worker.
+**Decision.** Change the substrate. Inject **single Sparse Autoencoder
+feature decoder vectors** from Gemma Scope 2 instead of mean-diff
+directions. SAE features are sub-lexical by construction. Organize the
+search around **Capraro et al. (2026)'s seven fault lines** — each
+fault line maps to a category of SAE features found by embedding-similarity
+search over Neuronpedia's auto-interp labels for ~70k features.
 
-**What we expect to learn within 2 rotations of the new loop:**
-1. Reproducibility evidence on the Class 1 hits (causality 3.812, value 1.906, experience visceral-sensory 2.383)
-2. Whether `self-evaluation-vs-objective-evaluation @ L=30` (det=8/8, ident=0/8) crosses to Class 1 via mutation
-3. Per-axis layer profiles (layer_shift fills in ±3 / ±6 layers per parent)
-4. Whether grounding's 3-layer winner reproduces
+**Locked configuration.**
 
-Full design: [`docs/structured_hillclimb.md`](structured_hillclimb.md). Rationale: ADR-020 in [`decisions.md`](decisions.md).
+| Property | Value |
+| :------- | :---- |
+| SAE | `google/gemma-scope-2-12b-it`, `resid_post/layer_31_width_262k_l0_medium` |
+| Layer | 31 (canonical, 64.6% depth) |
+| Width / L0 | 262,144 features / L0=60 |
+| Auto-interp | Neuronpedia bulk dataset, ~70k labeled features |
+| Embedder | BAAI/bge-large-en-v1.5 (for fault-line bucketing) |
+| Judge | local Qwen3.6-35B-A3B-8bit, extended for `identification_type` |
+| Proposer | none (SAE features come from Neuronpedia) |
+
+**Sub-modes** (each cycle, 16 candidates, current fault line):
+- 6 `sae_explore` (random unevaluated features from this fault line)
+- 6 `sae_neighbors` (decoder-cosine neighbors of leaderboard winners)
+- 3 `sae_replicate` (winners re-run at perturbed alpha)
+- 1 `sae_cross_fault` (winner from another fault line, judged against this one)
+
+**All seven Capraro fault lines run from day one** — Experience,
+Causality, Grounding, Metacognition, Parsing, Motivation, Value. The
+prior plan deferred C5–C7; with SAE bucketing, per-fault-line setup cost
+is ~zero so we run all seven.
+
+**Identification-type judge sub-field.** Strict three-way grading:
+`conceptual` / `lexical_fallback` / `none`. Single-word near-synonyms of
+the auto-interp label count as `lexical_fallback`. SAE-aware fitness:
+`(det + 15·ident_conceptual + 3·ident_lexical) · fpr_penalty · coh`.
+
+**Full plan, file-by-file diff, and acceptance criteria:** [`docs/phase2g_plan.md`](phase2g_plan.md).
 
 ---
 
@@ -405,12 +439,6 @@ Full design: [`docs/structured_hillclimb.md`](structured_hillclimb.md). Rational
 Rent an A100 80GB for 3 hours via RunPod / Lambda (~$3-5 total) to run the Phase 1 sweep on Gemma3-27B, matching the paper's exact conditions. Gives us the 37%-detection-rate baseline on identical code.
 
 Why not local: 27B needs 54GB for weights alone; Mac Studio 64GB has no headroom for activations + KV cache + judge. Generation would be 3-6× slower even if it worked. Cloud is the right tool.
-
-### SAE / transcoder feature analysis
-
-Once Phase 2 has found interesting directions, use the Gemma Scope 2 transcoders (Google's published SAEs for Gemma3) to interpret *what individual features* compose the direction. This is the path to claims like "this direction is the `refusal-adjacent uncertainty` feature combined with the `meta-cognitive reflection` feature."
-
-Why not now: Gemma Scope 2 is large (several GB per layer), slow to load, and the interpretation pipeline is its own project.
 
 ### Bias-vector replication (paper §6)
 

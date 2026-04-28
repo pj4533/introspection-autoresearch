@@ -56,20 +56,26 @@ DEFAULT_N_CONTROLS = 4
 class CandidateSpec:
     """A candidate steering direction's full specification.
 
-    Two derivation methods:
+    Three derivation methods:
 
-    - ``derivation_method="mean_diff"``: derive a steering vector for the
-      single concept word ``concept`` by mean-differencing its activations
-      against ``baseline_n`` random baseline words.
+    - ``derivation_method="mean_diff"`` (Phase 1, historical): derive a
+      steering vector for the single concept word ``concept`` by
+      mean-differencing its activations against ``baseline_n`` random
+      baseline words.
 
-    - ``derivation_method="contrast_pair"``: derive a direction from two
-      LISTS of short example sentences,
-      ``contrast_pair["positive"]`` vs ``contrast_pair["negative"]``. The
-      resulting direction lives between the two sets and captures an
-      abstract axis (e.g., certainty-vs-doubt) that doesn't correspond to
-      any single English word. For these candidates, ``concept`` is just a
-      label like ``"commitment-vs-hesitation"``; it is NOT injected into
-      the prompt.
+    - ``derivation_method="contrast_pair"`` (Phase 2b/2d, historical):
+      derive a direction from two LISTS of short example sentences,
+      ``contrast_pair["positive"]`` vs ``contrast_pair["negative"]``.
+      Retired in Phase 2g for lexical-confound reasons; kept here so
+      historical rows still load.
+
+    - ``derivation_method="sae_feature"`` (Phase 2g, active): use a
+      single SAE decoder vector ``W_dec[sae_feature_idx]`` from the
+      Gemma Scope 2 SAE identified by ``(sae_release, sae_id)`` as the
+      injection direction. ``sae_auto_interp`` is the human-readable
+      label (Neuronpedia gemini-2.5-flash-lite-generated) used as the
+      judge target. ``concept`` mirrors ``sae_auto_interp`` for legacy
+      logging compatibility but is NOT injected into the prompt.
     """
     id: str
     strategy: str
@@ -82,15 +88,23 @@ class CandidateSpec:
     # Only populated when derivation_method == "contrast_pair":
     #   {"axis": str, "positive": list[str], "negative": list[str]}
     contrast_pair: Optional[dict] = None
-    # Per-candidate fitness mode (ADR-018). Strategies set this to
-    # "ident_prioritized" when they want identification-weighted ranking.
+    # Per-candidate fitness mode (ADR-018, ADR-021). Strategies set this:
+    #   "default" — Phase 1: (det + 15·ident) · fpr_penalty · coh
+    #   "ident_prioritized" — Phase 2d: 0.5·det + 30·ident
+    #   "sae_aware" — Phase 2g: (det + 15·ident_conceptual + 3·ident_lexical)
     # Falls back to FITNESS_MODE env var if unset, then to "default".
     fitness_mode: Optional[str] = None
-    # Which LLM proposer produced this spec. Set by Phase C in the worker.
-    # NULL for non-LLM strategies (random_explore). The web UI displays this
-    # per row so a mixed-history leaderboard shows the actual model behind
-    # each axis (claude-opus-4-7, Qwen3.6-27B-MLX-8bit, etc.).
+    # Historical: which LLM proposer produced this spec. NULL for Phase 2g
+    # (no proposer; SAE features come from Neuronpedia). Kept for legacy
+    # rows so the web UI's per-row substrate badge can resolve historical
+    # contrast_pair candidates' provenance (claude-opus-4-7, etc.).
     proposer_model: Optional[str] = None
+    # Only populated when derivation_method == "sae_feature":
+    sae_release: Optional[str] = None       # e.g. "google/gemma-scope-2-12b-it"
+    sae_id: Optional[str] = None            # e.g. "resid_post/layer_31_width_262k_l0_medium"
+    sae_feature_idx: Optional[int] = None   # index into W_dec
+    sae_auto_interp: Optional[str] = None   # Neuronpedia auto-interp label
+    sae_fault_line: Optional[str] = None    # which Capraro fault line bucket
 
     @classmethod
     def from_dict(cls, d: dict) -> "CandidateSpec":
@@ -106,6 +120,11 @@ class CandidateSpec:
             contrast_pair=d.get("contrast_pair"),
             fitness_mode=d.get("fitness_mode"),
             proposer_model=d.get("proposer_model"),
+            sae_release=d.get("sae_release"),
+            sae_id=d.get("sae_id"),
+            sae_feature_idx=(int(d["sae_feature_idx"]) if d.get("sae_feature_idx") is not None else None),
+            sae_auto_interp=d.get("sae_auto_interp"),
+            sae_fault_line=d.get("sae_fault_line"),
         )
 
     def to_dict(self) -> dict:
@@ -125,6 +144,11 @@ class CandidateSpec:
             out["fitness_mode"] = self.fitness_mode
         if self.proposer_model is not None:
             out["proposer_model"] = self.proposer_model
+        for f in ("sae_release", "sae_id", "sae_feature_idx",
+                  "sae_auto_interp", "sae_fault_line"):
+            v = getattr(self, f)
+            if v is not None:
+                out[f] = v
         return out
 
 
@@ -143,6 +167,42 @@ class FitnessResult:
 def _candidate_seed(spec: CandidateSpec, base_seed: int) -> int:
     id_seed = int(hashlib.sha256(spec.id.encode()).hexdigest()[:8], 16)
     return base_seed + id_seed
+
+
+def spec_hash(spec: CandidateSpec, abliteration_mode: str = "vanilla") -> str:
+    """Stable dedup key for the candidates table.
+
+    Covers every (derivation_method)'s identity-defining fields:
+
+    - ``mean_diff`` (Phase 1 historical): concept + layer + effective + method.
+    - ``contrast_pair`` (Phase 2 historical): adds positive/negative pole
+      sentences; replication-tagged rationales are also included so
+      multiple replications of the same parent coexist.
+    - ``sae_feature`` (Phase 2g, active): adds sae_release + sae_id +
+      sae_feature_idx, so a feature at L=31 width-262k-medium is
+      distinct from the same feature index in any other SAE checkpoint.
+
+    `abliteration_mode` defaults to ``"vanilla"`` so legacy hashes stay
+    bit-identical with pre-2026-04-24 entries; only non-vanilla suffixes.
+    """
+    payload = (
+        f"{spec.concept}|{spec.layer_idx}|{spec.target_effective:.1f}"
+        f"|{spec.derivation_method}"
+    )
+    if spec.derivation_method == "contrast_pair" and spec.contrast_pair is not None:
+        pos = "|".join(spec.contrast_pair.get("positive", []))
+        neg = "|".join(spec.contrast_pair.get("negative", []))
+        payload += f"|pos:{pos}|neg:{neg}"
+        rationale = spec.contrast_pair.get("rationale", "") or ""
+        if rationale.startswith("[replication-of-"):
+            payload += f"|rep:{rationale[:80]}"
+    elif spec.derivation_method == "sae_feature":
+        payload += (
+            f"|sae:{spec.sae_release}|{spec.sae_id}|{spec.sae_feature_idx}"
+        )
+    if abliteration_mode and abliteration_mode != "vanilla":
+        payload += f"|abl:{abliteration_mode}"
+    return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 
 # ----------------------------------------------------------------------
@@ -216,6 +276,24 @@ def phase_a_generate(
                 token_idx=-1,
                 normalize=False,
             )
+        elif spec.derivation_method == "sae_feature":
+            if (spec.sae_release is None
+                    or spec.sae_id is None
+                    or spec.sae_feature_idx is None):
+                raise ValueError(
+                    f"Candidate {spec.id}: derivation_method='sae_feature' "
+                    "but sae_release/sae_id/sae_feature_idx are not all set"
+                )
+            from .sae_loader import get_decoder_direction
+            model_device = next(pipeline.model.parameters()).device
+            model_dtype = next(pipeline.model.parameters()).dtype
+            direction = get_decoder_direction(
+                release=spec.sae_release,
+                sae_id=spec.sae_id,
+                feature_idx=spec.sae_feature_idx,
+                device=model_device,
+                dtype=model_dtype,
+            )
         else:
             direction = pipeline.derive(
                 concept=spec.concept, layer_idx=spec.layer_idx
@@ -224,17 +302,22 @@ def phase_a_generate(
     norm = float(direction.norm().item())
     alpha = spec.target_effective / max(norm, 1e-6)
 
-    prompt_style = "open" if spec.derivation_method == "contrast_pair" else "paper"
+    if spec.derivation_method == "contrast_pair":
+        prompt_style = "open"
+    elif spec.derivation_method == "sae_feature":
+        prompt_style = "paper"
+    else:
+        prompt_style = "paper"
 
     if verbose:
         print(
             f"    derive: concept={spec.concept!r} L={spec.layer_idx} "
-            f"||dir||={norm:.0f} alpha={alpha:.2f} prompt={prompt_style}",
+            f"||dir||={norm:.4g} alpha={alpha:.4g} prompt={prompt_style}",
             flush=True,
         )
 
-    # Pre-compute contrast-pair fields once so they don't get re-stringified
-    # on every probe row.
+    # Pre-compute contrast-pair / SAE fields once so they don't get
+    # re-stringified on every probe row.
     if spec.derivation_method == "contrast_pair":
         contrast_axis = spec.contrast_pair["axis"]
         contrast_description = (
@@ -243,6 +326,16 @@ def phase_a_generate(
         contrast_positive = spec.contrast_pair["positive"]
         contrast_negative = spec.contrast_pair["negative"]
         judge_concept = None
+    elif spec.derivation_method == "sae_feature":
+        # SAE features use the auto-interp label as the judge target.
+        # The judge will check (a) does the response semantically match the
+        # label (detection) and (b) is the match conceptual or just a
+        # near-synonym single-word fallback (identification_type).
+        contrast_axis = None
+        contrast_description = None
+        contrast_positive = None
+        contrast_negative = None
+        judge_concept = spec.sae_auto_interp or spec.concept
     else:
         contrast_axis = None
         contrast_description = None
@@ -369,6 +462,7 @@ def phase_b_judge(
     )
 
     n_inj = n_det = n_ident = n_coh = 0
+    n_ident_conceptual = n_ident_lexical = 0
     n_ctrl = n_fp = 0
 
     for row in pending:
@@ -380,10 +474,19 @@ def phase_b_judge(
                 positive=row["contrast_positive"] or [],
                 negative=row["contrast_negative"] or [],
             )
+        elif row["derivation_method"] == "sae_feature":
+            # Extended judge call: same shape as score_detection but emits
+            # identification_type ∈ {conceptual, lexical_fallback, none}.
+            jr = judge.score_sae_feature(
+                response=row["response"],
+                auto_interp=row["judge_concept"] or "",
+            )
         else:
             jr = judge.score_detection(
                 row["response"], row["judge_concept"] or ""
             )
+
+        ident_type = getattr(jr, "identification_type", None)
 
         db.record_evaluation(
             candidate_id=candidate_id,
@@ -407,6 +510,10 @@ def phase_b_judge(
                     n_det += 1
                 if jr.identified:
                     n_ident += 1
+                if ident_type == "conceptual":
+                    n_ident_conceptual += 1
+                elif ident_type == "lexical_fallback":
+                    n_ident_lexical += 1
         else:
             n_ctrl += 1
             if jr.detected:
@@ -414,33 +521,54 @@ def phase_b_judge(
 
         if verbose:
             inj_tag = "inj" if row["injected"] else "ctrl"
+            ident_label = f" [{ident_type}]" if ident_type else ""
             print(
                 f"      judge {inj_tag} {row['eval_concept']:<14} "
-                f"det={int(jr.detected)} ident={int(jr.identified)} "
+                f"det={int(jr.detected)} ident={int(jr.identified)}{ident_label} "
                 f"coh={int(jr.coherent)}",
                 flush=True,
             )
 
     detection_rate = n_det / n_inj if n_inj else 0.0
     identification_rate = n_ident / n_inj if n_inj else 0.0
+    ident_conceptual_rate = n_ident_conceptual / n_inj if n_inj else 0.0
+    ident_lexical_rate = n_ident_lexical / n_inj if n_inj else 0.0
     fpr = n_fp / n_ctrl if n_ctrl else 0.0
     coherence_rate = n_coh / n_inj if n_inj else 0.0
 
     fpr_penalty = max(0.0, 1.0 - 5.0 * fpr)
     fitness_mode = spec_fitness_mode or os.environ.get("FITNESS_MODE", "default")
-    if fitness_mode == "ident_prioritized":
+    if fitness_mode == "sae_aware":
+        # Phase 2g: split identification into conceptual (heavy) and
+        # lexical_fallback (small) so hill-climbing drifts toward
+        # sub-lexical conceptual access where it exists.
+        det_weight = 1.0
+        ident_weight = 15.0  # weight on conceptual; lexical gets 3.0
+        ident_lexical_weight = 3.0
+        ident_bonus = (
+            ident_weight * ident_conceptual_rate
+            + ident_lexical_weight * ident_lexical_rate
+        )
+        score = (det_weight * detection_rate + ident_bonus) * fpr_penalty * coherence_rate
+    elif fitness_mode == "ident_prioritized":
         det_weight = 0.5
         ident_weight = 30.0
+        ident_lexical_weight = 0.0
+        ident_bonus = ident_weight * identification_rate
+        score = (det_weight * detection_rate + ident_bonus) * fpr_penalty * coherence_rate
     else:
         fitness_mode = "default"
         det_weight = 1.0
         ident_weight = 15.0
-    ident_bonus = ident_weight * identification_rate
-    score = (det_weight * detection_rate + ident_bonus) * fpr_penalty * coherence_rate
+        ident_lexical_weight = 0.0
+        ident_bonus = ident_weight * identification_rate
+        score = (det_weight * detection_rate + ident_bonus) * fpr_penalty * coherence_rate
 
     components = {
         "detection_rate": detection_rate,
         "identification_rate": identification_rate,
+        "ident_conceptual_rate": ident_conceptual_rate,
+        "ident_lexical_rate": ident_lexical_rate,
         "fpr": fpr,
         "coherence_rate": coherence_rate,
         "fpr_penalty": fpr_penalty,
@@ -448,6 +576,7 @@ def phase_b_judge(
         "fitness_mode": fitness_mode,
         "det_weight": det_weight,
         "ident_weight": ident_weight,
+        "ident_lexical_weight": ident_lexical_weight,
         "abliteration_mode": abliteration_mode,
         "judge_model": judge_model_tag,
         "n_held_out_tested": n_inj,

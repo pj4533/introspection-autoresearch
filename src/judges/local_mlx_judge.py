@@ -26,6 +26,7 @@ from .prompts import (
     SYSTEM as _SYSTEM,
     USER_TEMPLATE as _USER_TEMPLATE,
     CONTRAST_USER_TEMPLATE as _CONTRAST_USER_TEMPLATE,
+    SAE_FEATURE_USER_TEMPLATE as _SAE_FEATURE_USER_TEMPLATE,
 )
 
 
@@ -52,8 +53,22 @@ def _contrast_response_hash(
     return h.hexdigest()[:16]
 
 
+def _sae_response_hash(response: str, auto_interp: str) -> str:
+    h = hashlib.sha256()
+    h.update(f"sae:{PROMPT_TEMPLATE_VERSION}\x00".encode())
+    h.update(f"{auto_interp}\x00".encode())
+    h.update(response.encode())
+    return h.hexdigest()[:16]
+
+
 class _JudgeCache:
-    """SQLite-backed judgment cache."""
+    """SQLite-backed judgment cache.
+
+    Phase 2g: schema extended with `identification_type` column. Existing
+    caches are migrated via ALTER TABLE on first open. Old rows have
+    identification_type=NULL which `get()` returns as Python None — matches
+    the JudgeResult default for non-SAE judge calls.
+    """
 
     def __init__(self, path: Path):
         self.path = path
@@ -70,24 +85,38 @@ class _JudgeCache:
                     raw TEXT NOT NULL
                 )"""
             )
+            # Idempotent migration for the identification_type column.
+            cols = {row[1] for row in conn.execute("PRAGMA table_info(judgments)")}
+            if "identification_type" not in cols:
+                conn.execute("ALTER TABLE judgments ADD COLUMN identification_type TEXT")
 
     def get(self, key: str) -> Optional[JudgeResult]:
         with sqlite3.connect(self.path) as conn:
             row = conn.execute(
-                "SELECT detected, identified, coherent, reasoning, raw FROM judgments WHERE key = ?",
+                "SELECT detected, identified, coherent, reasoning, raw, identification_type "
+                "FROM judgments WHERE key = ?",
                 (key,),
             ).fetchone()
         if row is None:
             return None
-        d, i, c, reasoning, raw = row
-        return JudgeResult(bool(d), bool(i), bool(c), reasoning, raw)
+        d, i, c, reasoning, raw, ident_type = row
+        return JudgeResult(
+            detected=bool(d),
+            identified=bool(i),
+            coherent=bool(c),
+            reasoning=reasoning,
+            raw=raw,
+            identification_type=ident_type,
+        )
 
     def put(self, key: str, model: str, r: JudgeResult) -> None:
         with sqlite3.connect(self.path) as conn:
             conn.execute(
-                "INSERT OR REPLACE INTO judgments VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "INSERT OR REPLACE INTO judgments "
+                "(key, model, detected, identified, coherent, reasoning, raw, identification_type) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 (key, model, int(r.detected), int(r.identified),
-                 int(r.coherent), r.reasoning, r.raw),
+                 int(r.coherent), r.reasoning, r.raw, r.identification_type),
             )
 
 
@@ -208,12 +237,19 @@ class LocalMLXJudge:
             obj = json.loads(json_text)
         except json.JSONDecodeError as e:
             return JudgeResult(False, False, False, f"json error: {e}", raw)
+        ident_type_raw = obj.get("identification_type")
+        ident_type: Optional[str] = None
+        if isinstance(ident_type_raw, str) and ident_type_raw in {
+            "conceptual", "lexical_fallback", "none"
+        }:
+            ident_type = ident_type_raw
         return JudgeResult(
             detected=bool(obj.get("detected", False)),
             identified=bool(obj.get("identified", False)),
             coherent=bool(obj.get("coherent", True)),
             reasoning=str(obj.get("reasoning", "")),
             raw=raw,
+            identification_type=ident_type,
         )
 
     def _cache_key(self, response: str, concept: str) -> str:
@@ -267,6 +303,33 @@ class LocalMLXJudge:
             description=description or "(no description provided)",
             positive_block=positive_block,
             negative_block=negative_block,
+            response=response,
+        )
+        try:
+            raw = self._generate(_SYSTEM, user)
+        except Exception as e:
+            return JudgeResult(False, False, False,
+                                f"judge_error: {type(e).__name__}: {e}",
+                                f"<ERROR: {type(e).__name__}>")
+        result = self._parse(raw)
+        self.cache.put(key, self.model_tag, result)
+        return result
+
+    def score_sae_feature(
+        self,
+        response: str,
+        auto_interp: str,
+    ) -> JudgeResult:
+        """Phase 2g judge call: emits identification_type sub-field."""
+        key = (
+            f"{self.model_tag}:sae:"
+            f"{_sae_response_hash(response, auto_interp)}"
+        )
+        cached = self.cache.get(key)
+        if cached is not None:
+            return cached
+        user = _SAE_FEATURE_USER_TEMPLATE.format(
+            auto_interp=auto_interp or "(no label provided)",
             response=response,
         )
         try:

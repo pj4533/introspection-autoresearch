@@ -57,32 +57,28 @@ def test_handle_registry_activate_unloads_others():
     """activate() must unload any other handle that was loaded."""
     a = MockHandle(name="a")
     b = MockHandle(name="b")
-    c = MockHandle(name="c")
-    reg = HandleRegistry(gemma=a, judge=b, proposer=c)
+    reg = HandleRegistry(gemma=a, judge=b)
 
     reg.activate(a)
-    assert a.is_loaded() and not b.is_loaded() and not c.is_loaded()
+    assert a.is_loaded() and not b.is_loaded()
 
     # Switch to b: a should be unloaded, b should be loaded
     reg.activate(b)
     assert not a.is_loaded()
     assert b.is_loaded()
-    assert not c.is_loaded()
     assert a.unload_count == 1
 
-    # Switch to c: b should be unloaded
-    reg.activate(c)
-    assert not a.is_loaded()
+    # Switch back to a: b should be unloaded
+    reg.activate(a)
+    assert a.is_loaded()
     assert not b.is_loaded()
-    assert c.is_loaded()
     assert b.unload_count == 1
 
 
 def test_handle_registry_unload_all():
     a = MockHandle(name="a")
     b = MockHandle(name="b")
-    c = MockHandle(name="c")
-    reg = HandleRegistry(gemma=a, judge=b, proposer=c)
+    reg = HandleRegistry(gemma=a, judge=b)
     a.load()
     b.load()
     reg.unload_all()
@@ -95,9 +91,8 @@ def test_handle_registry_unload_all():
 def test_handle_registry_rejects_unknown_handle():
     a = MockHandle(name="a")
     b = MockHandle(name="b")
-    c = MockHandle(name="c")
     stranger = MockHandle(name="stranger")
-    reg = HandleRegistry(gemma=a, judge=b, proposer=c)
+    reg = HandleRegistry(gemma=a, judge=b)
     with pytest.raises(ValueError, match="not registered"):
         reg.activate(stranger)
 

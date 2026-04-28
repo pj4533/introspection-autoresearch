@@ -1,5 +1,13 @@
 # Project 1: Hunting Introspection Steering Directions on Mac Studio
 
+> **Original project spec (pre-Phase-1).** Many forward-looking sections
+> in this document are superseded by later phase plans. The active phase
+> is Phase 2g — see [`phase2g_plan.md`](phase2g_plan.md). The current
+> autoresearch substrate is SAE-feature injection over Capraro fault lines,
+> all-local with no Anthropic API usage at runtime. Mentions of using
+> Claude / Anthropic models for contrast-pair generation in this spec are
+> historical only.
+
 **Goal:** Reproduce key findings from Macar et al. (2026) "Mechanisms of Introspective Awareness in Language Models" on a local Gemma model, then build an autoresearch loop that automatically hunts for novel steering directions affecting introspection capability.
 
 **Hardware target:** Mac Studio M2 Ultra 64GB.

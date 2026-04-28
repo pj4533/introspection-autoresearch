@@ -405,8 +405,7 @@ def export_phase2_leaderboard(top_k: Optional[int] = None) -> list[dict]:
         }
         # For contrast_pair strategies, include the axis name + description
         # + the positive/negative example sentences + the researcher's
-        # rationale (Claude Sonnet's stated reason for choosing this axis,
-        # if recorded).
+        # rationale (historical, retired in Phase 2g).
         if r["derivation_method"] == "contrast_pair" and "contrast_pair" in spec:
             cp = spec["contrast_pair"]
             entry["contrast_pair"] = {
@@ -416,6 +415,29 @@ def export_phase2_leaderboard(top_k: Optional[int] = None) -> list[dict]:
                 "negative": cp.get("negative", []),
                 "rationale": cp.get("rationale", ""),
             }
+
+        # Phase 2g: surface SAE-feature substrate metadata so the web UI
+        # can render fault-line column membership, link to the Neuronpedia
+        # source, and color-code by identification_type. The Neuronpedia
+        # source page URL is constructed from the SAE id at render time on
+        # the client.
+        if r["derivation_method"] == "sae_feature":
+            entry["sae"] = {
+                "release": spec.get("sae_release"),
+                "sae_id": spec.get("sae_id"),
+                "feature_idx": spec.get("sae_feature_idx"),
+                "auto_interp": spec.get("sae_auto_interp"),
+                "fault_line": spec.get("sae_fault_line"),
+            }
+
+        # Substrate badge — explicit retro-tagging across all rows so the
+        # leaderboard shows what KIND of candidate each row is.
+        if r["derivation_method"] == "sae_feature":
+            entry["substrate"] = "SAE feature"
+        elif r["derivation_method"] == "contrast_pair":
+            entry["substrate"] = "invented axis"
+        else:
+            entry["substrate"] = "paper concept"
 
         # Pull each evaluation trial for this candidate (8 injected + 4 controls)
         trials = _q(VANILLA_DB, """

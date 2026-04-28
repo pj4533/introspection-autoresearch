@@ -1,4 +1,4 @@
-"""Four-phase autoresearch worker. All-local pipeline (ADR-019).
+"""Three-phase autoresearch worker (Phase 2g, all-local).
 
 State machine:
 
@@ -17,16 +17,20 @@ State machine:
   │     - mark candidate `done`                                           │
   │     - move queue file to queue/done/                                  │
   │     - run lineage commit-or-reject                                    │
-  ├─ C. PROPOSE   (judge unloaded, proposer loaded; only if queue low) ─┤
-  │   - call structured_hillclimb.generate_candidates (per fault line)   │
-  │     (or novel_contrast when no fault line is configured)             │
+  ├─ C. PROPOSE   (no model loaded; pure CPU work) ──────────────────────┤
+  │   - call sae_capraro.generate_candidates(fault_line=…)               │
+  │   - the strategy reads data/sae_features/capraro_buckets.json        │
+  │     and the leaderboard to pick fresh SAE-feature candidates         │
   │   - write specs to queue/pending/                                    │
-  ├─ D. RELOAD    (proposer unloaded, Gemma loaded) ────────────────────┤
+  ├─ D. RELOAD    (Gemma loaded) ───────────────────────────────────────┤
   │   Back to A.                                                          │
   └───────────────────────────────────────────────────────────────────────┘
 
 State invariant: at most ONE model is loaded across the whole process. The
-HandleRegistry enforces this on every transition.
+HandleRegistry enforces this on every transition. Phase 2g removed the
+proposer model — SAE features come from a static Neuronpedia-derived
+bucket file, no LLM proposer needed. Phase C is now pure CPU work, so
+no swap I/O between B and C.
 
 Crash recovery: SIGTERM/SIGINT triggers shutdown after the current operation
 finishes (no half-complete candidates). On restart, any rows left in
@@ -55,6 +59,7 @@ from src.evaluate import (
     load_eval_sets,
     phase_a_generate,
     phase_b_judge,
+    spec_hash,
 )
 from src.judges.base import Judge
 from src.judges.local_mlx_judge import LocalMLXJudge
@@ -63,9 +68,6 @@ from src.models.registry import (
     HandleRegistry,
     MLXHandle,
 )
-from src.proposers import LocalMLXProposer
-from src.proposers.base import Proposer
-from src.strategies.random_explore import spec_hash
 
 REPO = Path(__file__).resolve().parent.parent
 QUEUE = REPO / "queue"
@@ -75,7 +77,12 @@ HELD_OUT_PATH = REPO / "data" / "eval_sets" / "held_out_concepts.json"
 
 DEFAULT_BATCH_SIZE = 16
 DEFAULT_PROPOSE_THRESHOLD = 4   # if queue/pending has < this many, run Phase C
-DEFAULT_PROPOSE_N = 16          # candidates to ask proposer for per Phase C
+DEFAULT_PROPOSE_N = 16          # candidates per Phase C call
+
+# All seven Capraro fault lines — Phase 2g rotates through these.
+DEFAULT_FAULT_LINES = (
+    "experience,causality,grounding,metacognition,parsing,motivation,value"
+)
 
 
 # ----------------------------------------------------------------------
@@ -228,7 +235,8 @@ def _phase_a_one(
     db.set_candidate_status(spec.id, "running")
     moved = _move(path, QUEUE / "running")
 
-    fault_tag = spec.strategy.removeprefix("directed_capraro_") if spec.strategy.startswith("directed_capraro_") else spec.strategy
+    # Use the SAE fault-line tag for log readability when present.
+    fault_tag = spec.sae_fault_line or spec.strategy
     print(
         f"[{datetime.now().strftime('%H:%M:%S')}] gen-A    [{fault_tag}] "
         f"{spec.id}  concept={spec.concept!r} L={spec.layer_idx} "
@@ -271,7 +279,6 @@ def _phase_b_drain(
     they're judged anyway (this is the recovery path).
     """
     candidate_ids = [it.candidate_id for it in items]
-    # Add any orphan rows that aren't in `items` (crash recovery).
     orphan_ids = [
         cid for cid in db.pending_candidate_ids()
         if cid not in set(candidate_ids)
@@ -285,18 +292,15 @@ def _phase_b_drain(
     items_by_id = {it.candidate_id: it for it in items}
 
     for cid in candidate_ids + orphan_ids:
-        # Resolve fault-line tag for log readability. For non-orphans, use
-        # the in-memory item; for orphans, look up strategy from DB.
         it = items_by_id.get(cid)
         if it is not None:
-            strat = it.spec.strategy
+            tag = it.spec.sae_fault_line or it.spec.strategy
         else:
             row = db.get_candidate(cid)
-            strat = row["strategy"] if row else "unknown"
-        fault_tag = strat.removeprefix("directed_capraro_") if strat.startswith("directed_capraro_") else strat
+            tag = row["strategy"] if row else "unknown"
         try:
             print(
-                f"[{datetime.now().strftime('%H:%M:%S')}] judge-B  [{fault_tag}] {cid}",
+                f"[{datetime.now().strftime('%H:%M:%S')}] judge-B  [{tag}] {cid}",
                 flush=True,
             )
             result = phase_b_judge(
@@ -314,7 +318,6 @@ def _phase_b_drain(
                 _move(it.queue_running_path, QUEUE / "failed")
             continue
 
-        # Successful judging — promote lineage and write run artifact.
         it = items_by_id.get(cid)
         if it is not None:
             result_summary = {
@@ -332,7 +335,7 @@ def _phase_b_drain(
             _move(it.queue_running_path, QUEUE / "done")
             _maybe_promote_mutation(db, cid, it.lineage_meta, result.score)
         print(
-            f"[{datetime.now().strftime('%H:%M:%S')}] done     [{fault_tag}] "
+            f"[{datetime.now().strftime('%H:%M:%S')}] done     [{tag}] "
             f"{cid}  score={result.score:.3f} "
             f"det={result.detection_rate:.2f} ident={result.identification_rate:.2f} "
             f"fpr={result.fpr:.2f} coh={result.coherence_rate:.2f}",
@@ -341,57 +344,34 @@ def _phase_b_drain(
 
 
 def _phase_c_propose(
-    proposer: Proposer,
     db: ResultsDB,
     fault_line_id: Optional[str],
     propose_n: int,
 ) -> int:
-    """Generate `propose_n` new candidate specs for `fault_line_id` and queue them.
+    """Generate `propose_n` SAE-feature candidates for `fault_line_id`.
 
-    Returns the number of candidates actually queued. If `fault_line_id` is
-    None, runs `novel_contrast.generate_candidates` (open-ended).
-
-    Otherwise runs `structured_hillclimb.generate_candidates` which slots
-    the batch into replication / targeted-variants / cluster-expansion
-    using prior fault-line winners as seeds. On cold start (no winners
-    yet), structured_hillclimb falls through to `directed_capraro`
-    automatically.
-
-    Each emitted spec may carry a `_lineage_meta` runtime attribute
-    (parent_candidate_id, mutation_type, mutation_detail). We hoist this
-    into the queue file's `_lineage` block, which the worker reads in
-    `_phase_a_one` to populate the candidates table's lineage columns.
+    Phase 2g: no proposer model is loaded — `sae_capraro` reads the static
+    `data/sae_features/capraro_buckets.json` and the leaderboard, picks
+    fresh feature candidates per its sub-mode mix (explore / neighbors /
+    replicate / cross_fault), and writes them to queue/pending/.
     """
-    if fault_line_id is not None:
-        from src.strategies.structured_hillclimb import (
-            generate_candidates as gen,
-        )
-        specs = gen(
-            n=propose_n,
-            db=db,
-            fault_line_id=fault_line_id,
-            proposer=proposer,
-        )
-    else:
-        from src.strategies.novel_contrast import generate_candidates as gen
-        specs = gen(
-            n=propose_n,
-            db=db,
-            proposer=proposer,
-        )
+    from src.strategies.sae_capraro import generate_candidates as gen
+    specs = gen(
+        n=propose_n,
+        db=db,
+        fault_line=fault_line_id,
+    )
 
     n_written = 0
     for spec in specs:
         path = QUEUE / "pending" / f"{spec.id}.json"
         spec_dict = spec.to_dict()
-        # Hoist runtime _lineage_meta (set by mutation operators) into the
-        # queue file as _lineage. The worker reads this in _phase_a_one.
         lineage_meta = getattr(spec, "_lineage_meta", None)
         if lineage_meta:
             spec_dict["_lineage"] = lineage_meta
         path.write_text(json.dumps(spec_dict, indent=2) + "\n")
         n_written += 1
-    label = fault_line_id or "novel_contrast"
+    label = fault_line_id or "sae_capraro"
     print(f"[worker] phase C ({label}) wrote {n_written} new candidates to "
           f"queue/pending", flush=True)
     return n_written
@@ -408,7 +388,6 @@ def main_loop(
     held_out: list[str],
     controls: list[str],
     judge_factory,
-    proposer_factory,
     batch_size: int = DEFAULT_BATCH_SIZE,
     propose_threshold: int = DEFAULT_PROPOSE_THRESHOLD,
     propose_n: int = DEFAULT_PROPOSE_N,
@@ -417,27 +396,24 @@ def main_loop(
     abliteration_mode: str = "vanilla",
     poll_interval_s: int = 5,
 ) -> int:
-    """Run the four-phase loop until shutdown or max_cycles exceeded.
+    """Run the three-phase loop until shutdown or max_cycles exceeded.
 
-    `judge_factory` / `proposer_factory` build a Judge / Proposer from the
-    handle's loaded `(model, tokenizer)` pair. The worker doesn't construct
-    these eagerly — only after the corresponding handle is loaded.
+    Phase 2g: no `proposer_factory` parameter — Phase C runs CPU-only.
 
-    `fault_lines` is the round-robin rotation. Each successful Phase C
-    picks `fault_lines[propose_index % len(fault_lines)]` and asks the
-    proposer for that fault line's variants. None or empty list means run
-    novel_contrast (open-ended) on every cycle. The rotation index
-    advances only when Phase C actually fires (queue was below threshold).
+    `fault_lines` is the round-robin rotation of Capraro fault lines. Each
+    successful Phase C picks `fault_lines[propose_index % len(fault_lines)]`
+    and asks `sae_capraro` for that fault line's variants. Default rotation
+    is all 7 Capraro fault lines.
 
-    Returns the number of complete A-B cycles run (Phase C is a side-effect
+    Returns the number of complete A→B cycles run (Phase C is a side-effect
     inside the cycle, not its own counted unit).
     """
     cycles = 0
     rotation = fault_lines or []
-    # Persist the rotation index so a SIGTERM/restart doesn't reset us to
-    # rotation[0]. Scoped per-rotation-spec so changing the rotation list
-    # itself starts a fresh counter.
-    rotation_key = f"propose_index|{','.join(rotation)}" if rotation else "propose_index|<novel>"
+    rotation_key = (
+        f"propose_index|{','.join(rotation)}" if rotation
+        else "propose_index|<no-rotation>"
+    )
     try:
         propose_index = int(db.get_meta(rotation_key, "0") or "0")
     except (TypeError, ValueError):
@@ -469,10 +445,6 @@ def main_loop(
             break
 
         # ---------- A. GENERATE -----------------------------------------
-        # Cheap pre-check: if the queue file system is empty AND no orphan
-        # pending rows are waiting for judging, skip Phase A entirely and
-        # go straight to Phase C — no point loading Gemma just to unload
-        # it again. This saves ~30s of swap I/O per empty cycle.
         items: list[PhaseAItem] = []
         queue_has_work = _oldest_pending() is not None
         orphan_count = len(db.pending_candidate_ids())
@@ -496,8 +468,6 @@ def main_loop(
                 path = _oldest_pending()
                 if path is None:
                     break
-                # Per-candidate progress so the monitor sees the heartbeat
-                # rather than going silent for ~20 min.
                 print(
                     f"[{datetime.now().strftime('%H:%M:%S')}] [phase A] "
                     f"{len(items) + 1}/{batch_size} ...",
@@ -534,31 +504,25 @@ def main_loop(
                 break
 
         # ---------- C. PROPOSE -----------------------------------------
-        # Run only if the queue is empty (or we just had nothing else to do).
-        # The rotation: pick fault_lines[propose_index % len], generate one
-        # batch for that fault line, advance the index. With 7 fault lines
-        # and 16 candidates per batch, every fault line is refreshed once
-        # per ~3 hours of wallclock at typical cycle times.
+        # Phase 2g: no model load — pure CPU work. Unload any model first
+        # so we run lean.
         pending_left = len(list((QUEUE / "pending").glob("*.json")))
         if pending_left < propose_threshold:
+            registry.unload_all()
             if rotation:
                 next_fault_line = rotation[propose_index % len(rotation)]
             else:
-                next_fault_line = None  # novel_contrast open-ended
+                next_fault_line = None
             print(
                 f"[{datetime.now().strftime('%H:%M:%S')}] [phase C] cycle "
                 f"{propose_index} target: "
-                f"{next_fault_line or 'novel_contrast'} "
-                f"(asking proposer for {propose_n} candidates, ~90s)",
+                f"{next_fault_line or 'sae_capraro (no rotation)'} "
+                f"(building {propose_n} candidates from buckets)",
                 flush=True,
             )
-            registry.activate(registry.proposer)
-            proposer = proposer_factory(registry.proposer.obj)
             try:
-                _phase_c_propose(proposer, db, next_fault_line, propose_n)
+                _phase_c_propose(db, next_fault_line, propose_n)
                 propose_index += 1
-                # Persist immediately so a kill between Phase C and the
-                # next iteration doesn't lose the increment.
                 db.set_meta(rotation_key, str(propose_index))
             except Exception as e:
                 tb = traceback.format_exc()
@@ -587,18 +551,9 @@ def main_loop(
 def default_judge_factory(judge_model_path: str):
     """Returns a callable: (model_pair) -> LocalMLXJudge bound to that pair."""
     def _factory(pair) -> LocalMLXJudge:
-        # The judge needs a model_path string for cache namespacing. Re-use
-        # the directory name so old caches (from calibration) are reused.
         j = LocalMLXJudge(model_path=judge_model_path)
-        # Hot-wire the loaded pair so the judge skips its own _ensure_loaded.
         j._model, j._tokenizer = pair
         return j
-    return _factory
-
-
-def default_proposer_factory(_proposer_model_path: str):
-    def _factory(pair) -> LocalMLXProposer:
-        return LocalMLXProposer(loaded_pair=pair)
     return _factory
 
 
@@ -607,7 +562,7 @@ def default_proposer_factory(_proposer_model_path: str):
 # ----------------------------------------------------------------------
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Four-phase local-only worker.")
+    ap = argparse.ArgumentParser(description="Three-phase Phase 2g worker.")
     ap.add_argument("--db", type=Path, default=DB_PATH)
     ap.add_argument("--held-out", type=Path, default=HELD_OUT_PATH)
     ap.add_argument(
@@ -615,59 +570,34 @@ def main() -> int:
         default=str(Path.home() / "models/Qwen3.6-35B-A3B-8bit"),
         help="Path to MLX judge model (Qwen3.6-35B-A3B-8bit by default).",
     )
-    ap.add_argument(
-        "--proposer-model-path",
-        default=str(Path.home() / "models/Qwen3.6-27B-MLX-8bit"),
-        help="Path to MLX proposer model.",
-    )
     ap.add_argument("--gemma-model", default="gemma3_12b")
     ap.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE)
     ap.add_argument("--propose-threshold", type=int, default=DEFAULT_PROPOSE_THRESHOLD)
     ap.add_argument("--propose-n", type=int, default=DEFAULT_PROPOSE_N)
     ap.add_argument(
         "--fault-lines",
-        default="causality,grounding,metacognition,experience,parsing,motivation,value",
+        default=DEFAULT_FAULT_LINES,
         help="Comma-separated rotation of Capraro fault lines for Phase C. "
-             "Each Phase C call advances to the next fault line and wraps "
-             "around at the end. Default: all 7. Pass an empty string to "
-             "fall back to open-ended novel_contrast on every cycle.",
+             "Default: all 7 (experience, causality, grounding, "
+             "metacognition, parsing, motivation, value).",
     )
     ap.add_argument("--max-cycles", type=int, default=0,
                     help="0 = unlimited. Each completed A→B counts as one cycle.")
     args = ap.parse_args()
 
     fault_lines = [s.strip() for s in args.fault_lines.split(",") if s.strip()]
-    if fault_lines:
-        # Validate up-front so a typo doesn't surface mid-rotation.
-        from src.strategies.hypotheses import list_fault_lines as _list_fl
-        valid = set(_list_fl())
-        bad = [f for f in fault_lines if f not in valid]
-        if bad:
-            ap.error(
-                f"unknown fault line(s) in --fault-lines: {bad}. "
-                f"valid: {sorted(valid)}"
-            )
 
     _install_signal_handlers()
     _ensure_dirs()
 
-    print("[worker] starting four-phase local-only worker", flush=True)
+    print("[worker] starting three-phase Phase 2g worker", flush=True)
     print(f"           gemma:    {args.gemma_model}", flush=True)
     print(f"           judge:    {args.judge_model_path}", flush=True)
-    print(f"           proposer: {args.proposer_model_path}", flush=True)
+    print(f"           strategy: sae_capraro (no proposer)", flush=True)
 
-    # `expected_ram_gb=0` disables the strict pre-check: in practice
-    # vm_stat under-reports free memory (compressor + cache lag), MLX holds
-    # internal references we can't always release from Python, and torch's
-    # MPS allocator caches buffers across unloads. Tight numerical gates
-    # produce false-positive failures that block healthy runs. The base
-    # class still enforces a 4 GB minimum so a truly-OOM machine fails
-    # fast, but otherwise we trust the OS to manage allocation pressure
-    # and let torch/MLX raise on actual OOM.
     registry = HandleRegistry(
         gemma=GemmaHandle(model_id=args.gemma_model, expected_ram_gb=0.0),
         judge=MLXHandle(model_path=args.judge_model_path, expected_ram_gb=0.0),
-        proposer=MLXHandle(model_path=args.proposer_model_path, expected_ram_gb=0.0),
     )
 
     db = ResultsDB(args.db)
@@ -678,7 +608,8 @@ def main() -> int:
     if fault_lines:
         print(f"[worker] fault-line rotation: {' → '.join(fault_lines)}", flush=True)
     else:
-        print("[worker] no fault-line rotation; using novel_contrast every cycle", flush=True)
+        print("[worker] no fault-line rotation; sae_capraro idle until configured",
+              flush=True)
 
     main_loop(
         registry=registry,
@@ -686,7 +617,6 @@ def main() -> int:
         held_out=held_out,
         controls=controls,
         judge_factory=default_judge_factory(args.judge_model_path),
-        proposer_factory=default_proposer_factory(args.proposer_model_path),
         batch_size=args.batch_size,
         propose_threshold=args.propose_threshold,
         propose_n=args.propose_n,

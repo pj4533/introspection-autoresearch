@@ -352,17 +352,19 @@ class MockHandle(ModelHandle):
 
 @dataclass
 class HandleRegistry:
-    """Holds the three handles the worker uses (gemma, judge, proposer)
-    and provides a one-at-a-time guarantee: switching to a new active
-    handle unloads all others first.
+    """Holds the worker's two model handles (gemma, judge) and provides
+    a one-at-a-time guarantee: switching to a new active handle unloads
+    all others first.
+
+    Phase 2g dropped the third (proposer) slot — SAE features come from
+    Neuronpedia, not from an LLM proposer, so Phase C is pure CPU work.
     """
 
     gemma: ModelHandle
     judge: ModelHandle
-    proposer: ModelHandle
 
     def all(self) -> list[ModelHandle]:
-        return [self.gemma, self.judge, self.proposer]
+        return [self.gemma, self.judge]
 
     def loaded(self) -> list[ModelHandle]:
         return [h for h in self.all() if h.is_loaded()]
