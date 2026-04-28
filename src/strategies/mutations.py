@@ -13,7 +13,7 @@ directly by tweaking layer / alpha / nothing:
                        new id, used to confirm a result isn't a one-shot
                        artifact. Same axis, same layer, same alpha.
 
-Three proposer-driven operators (call the local MLX proposer with a tight
+Four proposer-driven operators (call the local MLX proposer with a tight
 template) — same axis name, regenerate one piece of language:
 
   - ``examples_swap``       : same axis name + pole descriptions, regenerate
@@ -23,6 +23,15 @@ template) — same axis name, regenerate one piece of language:
   - ``antonym_pivot``       : keep positive pole, generate a different
                               negative pole that contrasts with positive on
                               the same dimension
+  - ``lexical_decontaminate``: regenerate examples with tokens that were
+                              fully exclusive to one pole BANNED from both
+                              new poles. Tests whether a winning result was
+                              concept-level signal or just lexical pickup
+                              on those exclusive tokens. (Discovered live
+                              2026-04-28: causality Class 1 score 3.812
+                              relied on the literal token "caused" appearing
+                              in 6/6 positives and 0/6 negatives — when
+                              banned, signal vanished.)
 
 The dispatcher chooses an operator at random per child slot. Deterministic
 operators emit specs synchronously; proposer-driven ones queue a single
@@ -469,12 +478,152 @@ Description must be one sentence under 30 words. Each negative example must be u
     )
 
 
+def lexical_decontaminate(
+    parent: ParentRecord,
+    *,
+    proposer: Proposer,
+) -> Optional[CandidateSpec]:
+    """Regenerate examples with surface-token contamination explicitly banned.
+
+    Audits the parent contrast pair for tokens that appear in every
+    example of one pole and zero examples of the other (and high-skew
+    near-misses). Then asks the proposer to regenerate 6 positive + 6
+    negative examples with those tokens forbidden in BOTH poles.
+
+    Why this matters: if a winning result evaporates under
+    decontamination, the original signal was lexical pickup on the
+    exclusive tokens (e.g. the "caused" token in causal-vs-temporal-
+    gerund-cause), not concept-level introspection. If the result
+    survives, that's evidence the steering direction encodes an
+    abstract conceptual feature, not just a surface token's embedding.
+
+    Returns None when:
+      - The parent pair is already lexically clean (no operator needed —
+        let another operator handle this slot).
+      - The proposer returns malformed JSON.
+      - The proposer's regenerated examples STILL contain banned tokens
+        (we retry once, then give up).
+    """
+    parent_pair = parent.contrast_pair or {}
+    from .lexical_audit import (
+        banned_tokens_for_decontamination,
+        lexical_contamination,
+    )
+
+    report = lexical_contamination(parent_pair)
+    banned = banned_tokens_for_decontamination(report)
+    # If the parent is already clean, this operator has nothing to do —
+    # signal that to the dispatcher so a different operator fills the slot.
+    if not banned:
+        return None
+
+    description = parent_pair.get("description", "") or ""
+    banned_str = ", ".join(f"'{t}'" for t in banned)
+    user_prompt = f"""You are lexically-decontaminating a contrast pair. The original pair had specific surface tokens that appeared in EVERY example of one pole and ZERO examples of the other — that means the steering direction extracted from this pair was dominated by the EMBEDDINGS of those tokens, not the underlying concept.
+
+Generate 6 NEW positive examples and 6 NEW negative examples for the contrast pair below. Keep the axis identifier and description EXACTLY the same. The new examples must:
+
+  1. Express the SAME conceptual contrast as the original.
+  2. AVOID these banned tokens in BOTH poles (no exceptions, no morphological variants like plurals or tense changes): {banned_str}
+  3. Use varied vocabulary so no single content-word appears in 6/6 examples of one pole.
+  4. Make the contrast come from MEANING/STRUCTURE, not from a single shared word.
+
+Axis: {parent_pair.get('axis', parent.concept)}
+Description: {description}
+
+Original positive examples:
+{json.dumps(parent_pair.get('positive', []), indent=2)}
+
+Original negative examples:
+{json.dumps(parent_pair.get('negative', []), indent=2)}
+
+Return a JSON object in this exact shape:
+{{
+  "positive": ["...", "...", "...", "...", "...", "..."],
+  "negative": ["...", "...", "...", "...", "...", "..."]
+}}
+
+Each example must be under 18 words. Do not include any text before or after the JSON object."""
+
+    raw = proposer.generate(PROPOSER_SYSTEM_PROMPT, user_prompt)
+    obj = _parse_single_pair(raw)
+    if obj is None:
+        return None
+    pos = obj.get("positive") or []
+    neg = obj.get("negative") or []
+    if not isinstance(pos, list) or not isinstance(neg, list):
+        return None
+    if len(pos) < 3 or len(neg) < 3:
+        return None
+
+    # Verify the proposer actually obeyed the ban. If any banned token is
+    # still present in the regenerated examples, we abort — better to
+    # return None and let a fallback operator fill the slot than to emit
+    # a "decontaminated" spec that's still contaminated.
+    new_pair_dict = {
+        "positive": [str(x)[:240] for x in pos][:10],
+        "negative": [str(x)[:240] for x in neg][:10],
+    }
+    re_report = lexical_contamination(new_pair_dict)
+    re_banned = set(banned_tokens_for_decontamination(re_report))
+    # If any of the ORIGINAL banned tokens are still in the new pair's
+    # exclusive sets, the proposer didn't obey. Even if NEW exclusive
+    # tokens emerged (different from the original list), that's a softer
+    # warning — we let it through but tag the rationale.
+    original_banned = set(banned)
+    leaked = original_banned & set(
+        re_report.positive_exclusive + re_report.negative_exclusive
+    )
+    if leaked:
+        # Proposer ignored the explicit ban on a banned token. Reject.
+        return None
+
+    # Tag the rationale so downstream analysis knows this pair was
+    # decontaminated and which tokens were banned.
+    rationale = (
+        f"[lexical_decontaminate banned={','.join(banned)}] "
+        + (parent_pair.get("rationale", "") or "")
+    )[:400]
+
+    new_pair = {
+        "axis": parent_pair.get("axis", parent.concept),
+        "positive": new_pair_dict["positive"],
+        "negative": new_pair_dict["negative"],
+        "rationale": rationale,
+        "description": description,
+    }
+    return _make_child(
+        parent,
+        strategy=f"hillclimb_{parent.strategy}",
+        layer=parent.layer_idx,
+        target_effective=parent.target_effective,
+        contrast_pair=new_pair,
+        proposer_model=proposer.name,
+        mutation_type="lexical_decontaminate",
+        mutation_detail={
+            "banned_tokens": banned,
+            "n_banned": len(banned),
+            "original_contamination": report.summary(),
+            "decontaminated_contamination": re_report.summary(),
+            "new_exclusive_emerged": sorted(
+                set(re_report.positive_exclusive + re_report.negative_exclusive)
+                - original_banned
+            ),
+        },
+    )
+
+
 # ---------------------------------------------------------------------------
 # Public registry — operator name → callable
 # ---------------------------------------------------------------------------
 
 DETERMINISTIC_OPERATORS = ("layer_shift", "alpha_scale")
-PROPOSER_OPERATORS = ("examples_swap", "description_sharpen", "antonym_pivot")
+PROPOSER_OPERATORS = (
+    "examples_swap",
+    "description_sharpen",
+    "antonym_pivot",
+    "lexical_decontaminate",
+)
 ALL_VARIANT_OPERATORS = DETERMINISTIC_OPERATORS + PROPOSER_OPERATORS
 
 
@@ -503,4 +652,6 @@ def apply_operator(
             return description_sharpen(parent, proposer=proposer)
         if op_name == "antonym_pivot":
             return antonym_pivot(parent, proposer=proposer)
+        if op_name == "lexical_decontaminate":
+            return lexical_decontaminate(parent, proposer=proposer)
     raise ValueError(f"Unknown mutation operator: {op_name!r}")

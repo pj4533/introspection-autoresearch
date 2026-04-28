@@ -185,10 +185,16 @@ def _slot_variants(
     if not winners or n_slots <= 0:
         return []
     parents = winners[:3]
-    # Weighted pool — deterministic ops cheaper, more reliable, so weight up.
+    # Weighted pool. Deterministic ops are 2× weighted because they're
+    # cheaper and more reliable. lexical_decontaminate is also 2×
+    # weighted because, post-2026-04-28 lexical-control finding, it's
+    # the single most informative operator we have — every winner
+    # should get a decontamination test before being treated as a
+    # concept-level result.
     op_pool = (
         list(mutations.DETERMINISTIC_OPERATORS) * 2
-        + list(mutations.PROPOSER_OPERATORS)
+        + ["lexical_decontaminate"] * 2
+        + ["examples_swap", "description_sharpen", "antonym_pivot"]
     )
 
     out: list[CandidateSpec] = []
