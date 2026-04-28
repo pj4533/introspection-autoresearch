@@ -503,8 +503,11 @@ Phi-4-reasoning-plus).
 
 **Date.** 2026-04-28.
 
-**Status.** Accepted, scheduled for cutover after rotation 9 of the
-running 7-fault-line round-robin completes.
+**Status.** Accepted, **live on main since 2026-04-28 08:39 EDT** after
+rotation 9 of the previous run completed (cycle 73 cutover). The old
+unstructured `directed_capraro` Phase C dispatch is gone; `directed_capraro`
+itself remains only as the cold-start fallback when a fault line has no
+winners.
 
 **Context.** Phase 2d's round-robin loop produced 63 Class 2 hits and
 4 Class 1 hits across 60 cycles, but every winning axis we found —

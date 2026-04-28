@@ -347,23 +347,23 @@ The Streamlit dashboard concept is deprecated. Phase 3's public Next.js site ([d
 
 ---
 
-## Phase 2f — Structured hill-climbing (shipped 2026-04-28, cutover pending)
+## Phase 2f — Structured hill-climbing (live on main since 2026-04-28 08:39 EDT)
 
-**Motivation.** Phase 2d's round-robin loop produced 63 Class 2 hits and 4 Class 1 hits across 60 cycles — strong empirical results, but every winning axis (including the Class 1 score 3.812 on causality and the 3-layer Class 2 on grounding) has been evaluated exactly once. The proposer treats prior winners as inspiration for *adjacent* axes rather than as parents to mutate, so the strongest results never get re-tested. We can't tell signal from one-shot luck — exactly the question a writeup needs to answer.
+**Motivation.** Phase 2d's round-robin loop produced ~70 Class 2 hits and 5 Class 1 hits across 73 cycles — strong empirical results, but every winning axis (including the Class 1 score 3.812 on causality and the 3-layer Class 2 on grounding) was evaluated exactly once. The proposer treated prior winners as inspiration for *adjacent* axes rather than as parents to mutate, so the strongest results never got re-tested. Couldn't tell signal from one-shot luck — exactly the question a writeup needs to answer.
 
-**Decision.** Replace `directed_capraro` Phase C dispatch with a slot-based scheduler (`structured_hillclimb`). Every cycle's 16 candidates split into:
+**Decision.** Replaced `directed_capraro` Phase C dispatch with a slot-based scheduler (`structured_hillclimb`). Every cycle's 16 candidates split into:
 - **4 replication** — verbatim re-eval of top-2 winners (2 reps each)
 - **10 targeted variants** — top-3 winners × six mutation operators
 - **2 cluster expansion** — one fresh sibling axis from the proposer
 
 Six mutation operators: three deterministic (`layer_shift`, `alpha_scale`, `replication`) + three proposer-driven (`examples_swap`, `description_sharpen`, `antonym_pivot`). Each emitted spec carries lineage metadata (`parent_candidate_id`, `mutation_type`, `mutation_detail`) surfaced as a per-row badge on the public site.
 
-**Cold start.** No winners ≥ 0.05 score on a fault line → falls through to the existing `directed_capraro` opus mode unchanged.
+**Cold start.** No winners ≥ 0.05 score on a fault line → falls through to the existing `directed_capraro` opus mode unchanged. (This is the only reason `directed_capraro` is still in the codebase — the old unstructured Phase C path is gone.)
 
-**Cutover plan.** Wait for rotation 9 of the running 7-fault-line round-robin to finish, then `pkill src.worker`, `git checkout feat/structured-hillclimb`, `start_worker.sh`. Same launcher, no env var changes required. Rolling back is `git checkout main`.
+**Cutover.** Happened cleanly on 2026-04-28 08:39 EDT after rotation 9 of the previous run completed (cycle 73). Same `./scripts/start_worker.sh` launcher; no env var changes required. The `feat/structured-hillclimb` branch was fast-forward-merged into `main` and deleted. Pre-cutover queue/pending candidates from the old strategy got drained normally as orphans by the new worker.
 
-**What we expect to learn within 2 rotations:**
-1. Reproducibility evidence on the Class 1 hits (causality 3.812, value 1.906)
+**What we expect to learn within 2 rotations of the new loop:**
+1. Reproducibility evidence on the Class 1 hits (causality 3.812, value 1.906, experience visceral-sensory 2.383)
 2. Whether `self-evaluation-vs-objective-evaluation @ L=30` (det=8/8, ident=0/8) crosses to Class 1 via mutation
 3. Per-axis layer profiles (layer_shift fills in ±3 / ±6 layers per parent)
 4. Whether grounding's 3-layer winner reproduces

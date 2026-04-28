@@ -18,7 +18,8 @@ State machine:
   │     - move queue file to queue/done/                                  │
   │     - run lineage commit-or-reject                                    │
   ├─ C. PROPOSE   (judge unloaded, proposer loaded; only if queue low) ─┤
-  │   - call directed_capraro.generate_candidates (or novel_contrast)    │
+  │   - call structured_hillclimb.generate_candidates (per fault line)   │
+  │     (or novel_contrast when no fault line is configured)             │
   │   - write specs to queue/pending/                                    │
   ├─ D. RELOAD    (proposer unloaded, Gemma loaded) ────────────────────┤
   │   Back to A.                                                          │

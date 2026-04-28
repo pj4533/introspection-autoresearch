@@ -1,7 +1,9 @@
 # Phase 2f — Structured Hill-Climbing
 
-Status: **shipped to feature branch `feat/structured-hillclimb`, cutover
-scheduled after rotation 9 of the current run completes.**
+Status: **live on main as of 2026-04-28 08:39 EDT.** Cutover from the
+previous unstructured `directed_capraro` Phase C dispatch happened after
+rotation 9 of the 7-fault-line round-robin completed (cycle 73). The new
+slot-based scheduler is now the sole autoresearch pipeline going forward.
 
 Last updated: 2026-04-28.
 
@@ -166,18 +168,30 @@ from the `candidates` table — no schema changes required.
 
 ## Operational notes
 
-### Cutover plan
+### How to run
 
-1. Wait for rotation 9 to finish (≈06:00–06:30 EST 2026-04-28).
-2. `pkill -f 'src.worker'` — graceful shutdown finishes current cycle.
-3. `git checkout feat/structured-hillclimb && git merge --ff-only main`
-   (or rebase, depending on what's on main by then).
-4. `./scripts/start_worker.sh` — same launcher, no env var changes
-   required.
-5. Watch `logs/worker.log` for `[structured_hillclimb:<fault_line>]` lines
-   confirming the dispatcher loaded winners and allocated slots.
+Same launcher as before — no env var changes required:
 
-The code is a feature-branch addition. Rolling back is a `git checkout main`.
+```bash
+./scripts/start_worker.sh
+tail -f logs/worker.log
+```
+
+Look for `[structured_hillclimb:<fault_line>]` lines confirming the
+dispatcher loaded winners and allocated slots into 4 replication / 10
+variants / 2 cluster expansion.
+
+### Cutover history (for reference)
+
+Cutover from the unstructured loop happened cleanly on 2026-04-28
+08:39 EDT after rotation 9 of the 7-fault-line round-robin completed
+(cycle 73, ~3373 evaluated candidates, 0 failed). The graceful
+SIGTERM truncated the in-flight Phase A at 6/16 candidates (Phase B
+drained those normally as orphans on the next worker startup —
+verified via `db.pending_candidate_ids() == []`). The 137 unevaluated
+queue/pending candidates from `directed_capraro_*` are picked up by
+the new worker as normal — they get logged with their original
+strategy tag.
 
 ### Tunable env vars
 

@@ -113,18 +113,24 @@ plan file, it's a bug. Commit it to `docs/roadmap.md` (forward-looking) or
   identification-aware fitness, feedback-loop `novel_contrast`,
   `exploit_topk`): **planned next**. Full plan in
   [`docs/phase2b_hillclimb.md`](docs/phase2b_hillclimb.md).
-- Phase 2f — structured hill-climbing, **shipped to feature branch
-  `feat/structured-hillclimb` 2026-04-28, cutover after rotation 9 of
-  the running 7-fault-line round-robin.** Replaces unstructured Phase C
-  with a slot-based scheduler: 4 replication / 10 targeted-variants /
-  2 cluster-expansion per cycle. Six mutation operators (`layer_shift`,
-  `alpha_scale`, `replication`, `examples_swap`, `description_sharpen`,
-  `antonym_pivot`) plus lineage tagging on every emitted spec. Motivated
-  by 60-cycle Phase 2d data showing top winners (causality Class 1
-  score 3.812, value Class 1 1.906, metacognition Class 2 88%, grounding
-  3-layer Class 2 reproducibility) all evaluated exactly once and
-  drifting away across rotations. Full design in
-  [`docs/structured_hillclimb.md`](docs/structured_hillclimb.md), ADR-020.
+- Phase 2f — structured hill-climbing, **live on main since 2026-04-28
+  08:39 EDT (cycle 73 cutover).** This is the sole autoresearch
+  pipeline going forward. Phase C splits each batch of 16 candidates
+  into 4 replication / 10 targeted-variants / 2 cluster-expansion via
+  `src/strategies/structured_hillclimb.py`. Six mutation operators
+  (`layer_shift`, `alpha_scale`, `replication`, `examples_swap`,
+  `description_sharpen`, `antonym_pivot`) in `src/strategies/mutations.py`,
+  with lineage tagging (`parent_candidate_id`, `mutation_type`) on every
+  emitted spec, surfaced as a per-row badge on the public site.
+  Cold-start fallback: no winners ≥ 0.05 score on a fault line →
+  `directed_capraro` opus mode (kept around for this purpose only).
+  Motivated by 73-cycle Phase 2d data showing top winners (causality
+  Class 1 score 3.812, value Class 1 1.906, metacognition Class 2 88%
+  three times, grounding 3-layer Class 2, experience Class 1
+  visceral-sensory 2-layer) all evaluated exactly once with no
+  replication evidence. Full design in
+  [`docs/structured_hillclimb.md`](docs/structured_hillclimb.md),
+  rationale in ADR-020.
 
 ## Architecture quick map
 
