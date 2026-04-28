@@ -3,7 +3,7 @@
 import { Phase2Entry, Summary } from "@/lib/data";
 import { timeAgo, formatEastern, formatEasternParts } from "@/lib/utils";
 import { useEffect, useMemo, useState } from "react";
-import { SaeNeighborGraph } from "./SaeNeighborGraph";
+import { FaultLineDirectionProvenance } from "./FaultLineDirectionProvenance";
 
 type FilterKey =
   | "all"
@@ -87,15 +87,15 @@ export function Leaderboard({
       return items.filter(
         (e) =>
           e.derivation_method !== "contrast_pair" &&
-          e.derivation_method !== "sae_feature"
+          e.derivation_method !== "sae_feature_space_mean_diff"
       );
     if (filter === "sae")
-      return items.filter((e) => e.derivation_method === "sae_feature");
+      return items.filter((e) => e.derivation_method === "sae_feature_space_mean_diff");
     // Fault-line filters: SAE-feature rows tagged with that Capraro
     // fault line (set by the sae_capraro strategy at proposal time).
     return items.filter(
       (e) =>
-        e.derivation_method === "sae_feature" &&
+        e.derivation_method === "sae_feature_space_mean_diff" &&
         e.sae?.fault_line === filter
     );
   }, [withEffective, filter, view]);
@@ -136,10 +136,13 @@ export function Leaderboard({
         <p className="text-lg text-[var(--ink-soft)] max-w-3xl leading-relaxed mb-6">
           A machine keeps generating candidate &ldquo;thoughts&rdquo; and
           planting them inside Gemma 3 12B. The current substrate is{" "}
-          <strong className="text-[var(--ink)]">single Sparse Autoencoder
-          features</strong>{" "}
-          from Gemma Scope 2 — sub-lexical directions the model learns for
-          itself, organized around{" "}
+          <strong className="text-[var(--ink)]">fault-line directions</strong>{" "}
+          built by mean-differencing SAE feature activations between a
+          corpus of prompts about a target concept (causation, sensory
+          grounding, metacognition, etc.) and a matched control corpus,
+          then projecting back to the residual stream. Each direction is
+          conceptually pure (lexical features get zeroed out) but carries
+          natural activation texture. Organized around{" "}
           <strong className="text-[var(--ink)]">
             Capraro et al.&apos;s seven epistemological fault lines
           </strong>
@@ -200,7 +203,7 @@ export function Leaderboard({
         {/* Phase 2g: per-Capraro-fault-line filter strip. Only renders if
             the leaderboard has at least one SAE-feature row, so legacy
             views stay clean. */}
-        {entries.some((e) => e.derivation_method === "sae_feature") && (
+        {entries.some((e) => e.derivation_method === "sae_feature_space_mean_diff") && (
           <div className="flex flex-wrap gap-2 text-xs mb-6">
             <span className="text-[var(--ink-faint)] uppercase tracking-[0.15em] self-center mr-2">
               Capraro fault line:
@@ -208,7 +211,7 @@ export function Leaderboard({
             {FAULT_LINES.map((fl) => {
               const count = entries.filter(
                 (e) =>
-                  e.derivation_method === "sae_feature" &&
+                  e.derivation_method === "sae_feature_space_mean_diff" &&
                   e.sae?.fault_line === fl &&
                   e.score > 0
               ).length;
@@ -368,16 +371,17 @@ function LeaderCard({
 }) {
   const [open, setOpen] = useState(false);
   const isContrast = entry.derivation_method === "contrast_pair";
-  const isSae = entry.derivation_method === "sae_feature";
+  const isSae = entry.derivation_method === "sae_feature_space_mean_diff";
   const name = isContrast && entry.contrast_pair
     ? entry.contrast_pair.axis
     : isSae && entry.sae?.auto_interp
     ? entry.sae.auto_interp
     : entry.concept;
-  // Substrate badge text + color. Phase 2g rows light up green; legacy
-  // contrast_pair stays accent-purple; mean_diff stays neutral.
+  // Substrate badge text + color. Phase 2h fault-line rows light up
+  // green; legacy contrast_pair stays accent-purple; mean_diff stays
+  // neutral.
   const substrateLabel = isSae
-    ? "SAE feature"
+    ? "fault-line direction"
     : isContrast
     ? "invented axis"
     : "word";
@@ -446,20 +450,6 @@ function LeaderCard({
                   {entry.sae.fault_line}
                 </span>
               )}
-              {isSae &&
-                entry.sae?.feature_idx !== null &&
-                entry.sae?.feature_idx !== undefined && (
-                  <a
-                    href={`https://www.neuronpedia.org/gemma-3-12b-it/31-gemmascope-2-res-262k/${entry.sae.feature_idx}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-[10px] uppercase tracking-[0.15em] px-1.5 py-0.5 rounded text-[var(--accent)] bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 transition-colors"
-                    title="Open this feature on Neuronpedia"
-                  >
-                    np #{entry.sae.feature_idx}
-                  </a>
-                )}
               <span
                 className={`text-[10px] uppercase tracking-[0.15em] px-1.5 py-0.5 rounded ${
                   entry.prompt_style === "open"
@@ -552,8 +542,8 @@ function LeaderCard({
             <ContrastExamples pair={entry.contrast_pair} />
           )}
 
-          {isSae && entry.sae?.neighbors && entry.sae.neighbors.length > 0 && (
-            <SaeNeighborGraph entry={entry} />
+          {isSae && entry.sae?.top_features && entry.sae.top_features.length > 0 && (
+            <FaultLineDirectionProvenance entry={entry} />
           )}
 
           <PromptBox entry={entry} />

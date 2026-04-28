@@ -1,10 +1,19 @@
+> **ARCHIVED 2026-04-28.** Phase 2g (single-SAE-feature decoder
+> injection) was tested empirically the same day it was implemented
+> and produced consistent non-detection across all features and alphas
+> tried (8 → 18000) on the top metacognition feature at L=31 and the
+> top experience feature at L=33. Single decoder vectors are unit-norm
+> geometric basis directions without natural activation texture, and
+> the introspection circuit doesn't fire on them. Superseded by
+> **Phase 2h** ([`../phase2h_plan.md`](../phase2h_plan.md)), which uses
+> **SAE-feature-space mean-diff directions** built from prompt corpora
+> — preserving the SAE's concept disentanglement while restoring the
+> natural activation texture that mean_diff vectors have.
+
 # Phase 2g — SAE-Feature Injection over Capraro Fault Lines
 
-Status: **planned, replacing all prior autoresearch strategies.** Phase 2f
-(structured hill-climbing over `contrast_pair` axes) is the immediate
-predecessor and is being retired with this phase. From this point forward,
-**SAE-feature injection is the only autoresearch substrate** and **Capraro's
-seven fault lines are the only organizing taxonomy**.
+Status: **archived 2026-04-28** (single-feature decoder substrate
+empirically inadequate; superseded by Phase 2h).
 
 Last updated: 2026-04-28.
 

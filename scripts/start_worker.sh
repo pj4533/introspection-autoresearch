@@ -3,7 +3,7 @@
 #
 # Architecture: serial model swap, two slots only.
 # Gemma3-12B for generation, unload; Qwen3.6-35B-A3B-8bit (judge) for
-# judging, unload; sae_capraro proposes new candidates with NO model
+# judging, unload; sae_feature_space proposes new candidates with NO model
 # loaded (pure CPU work, reads data/sae_features/capraro_buckets.json
 # and the leaderboard). Phase 2g removed the proposer model.
 #
@@ -54,16 +54,16 @@ if [[ ! -d "$JUDGE_MODEL_PATH" ]]; then
     echo "    --local-dir $JUDGE_MODEL_PATH"
     exit 2
 fi
-if [[ ! -f "data/sae_features/capraro_buckets.json" ]]; then
-    echo "ERROR: capraro_buckets.json not found."
-    echo "Build it first: python scripts/build_capraro_buckets.py"
+if [[ ! -f "data/sae_features/fault_line_directions.pt" ]]; then
+    echo "ERROR: fault_line_directions.pt not found."
+    echo "Build it first: python scripts/build_fault_line_directions.py"
     exit 3
 fi
 
 LOG="logs/worker.log"
 echo "=== starting Phase 2g worker at $(date) ===" >> "$LOG"
 echo "    judge:    $JUDGE_MODEL_PATH" >> "$LOG"
-echo "    strategy: sae_capraro (no proposer model)" >> "$LOG"
+echo "    strategy: sae_feature_space (no proposer model)" >> "$LOG"
 echo "    fault_lines: $FAULT_LINES" >> "$LOG"
 echo "    batch_size=$BATCH_SIZE propose_threshold=$PROPOSE_THRESHOLD" >> "$LOG"
 

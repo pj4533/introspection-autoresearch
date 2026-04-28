@@ -42,6 +42,32 @@ CAPRARO_BUCKETS_PATH = REPO / "data" / "sae_features" / "capraro_buckets.json"
 
 
 _AUTO_INTERP_LOOKUP: Optional[dict[int, str]] = None
+_FAULT_LINE_DIRECTIONS: Optional[dict] = None
+
+
+def _load_direction_provenance(fault_line: Optional[str]) -> Optional[dict]:
+    """Read top-contributor metadata + lexical-filter stats for a fault
+    line from the Phase 2h directions file. Strips the actual direction
+    tensor before returning so the JSON stays small.
+    """
+    global _FAULT_LINE_DIRECTIONS
+    if fault_line is None:
+        return None
+    if _FAULT_LINE_DIRECTIONS is None:
+        path = REPO / "data" / "sae_features" / "fault_line_directions.pt"
+        if not path.exists():
+            return None
+        import torch as _torch
+        _FAULT_LINE_DIRECTIONS = _torch.load(path, weights_only=False)
+    entry = (_FAULT_LINE_DIRECTIONS.get("directions") or {}).get(fault_line)
+    if entry is None:
+        return None
+    return {
+        "top_features": entry.get("top_features", []),
+        "filtered_lexical_count": entry.get("filtered_lexical_count"),
+        "n_positive": entry.get("n_positive"),
+        "n_control": entry.get("n_control"),
+    }
 
 
 def _load_auto_interp_lookup() -> dict[int, str]:
@@ -442,57 +468,37 @@ def export_phase2_leaderboard(top_k: Optional[int] = None) -> list[dict]:
                 "rationale": cp.get("rationale", ""),
             }
 
-        # Phase 2g: surface SAE-feature substrate metadata so the web UI
-        # can render fault-line column membership, link to the Neuronpedia
-        # source, and color-code by identification_type. The Neuronpedia
-        # source page URL is constructed from the SAE id at render time on
-        # the client. For top-tier hits we also compute and embed the
-        # decoder-cosine neighbors so the React graph component doesn't
-        # need API access at render time.
-        if r["derivation_method"] == "sae_feature":
+        # Phase 2h: surface fault-line direction provenance so the web UI
+        # can render fault-line column membership and show the top SAE
+        # features that contributed to the direction. Provenance metadata
+        # (top contributors, lexical-filter count) is loaded from the
+        # fault_line_directions.pt file once and cached.
+        if r["derivation_method"] == "sae_feature_space_mean_diff":
+            fault_line = spec.get("sae_fault_line")
             entry["sae"] = {
                 "release": spec.get("sae_release"),
                 "sae_id": spec.get("sae_id"),
-                "feature_idx": spec.get("sae_feature_idx"),
                 "auto_interp": spec.get("sae_auto_interp"),
-                "fault_line": spec.get("sae_fault_line"),
+                "fault_line": fault_line,
             }
-            # Compute decoder-cosine neighbors for any SAE feature with
-            # score >= 0.05 (cheap: one matrix-vector op against a 262k×3840
-            # bf16 matrix, sub-second per call after the SAE is cached in
-            # process). Skip for low-scoring rows to keep the JSON small.
-            if r["score"] >= 0.05 and spec.get("sae_feature_idx") is not None:
-                try:
-                    import sys as _sys
-                    _sys.path.insert(0, str(REPO))
-                    from src.sae_loader import get_neighbors as _get_neighbors
-                    neighbors = _get_neighbors(
-                        release=spec["sae_release"],
-                        sae_id=spec["sae_id"],
-                        feature_idx=int(spec["sae_feature_idx"]),
-                        n=12,
-                        exclude_self=True,
+            # Embed direction provenance (which features dominated this
+            # fault line's mean-diff, plus the lexical-filter count).
+            try:
+                provenance = _load_direction_provenance(fault_line)
+                if provenance is not None:
+                    entry["sae"]["top_features"] = provenance.get("top_features", [])
+                    entry["sae"]["filtered_lexical_count"] = provenance.get(
+                        "filtered_lexical_count"
                     )
-                    # Look up auto_interp for each neighbor from the
-                    # buckets file (one-shot read; cached at module level).
-                    auto_interp_lookup = _load_auto_interp_lookup()
-                    entry["sae"]["neighbors"] = [
-                        {
-                            "feature_idx": idx,
-                            "cosine": round(sim, 4),
-                            "auto_interp": auto_interp_lookup.get(idx, ""),
-                        }
-                        for idx, sim in neighbors
-                    ]
-                except Exception:
-                    # Neighbor lookup is best-effort — if the SAE isn't
-                    # loadable in this environment, just skip it.
-                    pass
+                    entry["sae"]["n_positive"] = provenance.get("n_positive")
+                    entry["sae"]["n_control"] = provenance.get("n_control")
+            except Exception:
+                pass
 
         # Substrate badge — explicit retro-tagging across all rows so the
         # leaderboard shows what KIND of candidate each row is.
-        if r["derivation_method"] == "sae_feature":
-            entry["substrate"] = "SAE feature"
+        if r["derivation_method"] == "sae_feature_space_mean_diff":
+            entry["substrate"] = "fault-line direction"
         elif r["derivation_method"] == "contrast_pair":
             entry["substrate"] = "invented axis"
         else:

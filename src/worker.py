@@ -18,7 +18,7 @@ State machine:
   │     - move queue file to queue/done/                                  │
   │     - run lineage commit-or-reject                                    │
   ├─ C. PROPOSE   (no model loaded; pure CPU work) ──────────────────────┤
-  │   - call sae_capraro.generate_candidates(fault_line=…)               │
+  │   - call sae_feature_space.generate_candidates(fault_line=…)               │
   │   - the strategy reads data/sae_features/capraro_buckets.json        │
   │     and the leaderboard to pick fresh SAE-feature candidates         │
   │   - write specs to queue/pending/                                    │
@@ -348,14 +348,14 @@ def _phase_c_propose(
     fault_line_id: Optional[str],
     propose_n: int,
 ) -> int:
-    """Generate `propose_n` SAE-feature candidates for `fault_line_id`.
+    """Generate `propose_n` Phase 2h candidates for `fault_line_id`.
 
-    Phase 2g: no proposer model is loaded — `sae_capraro` reads the static
-    `data/sae_features/capraro_buckets.json` and the leaderboard, picks
-    fresh feature candidates per its sub-mode mix (explore / neighbors /
-    replicate / cross_fault), and writes them to queue/pending/.
+    No model is loaded during this phase — the precomputed fault-line
+    direction is loaded by Phase A on demand. The strategy reads
+    `data/sae_features/fault_line_directions.pt` (shared with the
+    in-process cache in `evaluate.py`) and the leaderboard.
     """
-    from src.strategies.sae_capraro import generate_candidates as gen
+    from src.strategies.sae_feature_space import generate_candidates as gen
     specs = gen(
         n=propose_n,
         db=db,
@@ -371,7 +371,7 @@ def _phase_c_propose(
             spec_dict["_lineage"] = lineage_meta
         path.write_text(json.dumps(spec_dict, indent=2) + "\n")
         n_written += 1
-    label = fault_line_id or "sae_capraro"
+    label = fault_line_id or "sae_feature_space"
     print(f"[worker] phase C ({label}) wrote {n_written} new candidates to "
           f"queue/pending", flush=True)
     return n_written
@@ -402,7 +402,7 @@ def main_loop(
 
     `fault_lines` is the round-robin rotation of Capraro fault lines. Each
     successful Phase C picks `fault_lines[propose_index % len(fault_lines)]`
-    and asks `sae_capraro` for that fault line's variants. Default rotation
+    and asks `sae_feature_space` for that fault line's variants. Default rotation
     is all 7 Capraro fault lines.
 
     Returns the number of complete A→B cycles run (Phase C is a side-effect
@@ -516,7 +516,7 @@ def main_loop(
             print(
                 f"[{datetime.now().strftime('%H:%M:%S')}] [phase C] cycle "
                 f"{propose_index} target: "
-                f"{next_fault_line or 'sae_capraro (no rotation)'} "
+                f"{next_fault_line or 'sae_feature_space (no rotation)'} "
                 f"(building {propose_n} candidates from buckets)",
                 flush=True,
             )
@@ -593,7 +593,7 @@ def main() -> int:
     print("[worker] starting three-phase Phase 2g worker", flush=True)
     print(f"           gemma:    {args.gemma_model}", flush=True)
     print(f"           judge:    {args.judge_model_path}", flush=True)
-    print(f"           strategy: sae_capraro (no proposer)", flush=True)
+    print(f"           strategy: sae_feature_space (no proposer)", flush=True)
 
     registry = HandleRegistry(
         gemma=GemmaHandle(model_id=args.gemma_model, expected_ram_gb=0.0),
@@ -608,7 +608,7 @@ def main() -> int:
     if fault_lines:
         print(f"[worker] fault-line rotation: {' → '.join(fault_lines)}", flush=True)
     else:
-        print("[worker] no fault-line rotation; sae_capraro idle until configured",
+        print("[worker] no fault-line rotation; sae_feature_space idle until configured",
               flush=True)
 
     main_loop(

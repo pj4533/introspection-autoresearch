@@ -113,7 +113,6 @@ export type Phase2Entry = {
   sae?: {
     release: string | null;
     sae_id: string | null;
-    feature_idx: number | null;
     auto_interp: string | null;
     fault_line:
       | "experience"
@@ -124,21 +123,23 @@ export type Phase2Entry = {
       | "motivation"
       | "value"
       | null;
-    // Decoder-cosine neighbors of this feature in W_dec space — populated
-    // by export_for_web.py for any SAE feature with score >= 0.05. Used
-    // by the site graph component so it can render the local feature
-    // neighborhood without an API call at render time.
-    neighbors?: Array<{
+    // Phase 2h direction provenance: top contributing SAE features and
+    // metadata about how the direction was built. Populated by
+    // export_for_web.py from the fault_line_directions.pt file.
+    top_features?: Array<{
       feature_idx: number;
-      cosine: number;
+      weight: number;
       auto_interp: string;
     }>;
+    filtered_lexical_count?: number | null;
+    n_positive?: number | null;
+    n_control?: number | null;
   };
   // Substrate badge — set on every row by export_for_web.py.
-  // "SAE feature"   → derivation_method === "sae_feature"   (Phase 2g)
-  // "invented axis" → derivation_method === "contrast_pair" (Phase 2b/2d)
-  // "paper concept" → derivation_method === "mean_diff"     (Phase 1)
-  substrate?: "SAE feature" | "invented axis" | "paper concept";
+  // "fault-line direction" → derivation_method === "sae_feature_space_mean_diff" (Phase 2h)
+  // "invented axis"        → derivation_method === "contrast_pair"               (Phase 2b/2d)
+  // "paper concept"        → derivation_method === "mean_diff"                   (Phase 1)
+  substrate?: "fault-line direction" | "invented axis" | "paper concept";
 };
 
 export type LineageNode = {

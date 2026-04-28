@@ -22,7 +22,7 @@ loop would re-create the burn that paused Phase 2c.
 
 ## Canonical references (read first if orienting)
 
-- **Active phase plan**: [`docs/phase2g_plan.md`](docs/phase2g_plan.md) —
+- **Active phase plan**: [`docs/phase2h_plan.md`](docs/phase2h_plan.md) —
   SAE-feature injection over all seven Capraro fault lines. The only
   phase being worked on going forward.
 - **Roadmap** (full project trajectory, all phases past and present):
@@ -34,8 +34,8 @@ loop would re-create the burn that paused Phase 2c.
 - Judge calibration data (local Qwen): [`docs/calibration_results_qwen35b.md`](docs/calibration_results_qwen35b.md)
 - Full original spec: [`docs/01_introspection_steering_autoresearch.md`](docs/01_introspection_steering_autoresearch.md)
 - README: [`README.md`](README.md) (repo layout, setup, running)
-- Archived phase docs: [`docs/archive/`](docs/archive/) — Phase 2b/2c/2d/2f
-  plans, all superseded by Phase 2g but kept for historical context.
+- Archived phase docs: [`docs/archive/`](docs/archive/) — Phase 2b/2c/2d/2f/2g
+  plans, all superseded by Phase 2h but kept for historical context.
 
 **Rule:** if a project decision only lives in chat logs, memory files, or
 ephemeral plan files, it's a bug. Commit it to `docs/roadmap.md`
@@ -43,86 +43,90 @@ ephemeral plan files, it's a bug. Commit it to `docs/roadmap.md`
 
 ## Status snapshot (2026-04-28)
 
-**Active phase: Phase 2g** — SAE-feature injection over Capraro fault lines.
-Plan in [`docs/phase2g_plan.md`](docs/phase2g_plan.md). All prior
-autoresearch substrates (random_explore, novel_contrast, contrast_pair
-hill-climbing, directed_capraro) are retired.
+**Active phase: Phase 2h** — SAE-feature-space mean-diff over Capraro
+fault lines. Plan in [`docs/phase2h_plan.md`](docs/phase2h_plan.md).
+All prior autoresearch substrates are retired.
 
 Historical state, briefly:
 
 - **Phase 1 (done 2026-04-16).** Full sweep on Gemma3-12B-it: best layer 33
   (68.75% depth), detection rate 6%, FPR 0/50. Mechanism reproduced at
-  smaller magnitude than the paper's 27B (~6× weaker). Decision: proceed
-  to autoresearch on the basis of the qualitative reproduction, even
-  though the magnitude threshold from the original spec failed.
+  smaller magnitude than the paper's 27B (~6× weaker).
 - **Phase 1.5 (done 2026-04-17).** Paper-method abliteration reproduced
-  at ~3.6× boost over vanilla, FPR stayed at 0/50. Off-the-shelf
-  abliterated variants destroyed control hygiene. Default reverted to
-  vanilla 2026-04-25 after Phase 2d-1 found paper-method *suppresses* the
-  Altman cluster's signal (refusal-entanglement).
-- **Phase 2b/2c/2d/2f (retired 2026-04-28).** Successive iterations on
+  at ~3.6× boost over vanilla; default reverted to vanilla after Phase
+  2d-1 found paper-method suppresses certain abstract axes' signal.
+- **Phase 2b/2c/2d/2f (retired 2026-04-28).** Iterations on
   contrast-pair-derived steering directions. Phase 2d ran 73 cycles
   producing ~70 Class 2 hits and 5 Class 1 hits across all 7 Capraro
-  fault lines, but every winning axis was vulnerable to the same
-  critique: the steering direction was derived from contrast-pair
-  sentences, so the model's "identification" signal could be
-  back-rationalized from whichever single token had the highest
-  activation differential. The lexical-surface ceiling motivated the
-  substrate change to SAE features in Phase 2g.
+  fault lines, but every winning axis was vulnerable to the
+  lexical-confound critique.
+- **Phase 2g (retired 2026-04-28, same day as implemented).** Tried
+  single-SAE-feature decoder injection. Empirically: never triggered
+  detection at any alpha 8–18000 across two top-bucket features at L=31
+  and L=33, while Phase 1's `mean_diff` Peace control detected 3/8 at
+  the same magnitudes. Single decoder vectors are unit-norm and lack
+  the natural activation texture the introspection circuit appears to
+  detect. Motivated Phase 2h's feature-space mean-diff approach.
 - **Phase 3 (done 2026-04-17).** Public site at
   [did-the-ai-notice.vercel.app](https://did-the-ai-notice.vercel.app).
-  Next.js + Tailwind + Recharts, static export, auto-redeploys when
-  data changes. Old Phase 2 data stays visible, retro-tagged with
-  substrate badges.
+  Old Phase 2 data stays visible, retro-tagged with substrate badges.
 
-## Architecture quick map (Phase 2g state)
+## Architecture quick map (Phase 2h state)
 
 ```
 src/paper/          ← vendored from safety-research/introspection-mechanisms.
                      Includes extract_concept_vector() (used by historical
-                     mean_diff / contrast_pair derivation paths) and
-                     AbliterationContext (dormant; vanilla is the default
-                     per ADR-017 rev 2).
+                     mean_diff / contrast_pair paths) and AbliterationContext
+                     (dormant; vanilla is the default per ADR-017 rev 2).
 src/bridge.py       ← MPS-aware loader + DetectionPipeline
 src/derive.py       ← steering-vector derivation wrappers (mean_diff, ...)
 src/inject.py       ← SteeringHook + generation runners
-src/sae_loader.py   ← SAE.from_pretrained wrapper, get_decoder_direction(...).
-                     LRU-cached. Phase 2g substrate plumbing.
+src/sae_loader.py   ← Loads Gemma Scope 2 SAE (W_enc, W_dec, b_enc, b_dec,
+                     threshold). Exposes encode_activations (jump-ReLU),
+                     project_features_to_residual (W_dec), get_decoder_row.
+                     LRU-cached. Phase 2h substrate plumbing.
 src/db.py           ← SQLite ResultsDB. Phase 1 trials + Phase 2 candidates/
                      evaluations/fitness_scores + pending_responses (Phase A→B
                      handoff). Schema version 3.
 src/evaluate.py     ← CandidateSpec + FitnessResult + phase_a_generate
                      (writes pending_responses) + phase_b_judge (reads them,
                      scores, writes evaluations + fitness_scores). Three
-                     derivation methods: mean_diff (Phase 1 historical),
-                     contrast_pair (Phase 2b/2d historical), sae_feature
-                     (Phase 2g, active).
+                     derivation methods:
+                       mean_diff                   (Phase 1 historical)
+                       contrast_pair               (Phase 2b/2d historical)
+                       sae_feature_space_mean_diff (Phase 2h, active)
+                     Caches the fault_line_directions.pt payload in-process.
 src/models/registry.py
                     ← ModelHandle ABC + GemmaHandle / MLXHandle / MockHandle +
                      HandleRegistry. One-loaded-at-a-time invariant.
 src/judges/         ← Judge protocol + JudgeResult + LocalMLXJudge +
-                     prompts.py. Strict-grading templates extended for
-                     Phase 2g's identification_type sub-field
-                     (conceptual / lexical_fallback / none).
+                     prompts.py. Strict-grading templates with Phase 2g's
+                     identification_type sub-field (conceptual /
+                     lexical_fallback / none) — preserved into 2h.
 src/worker.py       ← Three-phase serial-swap worker. Generate (Gemma) →
-                     Judge (MLX) → Reload. (Was four-phase pre-Phase-2g; the
-                     proposer phase is gone — SAE features come from
-                     Neuronpedia, not from an LLM proposer.)
-src/strategies/     ← sae_capraro: the only active strategy. Four sub-modes
-                     (sae_explore / sae_neighbors / sae_replicate /
-                     sae_cross_fault). Reads bucketed feature lists from
-                     data/sae_features/capraro_buckets.json.
+                     Judge (MLX) → Propose (CPU) → Reload. Phase C is pure
+                     CPU work — no proposer model.
+src/strategies/     ← sae_feature_space: the only active strategy. Two
+                     sub-modes per fault line (sae_fs_sweep / sae_fs_replicate).
+                     Reads data/sae_features/fault_line_directions.pt.
                      lexical_audit: post-hoc analysis of historical
                      contrast-pair candidates (kept; tested).
-data/sae_features/  ← neuronpedia_explanations_layer31/  (325 batches,
-                     ~70k auto-interp labels, gemini-2.5-flash-lite-generated)
-                     capraro_buckets.json  (built once via
-                     scripts/build_capraro_buckets.py)
+data/sae_features/
+   fault_line_corpora/          ← 7 JSON files, 50/50 positive/control prompts
+                                  per Capraro fault line. Phase 2h experimental
+                                  design.
+   fault_line_directions.pt     ← built by scripts/build_fault_line_directions.py
+                                  Holds 7 (3840,) bf16 directions + provenance.
+   neuronpedia_explanations_layer31/   (~70k auto-interp labels; used to drive
+                                        the lexical-feature filter in the
+                                        direction-builder script)
+   capraro_buckets.json         ← Phase 2g artifact, retired but kept as
+                                  read-only reference for which SAE features
+                                  fall in which fault-line region.
 tests/              ← pytest suite. Run with `.venv/bin/pytest tests/`.
-                     Covers DB pending_responses lifecycle, registry
-                     contract, phased evaluation (mean_diff + contrast_pair
-                     historical paths + sae_feature new path), full
-                     state-machine integration with mocked models.
+                     33 tests cover DB pending_responses lifecycle, registry
+                     contract, phased evaluation (all three derivation paths),
+                     full state-machine integration with mocked models.
 ```
 
 ## Gotchas and invariants
