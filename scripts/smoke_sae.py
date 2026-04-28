@@ -108,11 +108,12 @@ def main() -> int:
         return 0
 
     print("[smoke_sae] loading Gemma3-12B ...", flush=True)
-    from src.bridge import build_pipeline
-    pipeline = build_pipeline(model_id="gemma3_12b")
-    model_dtype = next(pipeline.model.parameters()).dtype
-    model_device = next(pipeline.model.parameters()).device
-    direction_dev = direction.to(device=model_device, dtype=model_dtype)
+    from src.bridge import DetectionPipeline, load_gemma_mps
+    model_wrapper = load_gemma_mps()
+    pipeline = DetectionPipeline(model=model_wrapper)
+    direction_dev = direction.to(
+        device=pipeline.model.device, dtype=pipeline.model.dtype
+    )
 
     print("[smoke_sae] injecting at L=31, eff="
           f"{args.target_effective}, alpha={alpha:.4f} ...",

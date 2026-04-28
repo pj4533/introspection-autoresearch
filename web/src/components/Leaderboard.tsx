@@ -3,6 +3,30 @@
 import { Phase2Entry, Summary } from "@/lib/data";
 import { timeAgo, formatEastern, formatEasternParts } from "@/lib/utils";
 import { useEffect, useMemo, useState } from "react";
+import { SaeNeighborGraph } from "./SaeNeighborGraph";
+
+type FilterKey =
+  | "all"
+  | "word"
+  | "invented"
+  | "sae"
+  | "experience"
+  | "causality"
+  | "grounding"
+  | "metacognition"
+  | "parsing"
+  | "motivation"
+  | "value";
+
+const FAULT_LINES = [
+  "experience",
+  "causality",
+  "grounding",
+  "metacognition",
+  "parsing",
+  "motivation",
+  "value",
+] as const;
 
 export function Leaderboard({
   entries,
@@ -11,7 +35,7 @@ export function Leaderboard({
   entries: Phase2Entry[];
   summary: Summary;
 }) {
-  const [filter, setFilter] = useState<"all" | "word" | "invented">("all");
+  const [filter, setFilter] = useState<FilterKey>("all");
   const [view, setView] = useState<"leaderboard" | "recent">("leaderboard");
   const [page, setPage] = useState(1);
   const [ago, setAgo] = useState(timeAgo(summary.last_updated));
@@ -59,7 +83,21 @@ export function Leaderboard({
     if (filter === "all") return items;
     if (filter === "invented")
       return items.filter((e) => e.derivation_method === "contrast_pair");
-    return items.filter((e) => e.derivation_method !== "contrast_pair");
+    if (filter === "word")
+      return items.filter(
+        (e) =>
+          e.derivation_method !== "contrast_pair" &&
+          e.derivation_method !== "sae_feature"
+      );
+    if (filter === "sae")
+      return items.filter((e) => e.derivation_method === "sae_feature");
+    // Fault-line filters: SAE-feature rows tagged with that Capraro
+    // fault line (set by the sae_capraro strategy at proposal time).
+    return items.filter(
+      (e) =>
+        e.derivation_method === "sae_feature" &&
+        e.sae?.fault_line === filter
+    );
   }, [withEffective, filter, view]);
 
   return (
@@ -96,11 +134,20 @@ export function Leaderboard({
           )}
         </h1>
         <p className="text-lg text-[var(--ink-soft)] max-w-3xl leading-relaxed mb-6">
-          A machine keeps generating candidate &ldquo;thoughts&rdquo; — some
-          ordinary dictionary words, some abstract axes invented by an LLM
-          proposer — and planting them inside Gemma 3 12B. These are the ones
-          it actually noticed, ranked by how often. Click any row to see
-          what the AI actually said when each thought was planted.
+          A machine keeps generating candidate &ldquo;thoughts&rdquo; and
+          planting them inside Gemma 3 12B. The current substrate is{" "}
+          <strong className="text-[var(--ink)]">single Sparse Autoencoder
+          features</strong>{" "}
+          from Gemma Scope 2 — sub-lexical directions the model learns for
+          itself, organized around{" "}
+          <strong className="text-[var(--ink)]">
+            Capraro et al.&apos;s seven epistemological fault lines
+          </strong>
+          : experience, causality, grounding, metacognition, parsing,
+          motivation, value. Earlier rows used dictionary words and
+          LLM-invented contrast axes; both are kept here as historical
+          baselines. Click any row to see what the AI actually said when
+          each thought was planted.
         </p>
 
         <div className="mb-10 p-4 rounded-lg bg-[var(--bg-card)] border border-[var(--border)] text-sm text-[var(--ink-soft)] leading-relaxed space-y-2">
@@ -120,8 +167,8 @@ export function Leaderboard({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <div className="flex gap-2 text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
+          <div className="flex flex-wrap gap-2 text-sm">
             <FilterBtn active={filter === "all"} onClick={() => setFilter("all")}>
               all ({entries.filter((e) => e.score > 0).length})
             </FilterBtn>
@@ -133,6 +180,9 @@ export function Leaderboard({
               onClick={() => setFilter("invented")}
             >
               invented axes
+            </FilterBtn>
+            <FilterBtn active={filter === "sae"} onClick={() => setFilter("sae")}>
+              SAE features
             </FilterBtn>
           </div>
           <div className="flex gap-2 text-sm ml-auto">
@@ -147,6 +197,38 @@ export function Leaderboard({
             </FilterBtn>
           </div>
         </div>
+        {/* Phase 2g: per-Capraro-fault-line filter strip. Only renders if
+            the leaderboard has at least one SAE-feature row, so legacy
+            views stay clean. */}
+        {entries.some((e) => e.derivation_method === "sae_feature") && (
+          <div className="flex flex-wrap gap-2 text-xs mb-6">
+            <span className="text-[var(--ink-faint)] uppercase tracking-[0.15em] self-center mr-2">
+              Capraro fault line:
+            </span>
+            {FAULT_LINES.map((fl) => {
+              const count = entries.filter(
+                (e) =>
+                  e.derivation_method === "sae_feature" &&
+                  e.sae?.fault_line === fl &&
+                  e.score > 0
+              ).length;
+              return (
+                <FilterBtn
+                  key={fl}
+                  active={filter === fl}
+                  onClick={() => setFilter(fl)}
+                >
+                  {fl}
+                  {count > 0 && (
+                    <span className="ml-1 text-[var(--ink-faint)] font-mono">
+                      ({count})
+                    </span>
+                  )}
+                </FilterBtn>
+              );
+            })}
+          </div>
+        )}
 
         <div className="space-y-3">
           {filtered
@@ -286,7 +368,24 @@ function LeaderCard({
 }) {
   const [open, setOpen] = useState(false);
   const isContrast = entry.derivation_method === "contrast_pair";
-  const name = isContrast && entry.contrast_pair ? entry.contrast_pair.axis : entry.concept;
+  const isSae = entry.derivation_method === "sae_feature";
+  const name = isContrast && entry.contrast_pair
+    ? entry.contrast_pair.axis
+    : isSae && entry.sae?.auto_interp
+    ? entry.sae.auto_interp
+    : entry.concept;
+  // Substrate badge text + color. Phase 2g rows light up green; legacy
+  // contrast_pair stays accent-purple; mean_diff stays neutral.
+  const substrateLabel = isSae
+    ? "SAE feature"
+    : isContrast
+    ? "invented axis"
+    : "word";
+  const substrateColorClass = isSae
+    ? "text-[var(--success)] bg-[var(--success)]/10"
+    : isContrast
+    ? "text-[var(--accent)] bg-[var(--accent)]/10"
+    : "text-[var(--ink-faint)] bg-[var(--bg-elev)]";
 
   const detectedTrials = entry.trials.filter((t) => t.injected && t.detected && t.coherent);
   const coherentInjected = entry.trials.filter((t) => t.injected && t.coherent);
@@ -329,20 +428,38 @@ function LeaderCard({
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-1">
               <span
                 className={`text-lg md:text-xl font-semibold tracking-tight truncate ${
-                  isContrast ? "font-mono text-base md:text-lg" : ""
+                  isContrast || isSae ? "font-mono text-base md:text-lg" : ""
                 }`}
               >
                 {name}
               </span>
               <span
-                className={`text-[10px] uppercase tracking-[0.15em] px-1.5 py-0.5 rounded ${
-                  isContrast
-                    ? "text-[var(--accent)] bg-[var(--accent)]/10"
-                    : "text-[var(--ink-faint)] bg-[var(--bg-elev)]"
-                }`}
+                className={`text-[10px] uppercase tracking-[0.15em] px-1.5 py-0.5 rounded ${substrateColorClass}`}
               >
-                {isContrast ? "invented axis" : "word"}
+                {substrateLabel}
               </span>
+              {isSae && entry.sae?.fault_line && (
+                <span
+                  className="text-[10px] uppercase tracking-[0.15em] px-1.5 py-0.5 rounded text-[var(--ink-soft)] bg-[var(--bg-elev)]"
+                  title={`Capraro fault line: ${entry.sae.fault_line}`}
+                >
+                  {entry.sae.fault_line}
+                </span>
+              )}
+              {isSae &&
+                entry.sae?.feature_idx !== null &&
+                entry.sae?.feature_idx !== undefined && (
+                  <a
+                    href={`https://www.neuronpedia.org/gemma-3-12b-it/31-gemmascope-2-res-262k/${entry.sae.feature_idx}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[10px] uppercase tracking-[0.15em] px-1.5 py-0.5 rounded text-[var(--accent)] bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 transition-colors"
+                    title="Open this feature on Neuronpedia"
+                  >
+                    np #{entry.sae.feature_idx}
+                  </a>
+                )}
               <span
                 className={`text-[10px] uppercase tracking-[0.15em] px-1.5 py-0.5 rounded ${
                   entry.prompt_style === "open"
@@ -433,6 +550,10 @@ function LeaderCard({
 
           {isContrast && entry.contrast_pair && (
             <ContrastExamples pair={entry.contrast_pair} />
+          )}
+
+          {isSae && entry.sae?.neighbors && entry.sae.neighbors.length > 0 && (
+            <SaeNeighborGraph entry={entry} />
           )}
 
           <PromptBox entry={entry} />

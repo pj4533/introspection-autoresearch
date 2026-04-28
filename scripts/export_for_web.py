@@ -38,6 +38,32 @@ ABLITERATED_PAPER_DB = REPO / "data" / "results_abliterated_paper.db"
 MLABONNE_DB = REPO / "data" / "results_abliterated.db"
 HUIHUI_DB = REPO / "data" / "results_abliterated_huihui.db"
 OUT_DIR = REPO / "web" / "public" / "data"
+CAPRARO_BUCKETS_PATH = REPO / "data" / "sae_features" / "capraro_buckets.json"
+
+
+_AUTO_INTERP_LOOKUP: Optional[dict[int, str]] = None
+
+
+def _load_auto_interp_lookup() -> dict[int, str]:
+    """Lazily build a {feature_idx -> auto_interp_label} dict from the
+    Capraro buckets file. Used to label decoder-cosine neighbors on the
+    site graph so users can see what each nearby feature represents.
+    """
+    global _AUTO_INTERP_LOOKUP
+    if _AUTO_INTERP_LOOKUP is not None:
+        return _AUTO_INTERP_LOOKUP
+    out: dict[int, str] = {}
+    if CAPRARO_BUCKETS_PATH.exists():
+        with CAPRARO_BUCKETS_PATH.open() as f:
+            data = json.load(f)
+        for fault_line, items in (data.get("buckets") or {}).items():
+            for item in items:
+                idx = item.get("feature_idx")
+                desc = item.get("auto_interp")
+                if idx is not None and desc:
+                    out[int(idx)] = desc
+    _AUTO_INTERP_LOOKUP = out
+    return out
 
 
 def _q(db: Path, sql: str, params: tuple = ()) -> list[dict]:
@@ -420,7 +446,9 @@ def export_phase2_leaderboard(top_k: Optional[int] = None) -> list[dict]:
         # can render fault-line column membership, link to the Neuronpedia
         # source, and color-code by identification_type. The Neuronpedia
         # source page URL is constructed from the SAE id at render time on
-        # the client.
+        # the client. For top-tier hits we also compute and embed the
+        # decoder-cosine neighbors so the React graph component doesn't
+        # need API access at render time.
         if r["derivation_method"] == "sae_feature":
             entry["sae"] = {
                 "release": spec.get("sae_release"),
@@ -429,6 +457,37 @@ def export_phase2_leaderboard(top_k: Optional[int] = None) -> list[dict]:
                 "auto_interp": spec.get("sae_auto_interp"),
                 "fault_line": spec.get("sae_fault_line"),
             }
+            # Compute decoder-cosine neighbors for any SAE feature with
+            # score >= 0.05 (cheap: one matrix-vector op against a 262k×3840
+            # bf16 matrix, sub-second per call after the SAE is cached in
+            # process). Skip for low-scoring rows to keep the JSON small.
+            if r["score"] >= 0.05 and spec.get("sae_feature_idx") is not None:
+                try:
+                    import sys as _sys
+                    _sys.path.insert(0, str(REPO))
+                    from src.sae_loader import get_neighbors as _get_neighbors
+                    neighbors = _get_neighbors(
+                        release=spec["sae_release"],
+                        sae_id=spec["sae_id"],
+                        feature_idx=int(spec["sae_feature_idx"]),
+                        n=12,
+                        exclude_self=True,
+                    )
+                    # Look up auto_interp for each neighbor from the
+                    # buckets file (one-shot read; cached at module level).
+                    auto_interp_lookup = _load_auto_interp_lookup()
+                    entry["sae"]["neighbors"] = [
+                        {
+                            "feature_idx": idx,
+                            "cosine": round(sim, 4),
+                            "auto_interp": auto_interp_lookup.get(idx, ""),
+                        }
+                        for idx, sim in neighbors
+                    ]
+                except Exception:
+                    # Neighbor lookup is best-effort — if the SAE isn't
+                    # loadable in this environment, just skip it.
+                    pass
 
         # Substrate badge — explicit retro-tagging across all rows so the
         # leaderboard shows what KIND of candidate each row is.

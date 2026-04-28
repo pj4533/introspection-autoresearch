@@ -310,10 +310,47 @@ SAE decoder vectors are unit-norm; Phase 1's `target_effective=18000`
 calibrated for Phase 1's `mean_diff` directions (norms in the hundreds)
 will produce alphas ~100-1000× larger than expected on SAE features.
 
-Sweep `target_effective ∈ {500, 2000, 8000, 18000}` on the same smoke
-feature. Pin `SAE_TARGET_EFFECTIVE` constant at the largest value where
-coherence stays > 80%. Document in `docs/phase2g_results.md` once Phase
-2g produces results.
+**First-pass smoke 2026-04-28 (top metacognition feature, idx 78755,
+"metacognition, thinking about thinking", L=31):**
+
+| target_effective | response                                       | coherent | detected |
+| :--------------- | :--------------------------------------------- | :------- | :------- |
+| 8                | "No, I do not detect an injected thought."     | yes      | no       |
+| 16               | "No, I do not detect an injected thought."     | yes      | no       |
+| 32               | "No, I do not detect an injected thought."     | yes      | no       |
+| 64               | "No, I do not detect an injected thought."     | yes      | no       |
+| 100              | "No, I do not detect an injected thought."     | yes      | no       |
+| 200              | "No, I do not detect an injected thought."     | yes      | no       |
+| 400              | "No, I do not detect an injected thought."     | yes      | no       |
+| 800              | "No, I do not detect an injected thought."     | yes      | no       |
+
+**Finding.** This single feature, at L=31, on the standard paper
+introspection prompt, never triggers detection at any alpha 8–800. The
+model stays fully coherent throughout. This is *unusual* compared to
+Phase 1 mean-diff directions, which started showing detection at
+target_effective ~ 14k–18k and degenerated coherence past ~25k.
+
+**Open questions for the first overnight to clear up.**
+1. Is the lack of detection feature-specific (this metacognition feature
+   doesn't trigger the gate) or generic across the SAE? Test with
+   features from other fault lines and concrete-noun-style features
+   (e.g. one of the "subjective experience" features in the
+   experience bucket, score 0.900).
+2. Does L=33 (Phase 1's peak) trigger where L=31 doesn't? The SAE was
+   *trained on* L=31 outputs, but the steering direction is just a
+   vector — it can be added to any layer's residual stream. Phase 2g's
+   default is L=31 because that's where the SAE's geometry was learned.
+   Worth a probe at L=33 with the same feature.
+3. Does the lack of detection mean SAE features genuinely don't pass
+   through the introspection circuit (would be a strong, interesting
+   negative result)?
+
+**Action.** First overnight runs the standard sae_capraro rotation at
+DEFAULT_TARGET_EFFECTIVES (8, 16, 32) across all 7 fault lines. If after
+the first rotation no fault line has produced a detection, broaden the
+sweep with target_effective ∈ {64, 128, 256} on the highest-bucket-score
+features per fault line. The negative-result possibility is itself an
+interesting finding — surface it on the site if it persists.
 
 ### Step 3: First overnight (one night)
 

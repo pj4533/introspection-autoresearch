@@ -285,14 +285,15 @@ def phase_a_generate(
                     "but sae_release/sae_id/sae_feature_idx are not all set"
                 )
             from .sae_loader import get_decoder_direction
-            model_device = next(pipeline.model.parameters()).device
-            model_dtype = next(pipeline.model.parameters()).dtype
+            # `pipeline.model` is a ModelWrapper (paper.model_utils) with
+            # device/dtype attributes; the underlying nn.Module is at
+            # pipeline.model.model.
             direction = get_decoder_direction(
                 release=spec.sae_release,
                 sae_id=spec.sae_id,
                 feature_idx=spec.sae_feature_idx,
-                device=model_device,
-                dtype=model_dtype,
+                device=pipeline.model.device,
+                dtype=pipeline.model.dtype,
             )
         else:
             direction = pipeline.derive(

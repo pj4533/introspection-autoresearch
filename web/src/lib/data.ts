@@ -106,6 +106,39 @@ export type Phase2Entry = {
   is_leader?: boolean;
   mutation_type?: string | null;
   mutation_detail?: MutationDetail | Record<string, unknown>;
+  // Phase 2g: SAE-feature substrate metadata. Present only when
+  // derivation_method === "sae_feature". `fault_line` is one of the
+  // seven Capraro fault lines (experience, causality, grounding,
+  // metacognition, parsing, motivation, value).
+  sae?: {
+    release: string | null;
+    sae_id: string | null;
+    feature_idx: number | null;
+    auto_interp: string | null;
+    fault_line:
+      | "experience"
+      | "causality"
+      | "grounding"
+      | "metacognition"
+      | "parsing"
+      | "motivation"
+      | "value"
+      | null;
+    // Decoder-cosine neighbors of this feature in W_dec space — populated
+    // by export_for_web.py for any SAE feature with score >= 0.05. Used
+    // by the site graph component so it can render the local feature
+    // neighborhood without an API call at render time.
+    neighbors?: Array<{
+      feature_idx: number;
+      cosine: number;
+      auto_interp: string;
+    }>;
+  };
+  // Substrate badge — set on every row by export_for_web.py.
+  // "SAE feature"   → derivation_method === "sae_feature"   (Phase 2g)
+  // "invented axis" → derivation_method === "contrast_pair" (Phase 2b/2d)
+  // "paper concept" → derivation_method === "mean_diff"     (Phase 1)
+  substrate?: "SAE feature" | "invented axis" | "paper concept";
 };
 
 export type LineageNode = {
