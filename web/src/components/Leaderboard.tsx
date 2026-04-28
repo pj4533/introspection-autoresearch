@@ -438,7 +438,10 @@ function LeaderCard({
           <PromptBox entry={entry} />
 
           <div className="flex items-baseline justify-between text-xs text-[var(--ink-faint)]">
-            <div>evaluated {formatEastern(entry.evaluated_at)}</div>
+            <div className="flex items-center gap-3">
+              <span>evaluated {formatEastern(entry.evaluated_at)}</span>
+              <LineageBadge entry={entry} />
+            </div>
             <div className="font-mono opacity-70">{entry.candidate_id}</div>
           </div>
 
@@ -655,6 +658,37 @@ function ResearcherRationale({
         &ldquo;{rationale}&rdquo;
       </p>
     </div>
+  );
+}
+
+function LineageBadge({ entry }: { entry: Phase2Entry }) {
+  const mt = entry.mutation_type;
+  if (!mt) return null;
+
+  const labels: Record<string, string> = {
+    replication: "replication",
+    layer_shift: "layer shift",
+    alpha_scale: "alpha scale",
+    examples_swap: "examples swapped",
+    description_sharpen: "description sharpened",
+    antonym_pivot: "antonym pivot",
+    cluster_expansion: "cluster expansion",
+    seed: "seed",
+  };
+  const label = labels[mt] ?? mt;
+
+  const parentSuffix = entry.parent_candidate_id
+    ? ` of ${entry.parent_candidate_id.slice(-6)}`
+    : "";
+
+  return (
+    <span
+      className="inline-flex items-center px-2 py-[1px] rounded-md text-[10px] uppercase tracking-[0.12em] bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--ink-faint)] font-mono"
+      title={`mutation_type=${mt}${entry.parent_candidate_id ? ` parent=${entry.parent_candidate_id}` : ""}`}
+    >
+      {label}
+      {parentSuffix}
+    </span>
   );
 }
 

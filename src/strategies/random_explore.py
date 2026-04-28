@@ -47,6 +47,15 @@ def spec_hash(spec: CandidateSpec, abliteration_mode: str = "vanilla") -> str:
         pos = "|".join(spec.contrast_pair.get("positive", []))
         neg = "|".join(spec.contrast_pair.get("negative", []))
         payload += f"|pos:{pos}|neg:{neg}"
+        # Include rationale ONLY when it carries a replication tag —
+        # this lets multiple replications of the same parent coexist
+        # (each gets a uuid'd rep_id appended to the rationale by
+        # mutations.replication). For non-replication candidates the
+        # rationale is summary text that doesn't affect the steering
+        # direction, so we leave it out to keep legacy hashes stable.
+        rationale = spec.contrast_pair.get("rationale", "") or ""
+        if rationale.startswith("[replication-of-"):
+            payload += f"|rep:{rationale[:80]}"
     # Only include the mode suffix when non-vanilla, to keep legacy vanilla
     # hashes bit-identical with pre-2026-04-24 entries.
     if abliteration_mode and abliteration_mode != "vanilla":

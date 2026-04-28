@@ -498,3 +498,102 @@ Phi-4-reasoning-plus).
   example sentences).
 - Does not introduce any concurrent-model paths. Strictly serial.
 - Does not migrate to a different Mac. M2 Ultra 64 GB is the platform.
+
+## ADR-020: Structured hill-climbing with replication slots and explicit mutation operators
+
+**Date.** 2026-04-28.
+
+**Status.** Accepted, scheduled for cutover after rotation 9 of the
+running 7-fault-line round-robin completes.
+
+**Context.** Phase 2d's round-robin loop produced 63 Class 2 hits and
+4 Class 1 hits across 60 cycles, but every winning axis we found —
+including the cleanest Class 1 of the entire pipeline (`causal-vs-
+temporal-gerund-cause @ L=36`, score 3.812, model said *"the injected
+thought is about the concept of 'causality'"*) — has been **evaluated
+exactly once**. The proposer's feedback block lets it see prior
+winners, but it treats them as inspiration for *adjacent* axes rather
+than as parents to mutate. The strongest Class 2 (3-layer grounding
+winner, 88% metacognition winner) and the Class 1 hits are therefore
+unreproducible: we can't tell signal from one-shot luck. A writeup
+needs reproducibility evidence; the current loop won't generate it.
+
+**Decision.** Replace the unstructured `directed_capraro` Phase C
+dispatch with a slot-based scheduler (`structured_hillclimb`). Every
+batch of 16 candidates is split into:
+
+  - 4 replication specs (top-2 winners, 2 reps each — *verbatim* re-eval)
+  - 10 targeted-variant specs (top-3 winners × six mutation operators)
+  - 2 cluster-expansion specs (one fresh sibling axis, 2 layers)
+
+Six mutation operators: three deterministic (`layer_shift`, `alpha_scale`,
+`replication`) and three proposer-driven (`examples_swap`,
+`description_sharpen`, `antonym_pivot`). Each emitted spec carries
+`parent_candidate_id` and `mutation_type` lineage metadata, surfaced on
+the public site as a per-row badge.
+
+Slot composition is tunable via `HILLCLIMB_BATCH_COMPOSITION="<r>:<v>:<e>"`
+env var (default `"4:10:2"`). Cold start (no winners ≥ 0.05 score) falls
+through to the existing `directed_capraro` opus mode — no functional
+change for fresh fault lines.
+
+**Why these operators.** Each tests a distinct hypothesis:
+`layer_shift` answers "is the geometric direction localized at this
+layer or broader?" `alpha_scale` answers "was alpha over- or
+under-steering?" `examples_swap` answers "is the direction robust to
+the specific sentences used in mean-diff derivation?"
+`description_sharpen` improves the judge's contrast-pair grading
+prompt without changing the steering direction. `antonym_pivot`
+isolates which sub-dimension of the positive pole produces the
+signal. `replication` is the reproducibility ground truth.
+
+**Why not free exploration.** Per PJ's explicit guidance: focus is on
+Capraro fault-line variations and proving previous successes. The
+unstructured loop already demonstrated that wide free exploration
+finds families (`hunger-as-drive`, `causal-vs-temporal`,
+`epistemic-access-vs-epistemic-state`); what it can't do is exploit
+them. The 2-slot cluster_expansion preserves a small wildcard
+without dominating the batch.
+
+**Why slot quotas instead of probabilistic mixing.** Quotas guarantee
+the replication slots fire every cycle. A probabilistic mix could
+sample 0 replications in a batch by chance, defeating the purpose.
+
+**Consequences.**
+- Reproducibility evidence accumulates from the first post-cutover
+  rotation. Within 2 rotations every top winner has 4+ replication
+  data points.
+- Per-axis layer profiles become dense (`layer_shift` mutates each
+  parent ±3 / ±6 layers).
+- Lineage queryable via SQL: `SELECT mutation_type, AVG(score) FROM
+  candidates JOIN fitness_scores USING (candidate_id) GROUP BY
+  mutation_type` answers "which operators improve scores?" directly.
+- Modest token overhead per cycle: proposer-driven operators add
+  ~3-5 short generations per batch on top of the existing single
+  cluster-expansion generation. Negligible compared to the variants
+  produced.
+- Existing data carries forward: pre-cutover rows have `mutation_type
+  IS NULL`; the badge is hidden for them, scoring/leaderboard
+  unaffected.
+
+**Validation plan.** Run for 2-3 rotations after cutover and check:
+1. Do replication slots reproduce the original Class 1s (causality
+   3.812, value 1.906)?
+2. Does `self-evaluation-vs-objective-evaluation @ L=30` hold its
+   det=8/8 across replications?
+3. Does any Class 2 cross to Class 1 via `layer_shift` or `alpha_scale`?
+
+If yes to (1) — headline claims hold and we have a writeup. If no —
+downgrade them and report what we actually have (a robust geometric
+direction, but rare unstable identification).
+
+**What this ADR explicitly does NOT do.**
+- Does not change the fitness function (ADR-018 stays).
+- Does not change Gemma3-12B, the judge model, or the proposer model.
+- Does not introduce a "free exploration" slot — focus stays on
+  Capraro fault-line variations.
+- Does not modify the four-phase worker state machine (ADR-019 stays).
+- Does not change the database schema. The lineage columns
+  (`parent_candidate_id`, `mutation_type`, `mutation_detail`) were
+  already added in 2026-04-18 for the original Phase 2c hill-climb;
+  this ADR re-uses them.

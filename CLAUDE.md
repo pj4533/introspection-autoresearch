@@ -113,6 +113,18 @@ plan file, it's a bug. Commit it to `docs/roadmap.md` (forward-looking) or
   identification-aware fitness, feedback-loop `novel_contrast`,
   `exploit_topk`): **planned next**. Full plan in
   [`docs/phase2b_hillclimb.md`](docs/phase2b_hillclimb.md).
+- Phase 2f — structured hill-climbing, **shipped to feature branch
+  `feat/structured-hillclimb` 2026-04-28, cutover after rotation 9 of
+  the running 7-fault-line round-robin.** Replaces unstructured Phase C
+  with a slot-based scheduler: 4 replication / 10 targeted-variants /
+  2 cluster-expansion per cycle. Six mutation operators (`layer_shift`,
+  `alpha_scale`, `replication`, `examples_swap`, `description_sharpen`,
+  `antonym_pivot`) plus lineage tagging on every emitted spec. Motivated
+  by 60-cycle Phase 2d data showing top winners (causality Class 1
+  score 3.812, value Class 1 1.906, metacognition Class 2 88%, grounding
+  3-layer Class 2 reproducibility) all evaluated exactly once and
+  drifting away across rotations. Full design in
+  [`docs/structured_hillclimb.md`](docs/structured_hillclimb.md), ADR-020.
 
 ## Architecture quick map
 

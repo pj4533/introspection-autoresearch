@@ -348,16 +348,27 @@ def _phase_c_propose(
     """Generate `propose_n` new candidate specs for `fault_line_id` and queue them.
 
     Returns the number of candidates actually queued. If `fault_line_id` is
-    None, runs `novel_contrast.generate_candidates` (open-ended). Otherwise
-    runs `directed_capraro.generate_candidates` for that fault line.
+    None, runs `novel_contrast.generate_candidates` (open-ended).
+
+    Otherwise runs `structured_hillclimb.generate_candidates` which slots
+    the batch into replication / targeted-variants / cluster-expansion
+    using prior fault-line winners as seeds. On cold start (no winners
+    yet), structured_hillclimb falls through to `directed_capraro`
+    automatically.
+
+    Each emitted spec may carry a `_lineage_meta` runtime attribute
+    (parent_candidate_id, mutation_type, mutation_detail). We hoist this
+    into the queue file's `_lineage` block, which the worker reads in
+    `_phase_a_one` to populate the candidates table's lineage columns.
     """
     if fault_line_id is not None:
-        from src.strategies.directed_capraro import generate_candidates as gen
+        from src.strategies.structured_hillclimb import (
+            generate_candidates as gen,
+        )
         specs = gen(
             n=propose_n,
             db=db,
             fault_line_id=fault_line_id,
-            mode="opus",
             proposer=proposer,
         )
     else:
@@ -371,7 +382,13 @@ def _phase_c_propose(
     n_written = 0
     for spec in specs:
         path = QUEUE / "pending" / f"{spec.id}.json"
-        path.write_text(json.dumps(spec.to_dict(), indent=2) + "\n")
+        spec_dict = spec.to_dict()
+        # Hoist runtime _lineage_meta (set by mutation operators) into the
+        # queue file as _lineage. The worker reads this in _phase_a_one.
+        lineage_meta = getattr(spec, "_lineage_meta", None)
+        if lineage_meta:
+            spec_dict["_lineage"] = lineage_meta
+        path.write_text(json.dumps(spec_dict, indent=2) + "\n")
         n_written += 1
     label = fault_line_id or "novel_contrast"
     print(f"[worker] phase C ({label}) wrote {n_written} new candidates to "

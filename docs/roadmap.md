@@ -347,6 +347,31 @@ The Streamlit dashboard concept is deprecated. Phase 3's public Next.js site ([d
 
 ---
 
+## Phase 2f — Structured hill-climbing (shipped 2026-04-28, cutover pending)
+
+**Motivation.** Phase 2d's round-robin loop produced 63 Class 2 hits and 4 Class 1 hits across 60 cycles — strong empirical results, but every winning axis (including the Class 1 score 3.812 on causality and the 3-layer Class 2 on grounding) has been evaluated exactly once. The proposer treats prior winners as inspiration for *adjacent* axes rather than as parents to mutate, so the strongest results never get re-tested. We can't tell signal from one-shot luck — exactly the question a writeup needs to answer.
+
+**Decision.** Replace `directed_capraro` Phase C dispatch with a slot-based scheduler (`structured_hillclimb`). Every cycle's 16 candidates split into:
+- **4 replication** — verbatim re-eval of top-2 winners (2 reps each)
+- **10 targeted variants** — top-3 winners × six mutation operators
+- **2 cluster expansion** — one fresh sibling axis from the proposer
+
+Six mutation operators: three deterministic (`layer_shift`, `alpha_scale`, `replication`) + three proposer-driven (`examples_swap`, `description_sharpen`, `antonym_pivot`). Each emitted spec carries lineage metadata (`parent_candidate_id`, `mutation_type`, `mutation_detail`) surfaced as a per-row badge on the public site.
+
+**Cold start.** No winners ≥ 0.05 score on a fault line → falls through to the existing `directed_capraro` opus mode unchanged.
+
+**Cutover plan.** Wait for rotation 9 of the running 7-fault-line round-robin to finish, then `pkill src.worker`, `git checkout feat/structured-hillclimb`, `start_worker.sh`. Same launcher, no env var changes required. Rolling back is `git checkout main`.
+
+**What we expect to learn within 2 rotations:**
+1. Reproducibility evidence on the Class 1 hits (causality 3.812, value 1.906)
+2. Whether `self-evaluation-vs-objective-evaluation @ L=30` (det=8/8, ident=0/8) crosses to Class 1 via mutation
+3. Per-axis layer profiles (layer_shift fills in ±3 / ±6 layers per parent)
+4. Whether grounding's 3-layer winner reproduces
+
+Full design: [`docs/structured_hillclimb.md`](structured_hillclimb.md). Rationale: ADR-020 in [`decisions.md`](decisions.md).
+
+---
+
 ## Phase 3 — Public-facing site (done 2026-04-17)
 
 **Motivation.** Build this project in public. Phase 1 + Phase 2 generate responses (the model saying "I detect a thought about X") that are more compelling than any number. A beautiful site that surfaces them is the right public output.
