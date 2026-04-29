@@ -28,7 +28,14 @@ import mlx.nn as nn
 DEFAULT_MODEL_PATH = "~/models/gemma-4-31B-it-8bit"
 N_LAYERS = 60          # text_config.num_hidden_layers
 HIDDEN_DIM = 5376      # text_config.hidden_size
-PREDICTED_PEAK_LAYER = 42   # ~70% depth, paper's prediction
+PREDICTED_PEAK_LAYER = 42   # ~70% depth, paper's prediction (Phase 1 / 27B)
+# Empirically discovered Phase 3 peak from layer sweep 2026-04-29:
+# Bread injection at L=25 produces clean "Yes. It was bread." detection,
+# while L=15/35/42/50/55 either over-steer or fail to trigger. ~42% depth.
+# Possibly tied to Gemma 4's attention pattern — full-attention layers
+# at indices 5, 11, 17, 23, 29, 35, 41, 47, 53, 59; L=25 sits right
+# after the L=23 full-attention layer.
+EMPIRICAL_PEAK_LAYER = 25
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 

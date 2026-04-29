@@ -47,8 +47,8 @@ DB_PATH = REPO / "data" / "results.db"
 CONCEPTS_50_PATH = REPO / "data" / "concepts" / "concepts_50.json"
 REFUSAL_DIRS_31B_PATH = REPO / "data" / "refusal_directions_31b.npy"
 
-DEFAULT_LAYERS = [36, 38, 40, 42, 44, 46, 48]   # ±6 around L=42 (paper's predicted ~70% depth)
-DEFAULT_TARGET_EFFECTIVE = 18000.0
+DEFAULT_LAYERS = [19, 21, 23, 25, 27, 29, 31]   # ±6 around L=25 (Phase 3 empirical peak)
+DEFAULT_TARGET_EFFECTIVE = 100.0                  # L=25 produces clean detection at eff=100 on Bread
 DEFAULT_TRIALS_PER_CELL = 1                       # Phase 1 sweep ran 1 trial per cell
 
 # 24 baseline words (paper's BASELINE_WORDS_BG used in Phase 1).
