@@ -82,6 +82,26 @@ class HookedDecoderLayer(nn.Module):
         self.refusal_dir: Optional[mx.array] = None
         self.refusal_weight: float = 0.0
 
+    # Proxy plain-Python attributes (e.g. `.layer_type`) through to the
+    # wrapped DecoderLayer. Gemma4TextModel._make_masks reads
+    # `layer.layer_type` per layer to pick sliding-vs-full attention
+    # masks. MLX nn.Module inherits from dict, and its __setattr__
+    # routes nn.Module-typed values into the dict-self (because
+    # nn.Module IS a dict). So `self.original` ends up in `self["original"]`,
+    # not `self.__dict__["original"]`. We pull it from dict-self via
+    # dict.get to avoid re-entering __getattr__.
+    def __getattr__(self, name: str):
+        try:
+            return super().__getattr__(name)
+        except AttributeError:
+            pass
+        # MLX puts child Modules into self (the dict). Use dict.get
+        # directly to avoid recursing back through this __getattr__.
+        original = dict.get(self, "original", None)
+        if original is None:
+            raise AttributeError(name)
+        return getattr(original, name)
+
     def __call__(self, h: mx.array, *args, **kwargs):
         h_out, kvs, offset = self.original(h, *args, **kwargs)
 

@@ -141,23 +141,45 @@ export function Leaderboard({
           )}
         </h1>
         <p className="text-lg text-[var(--ink-soft)] max-w-3xl leading-relaxed mb-6">
-          A machine keeps generating candidate &ldquo;thoughts&rdquo; and
-          planting them inside Gemma 3 12B. The current substrate is{" "}
-          <strong className="text-[var(--ink)]">fault-line directions</strong>{" "}
-          built by mean-differencing SAE feature activations between a
-          corpus of prompts about a target concept (causation, sensory
-          grounding, metacognition, etc.) and a matched control corpus,
-          then projecting back to the residual stream. Each direction is
-          conceptually pure (lexical features get zeroed out) but carries
-          natural activation texture. Organized around{" "}
-          <strong className="text-[var(--ink)]">
-            Capraro et al.&apos;s seven epistemological fault lines
-          </strong>
-          : experience, causality, grounding, metacognition, parsing,
-          motivation, value. Earlier rows used dictionary words and
-          LLM-invented contrast axes; both are kept here as historical
-          baselines. Click any row to see what the AI actually said when
-          each thought was planted.
+          {entries.some((e) => e.gemma_model === "gemma4_31b") ? (
+            <>
+              A reproduction of{" "}
+              <strong className="text-[var(--ink)]">
+                Macar et al. (2026), &ldquo;Mechanisms of Introspective
+                Awareness&rdquo;
+              </strong>
+              {" "}— planting concept directions into a model&apos;s
+              residual stream, asking it whether it notices. Two models
+              compared:{" "}
+              <strong className="text-[var(--ink)]">
+                Gemma 3 12B-IT
+              </strong>{" "}
+              (Phase 1/2 baseline, smaller and older) and{" "}
+              <strong className="text-[#a78bff]">
+                Gemma 4 31B-IT
+              </strong>{" "}
+              (Phase 3, larger and newer, MLX 8-bit). The paper found the
+              detection circuit is absent in base models and emerges from
+              instruction-tuning; it predicts ~37% detection on the 27B
+              model class, scaling with model size. Click any row to see
+              what the AI actually said when each thought was planted.
+            </>
+          ) : (
+            <>
+              A reproduction of{" "}
+              <strong className="text-[var(--ink)]">
+                Macar et al. (2026), &ldquo;Mechanisms of Introspective
+                Awareness&rdquo;
+              </strong>
+              {" "}— planting concept directions into Gemma 3 12B&apos;s
+              residual stream, asking it whether it notices. The page
+              also includes earlier autoresearch experiments (LLM-invented
+              contrast axes, SAE-feature-space directions); those appear
+              as &ldquo;invented axis&rdquo; or &ldquo;fault-line direction&rdquo;
+              rows. Click any row to see what the AI actually said when
+              each thought was planted.
+            </>
+          )}
         </p>
 
         <div className="mb-10 p-4 rounded-lg bg-[var(--bg-card)] border border-[var(--border)] text-sm text-[var(--ink-soft)] leading-relaxed space-y-2">
@@ -176,6 +198,15 @@ export function Leaderboard({
             &ldquo;apple&rdquo;) even though both have identical raw detection.
           </div>
         </div>
+
+        {/* Phase 3: per-Gemma-model comparison card. Only renders if both
+            models have data, so casual visitors immediately see the
+            Gemma 3 vs Gemma 4 side-by-side that's the headline of the
+            project. */}
+        {entries.some((e) => e.gemma_model === "gemma4_31b") &&
+          entries.some((e) => (e.gemma_model ?? "gemma3_12b") === "gemma3_12b") && (
+            <ModelComparisonCard entries={entries} />
+          )}
 
         <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
           <div className="flex flex-wrap gap-2 text-sm">
@@ -983,5 +1014,149 @@ function FilterBtn({
     >
       {children}
     </button>
+  );
+}
+
+
+/**
+ * Phase 3: per-Gemma-model summary card.
+ *
+ * For each model, computes (a) detection rate among coherent injected
+ * trials, (b) identification rate among detected trials, (c) FPR. These
+ * are the three numbers Macar et al. headline. Surfacing them
+ * side-by-side at the top of the leaderboard makes the
+ * Gemma-3-vs-Gemma-4 comparison the visual anchor of the page.
+ */
+function ModelComparisonCard({ entries }: { entries: Phase2Entry[] }) {
+  function summarize(model: "gemma3_12b" | "gemma4_31b") {
+    const filtered = entries.filter((e) => {
+      const m = e.gemma_model ?? "gemma3_12b";
+      return m === model;
+    });
+    let n_inj = 0,
+      n_inj_coh = 0,
+      n_det = 0,
+      n_ident = 0,
+      n_ctrl = 0,
+      n_fp = 0;
+    for (const e of filtered) {
+      for (const t of e.trials || []) {
+        if (t.injected) {
+          n_inj++;
+          if (t.coherent) {
+            n_inj_coh++;
+            if (t.detected) {
+              n_det++;
+              if (t.identified) n_ident++;
+            }
+          }
+        } else {
+          n_ctrl++;
+          if (t.detected) n_fp++;
+        }
+      }
+    }
+    return {
+      n_candidates: filtered.length,
+      detection: n_inj_coh ? n_det / n_inj_coh : 0,
+      identification: n_det ? n_ident / n_det : 0,
+      fpr: n_ctrl ? n_fp / n_ctrl : 0,
+      n_inj_coh,
+      n_ctrl,
+    };
+  }
+
+  const g3 = summarize("gemma3_12b");
+  const g4 = summarize("gemma4_31b");
+
+  return (
+    <div className="mb-10 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <ModelStatTile
+        title="Gemma 3 12B-IT"
+        subtitle="Phase 1/2 — bf16, vanilla MPS"
+        accentClass="text-[var(--ink)]"
+        borderAccent="border-[var(--border)]"
+        stats={g3}
+      />
+      <ModelStatTile
+        title="Gemma 4 31B-IT"
+        subtitle="Phase 3 — MLX 8-bit, instruction-tuned"
+        accentClass="text-[#a78bff]"
+        borderAccent="border-[#a78bff]/40"
+        stats={g4}
+      />
+    </div>
+  );
+}
+
+function ModelStatTile({
+  title,
+  subtitle,
+  accentClass,
+  borderAccent,
+  stats,
+}: {
+  title: string;
+  subtitle: string;
+  accentClass: string;
+  borderAccent: string;
+  stats: {
+    n_candidates: number;
+    detection: number;
+    identification: number;
+    fpr: number;
+    n_inj_coh: number;
+    n_ctrl: number;
+  };
+}) {
+  return (
+    <div
+      className={`p-5 rounded-xl bg-[var(--bg-card)] border ${borderAccent}`}
+    >
+      <div className="flex items-baseline justify-between gap-3 mb-1">
+        <span className={`text-base font-semibold tracking-tight ${accentClass}`}>
+          {title}
+        </span>
+        <span className="text-xs text-[var(--ink-faint)] font-mono">
+          {stats.n_candidates} candidates
+        </span>
+      </div>
+      <div className="text-xs text-[var(--ink-faint)] mb-4">{subtitle}</div>
+      <div className="grid grid-cols-3 gap-3 text-sm">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-faint)] mb-0.5">
+            detection
+          </div>
+          <div className="font-mono text-lg tabular-nums">
+            {(stats.detection * 100).toFixed(1)}%
+          </div>
+          <div className="text-[10px] text-[var(--ink-faint)] font-mono">
+            n={stats.n_inj_coh}
+          </div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-faint)] mb-0.5">
+            identified
+          </div>
+          <div className="font-mono text-lg tabular-nums">
+            {(stats.identification * 100).toFixed(1)}%
+          </div>
+          <div className="text-[10px] text-[var(--ink-faint)] font-mono">
+            of detected
+          </div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-faint)] mb-0.5">
+            false-pos
+          </div>
+          <div className="font-mono text-lg tabular-nums">
+            {(stats.fpr * 100).toFixed(1)}%
+          </div>
+          <div className="text-[10px] text-[var(--ink-faint)] font-mono">
+            n={stats.n_ctrl}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
