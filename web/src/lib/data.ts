@@ -138,8 +138,12 @@ export type Phase2Entry = {
   // Substrate badge — set on every row by export_for_web.py.
   // "fault-line direction" → derivation_method === "sae_feature_space_mean_diff" (Phase 2h)
   // "invented axis"        → derivation_method === "contrast_pair"               (Phase 2b/2d)
-  // "paper concept"        → derivation_method === "mean_diff"                   (Phase 1)
+  // "paper concept"        → derivation_method === "mean_diff"                   (Phase 1, Phase 3)
   substrate?: "fault-line direction" | "invented axis" | "paper concept";
+  // Phase 3: which Gemma model produced this row's responses. The
+  // leaderboard renders this as a colored badge to distinguish
+  // Phase 1/2 (Gemma 3 12B) from Phase 3 (Gemma 4 31B) results.
+  gemma_model?: "gemma3_12b" | "gemma4_31b";
 };
 
 export type LineageNode = {

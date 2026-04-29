@@ -360,7 +360,7 @@ def export_phase2_leaderboard(top_k: Optional[int] = None) -> list[dict]:
         rows = _q(VANILLA_DB, """
             SELECT c.id, c.strategy, c.concept, c.layer_idx, c.target_effective,
                    c.derivation_method, c.created_at, c.evaluated_at,
-                   c.abliteration_mode, c.proposer_model,
+                   c.abliteration_mode, c.proposer_model, c.gemma_model,
                    f.score, f.detection_rate, f.identification_rate, f.fpr, f.coherence_rate,
                    c.spec_json
             FROM fitness_scores f
@@ -372,7 +372,7 @@ def export_phase2_leaderboard(top_k: Optional[int] = None) -> list[dict]:
         rows = _q(VANILLA_DB, """
             SELECT c.id, c.strategy, c.concept, c.layer_idx, c.target_effective,
                    c.derivation_method, c.created_at, c.evaluated_at,
-                   c.abliteration_mode, c.proposer_model,
+                   c.abliteration_mode, c.proposer_model, c.gemma_model,
                    f.score, f.detection_rate, f.identification_rate, f.fpr, f.coherence_rate,
                    c.spec_json
             FROM fitness_scores f
@@ -438,6 +438,7 @@ def export_phase2_leaderboard(top_k: Optional[int] = None) -> list[dict]:
             "derivation_method": r["derivation_method"],
             "abliteration_mode": r["abliteration_mode"] or "vanilla",
             "proposer_model": r["proposer_model"],
+            "gemma_model": r["gemma_model"] or "gemma3_12b",
             "score": round(r["score"], 4),
             "detection_rate": round(r["detection_rate"], 3),
             "identification_rate": round(r["identification_rate"], 3),

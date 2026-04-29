@@ -16,7 +16,9 @@ type FilterKey =
   | "metacognition"
   | "parsing"
   | "motivation"
-  | "value";
+  | "value"
+  | "gemma3_12b"
+  | "gemma4_31b";
 
 const FAULT_LINES = [
   "experience",
@@ -91,6 +93,11 @@ export function Leaderboard({
       );
     if (filter === "sae")
       return items.filter((e) => e.derivation_method === "sae_feature_space_mean_diff");
+    // Phase 3: per-Gemma-model filters.
+    if (filter === "gemma3_12b")
+      return items.filter((e) => (e.gemma_model ?? "gemma3_12b") === "gemma3_12b");
+    if (filter === "gemma4_31b")
+      return items.filter((e) => e.gemma_model === "gemma4_31b");
     // Fault-line filters: SAE-feature rows tagged with that Capraro
     // fault line (set by the sae_capraro strategy at proposal time).
     return items.filter(
@@ -200,6 +207,34 @@ export function Leaderboard({
             </FilterBtn>
           </div>
         </div>
+        {/* Phase 3: per-Gemma-model filter strip. Only renders once Phase 3
+            data exists (i.e. there's at least one Gemma 4 row); otherwise
+            the original Phase-1/2 leaderboard view stays unchanged. */}
+        {entries.some((e) => e.gemma_model === "gemma4_31b") && (
+          <div className="flex flex-wrap gap-2 text-xs mb-3">
+            <span className="text-[var(--ink-faint)] uppercase tracking-[0.15em] self-center mr-2">
+              Gemma model:
+            </span>
+            <FilterBtn
+              active={filter === "gemma3_12b"}
+              onClick={() => setFilter("gemma3_12b")}
+            >
+              Gemma 3 12B
+              <span className="ml-1 text-[var(--ink-faint)] font-mono">
+                ({entries.filter((e) => (e.gemma_model ?? "gemma3_12b") === "gemma3_12b" && e.score > 0).length})
+              </span>
+            </FilterBtn>
+            <FilterBtn
+              active={filter === "gemma4_31b"}
+              onClick={() => setFilter("gemma4_31b")}
+            >
+              Gemma 4 31B
+              <span className="ml-1 text-[var(--ink-faint)] font-mono">
+                ({entries.filter((e) => e.gemma_model === "gemma4_31b" && e.score > 0).length})
+              </span>
+            </FilterBtn>
+          </div>
+        )}
         {/* Phase 2g: per-Capraro-fault-line filter strip. Only renders if
             the leaderboard has at least one SAE-feature row, so legacy
             views stay clean. */}
@@ -442,6 +477,30 @@ function LeaderCard({
               >
                 {substrateLabel}
               </span>
+              {/* Phase 3: model badge — distinguishes Gemma 3 12B (Phase 1/2)
+                  from Gemma 4 31B (Phase 3) results. Always visible when a
+                  Gemma 4 row exists somewhere in the dataset; otherwise the
+                  legacy display stays clean. */}
+              {(() => {
+                const model = entry.gemma_model ?? "gemma3_12b";
+                const isG4 = model === "gemma4_31b";
+                const label = isG4 ? "Gemma 4 31B" : "Gemma 3 12B";
+                const cls = isG4
+                  ? "text-[#a78bff] bg-[#a78bff]/15 border border-[#a78bff]/30"
+                  : "text-[var(--ink-faint)] bg-[var(--bg-elev)]";
+                return (
+                  <span
+                    className={`text-[10px] uppercase tracking-[0.15em] px-1.5 py-0.5 rounded font-medium ${cls}`}
+                    title={
+                      isG4
+                        ? "Phase 3 reproduction on Gemma 4 31B-IT (MLX 8-bit)"
+                        : "Phase 1/2 result on Gemma 3 12B-IT"
+                    }
+                  >
+                    {label}
+                  </span>
+                );
+              })()}
               {isSae && entry.sae?.fault_line && (
                 <span
                   className="text-[10px] uppercase tracking-[0.15em] px-1.5 py-0.5 rounded text-[var(--ink-soft)] bg-[var(--bg-elev)]"

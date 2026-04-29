@@ -15,7 +15,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable, Optional
 
-SCHEMA_VERSION = 3  # 2026-04-18: add lineage tracking for Phase 2c autoresearch
+SCHEMA_VERSION = 4  # 2026-04-29: add gemma_model column for Phase 3 (Gemma 4 reproduction)
 
 
 @dataclass
@@ -90,7 +90,13 @@ CREATE TABLE IF NOT EXISTS candidates (
     generation INTEGER NOT NULL DEFAULT 0,
     is_leader INTEGER NOT NULL DEFAULT 0,
     mutation_type TEXT,                   -- seed, swap_positive, swap_negative, alt_effective, alt_layer, edit_description
-    mutation_detail TEXT                  -- JSON describing what changed from parent
+    mutation_detail TEXT,                 -- JSON describing what changed from parent
+    -- Phase 3 (Gemma 4): which Gemma model produced this candidate's
+    -- responses. 'gemma3_12b' for all pre-Phase-3 rows; 'gemma4_31b'
+    -- for Phase 3 rows. Site uses this for the per-row model badge.
+    abliteration_mode TEXT NOT NULL DEFAULT 'vanilla',
+    proposer_model TEXT,
+    gemma_model TEXT NOT NULL DEFAULT 'gemma3_12b'
 );
 
 CREATE INDEX IF NOT EXISTS idx_candidates_strategy ON candidates(strategy);
@@ -237,6 +243,13 @@ class ResultsDB:
             # Qwen3.6-27B-MLX-8bit local proposer. NULL for random_explore
             # (no LLM involvement). Backfill is date-based.
             "proposer_model":      "ALTER TABLE candidates ADD COLUMN proposer_model TEXT",
+            # 2026-04-29: Phase 3 — which Gemma generation/size produced
+            # this candidate's responses. All pre-Phase-3 rows are
+            # 'gemma3_12b' (the only model used in Phases 1/2). Phase 3
+            # rows are 'gemma4_31b' (instruction-tuned, MLX 8-bit). The
+            # site reads this to render the model badge that distinguishes
+            # Gemma 3 results from Gemma 4 results in the same leaderboard.
+            "gemma_model":         "ALTER TABLE candidates ADD COLUMN gemma_model TEXT NOT NULL DEFAULT 'gemma3_12b'",
         }
         for col, stmt in add_col_stmts.items():
             if col not in existing:
@@ -247,6 +260,10 @@ class ResultsDB:
         )
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_candidates_parent ON candidates(parent_candidate_id)"
+        )
+        # Phase 3: index gemma_model for fast per-model filtering on the site.
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_candidates_gemma_model ON candidates(gemma_model)"
         )
 
     def _conn(self) -> sqlite3.Connection:
@@ -386,6 +403,7 @@ class ResultsDB:
         mutation_detail: Optional[str] = None,
         abliteration_mode: str = "vanilla",
         proposer_model: Optional[str] = None,
+        gemma_model: str = "gemma3_12b",
     ) -> None:
         with self._conn() as conn:
             conn.execute(
@@ -394,15 +412,15 @@ class ResultsDB:
                     target_effective, derivation_method, status,
                     lineage_id, parent_candidate_id, generation,
                     is_leader, mutation_type, mutation_detail,
-                    abliteration_mode, proposer_model)
+                    abliteration_mode, proposer_model, gemma_model)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending',
-                           ?, ?, ?, 0, ?, ?, ?, ?)""",
+                           ?, ?, ?, 0, ?, ?, ?, ?, ?)""",
                 (
                     candidate_id, strategy, spec_json, spec_hash,
                     concept, layer_idx, target_effective, derivation_method,
                     lineage_id, parent_candidate_id, generation,
                     mutation_type, mutation_detail, abliteration_mode,
-                    proposer_model,
+                    proposer_model, gemma_model,
                 ),
             )
 
