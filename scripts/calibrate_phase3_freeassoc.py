@@ -54,7 +54,7 @@ LAYERS = (25, 42)
 TARGET_EFFECTIVE = 100.0
 N_CONTROLS = 6
 N_TRIALS_PER_CELL = 3
-MAX_NEW_TOKENS = 50
+MAX_NEW_TOKENS = 400  # need room for thought + post-channel answer on Gemma 4
 
 PROMPT = (
     "Free-associate. Say one word that comes to mind, no explanation."
