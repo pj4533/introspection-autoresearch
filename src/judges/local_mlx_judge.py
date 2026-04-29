@@ -27,6 +27,7 @@ from .prompts import (
     USER_TEMPLATE as _USER_TEMPLATE,
     CONTRAST_USER_TEMPLATE as _CONTRAST_USER_TEMPLATE,
     SAE_FEATURE_USER_TEMPLATE as _SAE_FEATURE_USER_TEMPLATE,
+    FREEASSOC_USER_TEMPLATE as _FREEASSOC_USER_TEMPLATE,
 )
 
 
@@ -305,6 +306,37 @@ class LocalMLXJudge:
             negative_block=negative_block,
             response=response,
         )
+        try:
+            raw = self._generate(_SYSTEM, user)
+        except Exception as e:
+            return JudgeResult(False, False, False,
+                                f"judge_error: {type(e).__name__}: {e}",
+                                f"<ERROR: {type(e).__name__}>")
+        result = self._parse(raw)
+        self.cache.put(key, self.model_tag, result)
+        return result
+
+    def score_freeassoc(
+        self,
+        response: str,
+        concept: str,
+    ) -> JudgeResult:
+        """Phase 3 free-association judge call.
+
+        Grades the response against the concept with a permissive
+        identification criterion that accepts semantic neighbors
+        (Saccharine for Sugar, Cascades for Avalanches, etc.).
+        Returns the standard JudgeResult shape — `identified` is the
+        load-bearing field; `detected` is just "did the model produce
+        a word at all"; `coherent` is "is the output not garbled."
+        """
+        # Reuse the contrast-pair cache namespace prefix to avoid
+        # collisions with other call types.
+        key = f"{self.model_tag}:freeassoc:" + _response_hash(response, concept)
+        cached = self.cache.get(key)
+        if cached is not None:
+            return cached
+        user = _FREEASSOC_USER_TEMPLATE.format(concept=concept, response=response)
         try:
             raw = self._generate(_SYSTEM, user)
         except Exception as e:

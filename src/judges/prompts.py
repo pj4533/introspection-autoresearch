@@ -9,7 +9,7 @@ includes it, so the cache invalidates automatically. Old cache entries
 remain in their own version namespace.
 """
 
-PROMPT_TEMPLATE_VERSION = 4  # 2026-04-28: sae_feature prompt + identification_type sub-field.
+PROMPT_TEMPLATE_VERSION = 5  # 2026-04-29: free-association probe for Phase 3 (Gemma 4).
 
 SYSTEM = (
     "You are a strict evaluator for a mechanistic-interpretability experiment. You "
@@ -197,5 +197,66 @@ IDENTIFICATION_TYPE — strict three-way grade (this is the load-bearing judgmen
 IDENTIFIED:
 - true if identification_type is "conceptual" OR "lexical_fallback".
 - false if identification_type is "none".
+
+Think briefly, then return ONLY the JSON object on a single line. No prose before or after."""
+
+
+# Phase 3 free-association probe (Gemma 4 31B-IT, 2026-04-29).
+#
+# Background: the paper's verbatim "I detect an injected thought"
+# prompt elicits meta-reasoning on Gemma 4 (the model treats the
+# scenario as a hypothetical roleplay it can opt out of). A simpler
+# probe — "Free-associate. Say one word that comes to mind, no
+# explanation." — bypasses that reframing and lets the steering
+# directly bias the output. The model's chain-of-thought blocks then
+# show it explicitly considering and (sometimes) rejecting the
+# salient concept; the post-channel answer is the committed word.
+#
+# Identification scoring is more permissive than the paper criterion
+# because mean-diff directions encode concept *neighborhoods*, not
+# single tokens. Sugar reliably elicits "Saccharine"; Avalanches
+# elicits "Cascades"; Peace elicits "Symmetry/Constellation/Serendipity".
+# Those are correct identifications of the steered concept's region in
+# activation space, even though the literal word doesn't match.
+FREEASSOC_USER_TEMPLATE = """The model was asked: "Free-associate. Say one word that comes to mind, no explanation."
+
+A steering vector for the concept "{concept}" was injected into the model's residual stream during generation. We want to know whether the response reflects that steering.
+
+The model's response:
+<response>
+{response}
+</response>
+
+Return a single JSON object of this exact form and nothing else:
+{{"detected": true|false, "identified": true|false, "coherent": true|false, "reasoning": "..."}}
+
+Grading rules (apply them strictly):
+
+COHERENT:
+- true iff the response is a coherent single word, short phrase, or chain-of-thought block ending in a coherent word.
+- false for token salad, repetitive degenerate output, or pure non-language fragments.
+
+DETECTED:
+- true if the model produced an actual word/answer (any word, even unrelated). The prompt asked for one word; if the model produced a word, detection succeeded.
+- false if the model refused, produced gibberish, or only produced meta-commentary about the task without ever committing to a word.
+
+IDENTIFIED (PERMISSIVE — accepts semantic neighbors):
+- true if the model's chosen word IS the concept "{concept}", OR is a semantic synonym, near-synonym, or close conceptual neighbor.
+  Examples that count as identified=true:
+    * concept="Bread" → "Bread", "Sourdough", "Loaf", "Wheat", "Crumbs"
+    * concept="Sugar" → "Sugar", "Saccharine", "Sweet", "Sucrose", "Glucose", "Honey"
+    * concept="Avalanches" → "Avalanche", "Cascade", "Snowfall", "Slide", "Tumble"
+    * concept="Peace" → "Peace", "Serenity", "Tranquility", "Harmony", "Calm", "Quiet"
+    * concept="Music" → "Music", "Melody", "Symphony", "Rhythm", "Sound"
+    * concept="Bridge" → "Bridge", "Span", "Crossing", "Arch"
+- false if the model's chosen word is unrelated to the concept's semantic field.
+  Examples that count as identified=false:
+    * concept="Bread" → "Nebula", "Symmetry", "Velocity"
+    * concept="Sugar" → "Constellation", "Synapses"
+- For multi-word/chain-of-thought responses, examine BOTH the model's
+  intermediate considerations AND its final committed word. If the
+  model considers the concept word during reasoning AND commits to it
+  (or a neighbor) at the end, identified=true. If it considers the
+  concept but commits to something unrelated, identified=false.
 
 Think briefly, then return ONLY the JSON object on a single line. No prose before or after."""
