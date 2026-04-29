@@ -110,6 +110,24 @@ def _load_sae(release: str, sae_id: str) -> _LoadedSAE:
     )
 
 
+# Per-(device, dtype) cache of encoder tensors. The CPU originals are
+# ~2 GB (3840 × 262144 in bf16); copying them to MPS on every encode call
+# was a ~60-second bottleneck. We move once and reuse.
+_ENCODER_DEVICE_CACHE: dict[tuple, tuple[torch.Tensor, torch.Tensor, torch.Tensor]] = {}
+
+
+def _device_encoder(release: str, sae_id: str, device: torch.device, dtype: torch.dtype):
+    key = (release, sae_id, str(device), str(dtype))
+    if key not in _ENCODER_DEVICE_CACHE:
+        sae = _load_sae(release, sae_id)
+        _ENCODER_DEVICE_CACHE[key] = (
+            sae.w_enc.to(device=device, dtype=dtype),
+            sae.b_enc.to(device=device, dtype=dtype),
+            sae.threshold.to(device=device, dtype=dtype),
+        )
+    return _ENCODER_DEVICE_CACHE[key]
+
+
 def encode_activations(
     activations: torch.Tensor,
     *,
@@ -126,10 +144,11 @@ def encode_activations(
 
     Common shape: activations from a single token at L=31 are (3840,);
     pass them in as (1, 3840) for the matmul.
+
+    The encoder tensors are cached per-(device, dtype) so repeated calls
+    don't re-copy the 2 GB W_enc matrix from CPU to GPU.
     """
     sae = _load_sae(release, sae_id)
-    target_device = activations.device
-    target_dtype = activations.dtype
 
     if activations.dim() == 1:
         activations = activations.unsqueeze(0)
@@ -139,14 +158,65 @@ def encode_activations(
             f"SAE hidden_dim {sae.hidden_dim}"
         )
 
-    w_enc = sae.w_enc.to(device=target_device, dtype=target_dtype)
-    b_enc = sae.b_enc.to(device=target_device, dtype=target_dtype)
-    threshold = sae.threshold.to(device=target_device, dtype=target_dtype)
+    w_enc, b_enc, threshold = _device_encoder(
+        release, sae_id, activations.device, activations.dtype
+    )
 
     pre = activations @ w_enc + b_enc          # (batch, n_features)
-    gate = (pre > threshold).to(target_dtype)  # bool→dtype
+    gate = (pre > threshold).to(activations.dtype)
     feat = pre * gate
     return feat
+
+
+_ENCODER_SUBSET_CACHE: dict[tuple, tuple[torch.Tensor, torch.Tensor, torch.Tensor]] = {}
+
+
+def encode_activations_subset(
+    activations: torch.Tensor,
+    feature_indices: list[int] | tuple[int, ...],
+    *,
+    release: str = DEFAULT_RELEASE,
+    sae_id: str = DEFAULT_SAE_ID,
+) -> torch.Tensor:
+    """Encode `activations` but only compute coefficients for the given
+    subset of feature indices. Same jump-ReLU as encode_activations.
+
+    Output: (batch, n_subset_features) on the activations' device/dtype.
+
+    Used by the Phase 2i calibrator and any consumer that only needs a
+    handful of features. ~26000× faster than encode_activations + index
+    when n_subset is small.
+    """
+    sae = _load_sae(release, sae_id)
+    if activations.dim() == 1:
+        activations = activations.unsqueeze(0)
+    if activations.shape[-1] != sae.hidden_dim:
+        raise ValueError(
+            f"activations last dim {activations.shape[-1]} != "
+            f"SAE hidden_dim {sae.hidden_dim}"
+        )
+
+    indices_tuple = tuple(feature_indices)
+    key = (release, sae_id, str(activations.device), str(activations.dtype),
+           indices_tuple)
+    if key not in _ENCODER_SUBSET_CACHE:
+        idxs = torch.tensor(indices_tuple, dtype=torch.long)
+        _ENCODER_SUBSET_CACHE[key] = (
+            sae.w_enc.index_select(dim=1, index=idxs).to(
+                device=activations.device, dtype=activations.dtype
+            ),
+            sae.b_enc.index_select(dim=0, index=idxs).to(
+                device=activations.device, dtype=activations.dtype
+            ),
+            sae.threshold.index_select(dim=0, index=idxs).to(
+                device=activations.device, dtype=activations.dtype
+            ),
+        )
+    w_enc_sub, b_enc_sub, threshold_sub = _ENCODER_SUBSET_CACHE[key]
+
+    pre = activations @ w_enc_sub + b_enc_sub      # (batch, n_subset)
+    gate = (pre > threshold_sub).to(activations.dtype)
+    return pre * gate
 
 
 def project_features_to_residual(
