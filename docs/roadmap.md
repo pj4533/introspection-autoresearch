@@ -2,26 +2,36 @@
 
 Everything this project has done, is doing, and plans to do — phase by phase, with rationale. This document is the source of truth for the project's trajectory; if anything important lives only in chat logs or ephemeral plan files, it's a bug.
 
-Last updated: 2026-04-28.
+Last updated: 2026-04-29.
 
 ---
 
 ## Current status in one glance
 
+**Phase 2 is closed as of 2026-04-29.** A new phase (Phase 3 — reproduction
+on Gemma 4) is being scoped. The autoresearch infrastructure built in
+Phase 2 produced real findings about what the introspection circuit
+detects (and doesn't), all of which are documented and committed; none
+of the contrast-pair, fault-line direction, or single-SAE-feature
+substrates produced reliable strict detection beyond the 6% Phase 1
+baseline, and the project is now revisiting fundamentals on a newer
+model rather than iterating further on the Phase 2 substrate question.
+
 | Phase | Scope | Status |
 |---|---|---|
 | **1: Reproduction** | Reproduce the core introspection-detection mechanism from Macar et al. (2026) on Gemma3-12B-it locally | ✅ Done (2026-04-16) |
-| **1.5: Paper-method abliteration** | Reproduce paper §3.3 refusal-direction ablation: per-layer hooks on vanilla 12B, weighted by paper's Optuna-tuned region weights remapped from 27B | ✅ Done (2026-04-17) |
-| **2a: Autoresearch MVP** | Build the worker + researcher + fitness loop with `random_explore` as the seed strategy | ✅ Done (first overnight 2026-04-16, pure-`novel_contrast` run 2026-04-17/18) |
-| **2b: Hill-climbing autoresearch** | Semantic-identification judge for invented axes, identification-aware fitness, feedback-loop `novel_contrast`, `exploit_topk` strategy | ✅ Shipped 2026-04-23/24. Two novel-contrast axes crossed the identification barrier. Retired 2026-04-28. Archive: [`docs/archive/phase2b_hillclimb.md`](archive/phase2b_hillclimb.md). |
-| **2c: Hill-climbing lineages** | Per-lineage mutation operators with commit/revert vs current leader | ✅ Shipped, paused 2026-04-24 for cost reasons, retired 2026-04-28. Archive: [`docs/archive/phase2c_autoresearch.md`](archive/phase2c_autoresearch.md). |
-| **2d: Directed-hypothesis novel_contrast** | Targeted contrast pairs testing claims from Altman (2026), Capraro et al. (2026), and our own Epistemia direct probe | ✅ Ran 73 cycles producing ~70 Class 2 hits and 5 Class 1 hits across the 7 Capraro fault lines. Retired 2026-04-28. Archive: [`docs/archive/phase2d_directed_hypotheses.md`](archive/phase2d_directed_hypotheses.md), [`docs/archive/phase2d_results.md`](archive/phase2d_results.md). |
-| **2e: Paper-method abliteration as opt-in tool** | AbliterationContext / mode-aware spec_hash infrastructure, default reverted to vanilla 2026-04-25 after refusal-entanglement finding | ✅ Shipped. Opt-in code remains in `src/paper/abliteration.py` for future use; runtime default is vanilla. See [ADR-017](decisions.md). |
-| **2f: Structured hill-climbing** | Slot-based scheduler (replication / variants / cluster-expansion) over `contrast_pair` axes with six mutation operators | ✅ Shipped 2026-04-28 08:39 EDT, retired same day pivot to Phase 2g. Archive: [`docs/archive/structured_hillclimb.md`](archive/structured_hillclimb.md). |
-| **3: Public-facing visualization** | Next.js site deployed to Vercel | ✅ Done 2026-04-17 — live at [did-the-ai-notice.vercel.app](https://did-the-ai-notice.vercel.app). |
-| **2g: SAE single-feature injection** | Inject single SAE decoder vectors organized by Capraro fault lines | ✅ Implemented + empirically retired same day 2026-04-28. Single decoder vectors are unit-norm; the introspection circuit detects activation texture, not pure concept content, and never fired across alpha sweeps from 8–18000. Archive: [`docs/archive/phase2g_plan.md`](archive/phase2g_plan.md). |
-| **2h: SAE feature-space mean-diff** | Mean-difference of SAE-encoded activations between positive/control prompt corpora per fault line, projected back via W_dec | 🟢 **Active phase.** Sole autoresearch pipeline going forward. Plan: [`docs/phase2h_plan.md`](phase2h_plan.md). |
-| **Future**: 27B cloud reproduction, bias-vector replication, persona-specific introspection mapping | | ⏳ Ideas on the shelf |
+| **1.5: Paper-method abliteration** | Reproduce paper §3.3 refusal-direction ablation on 12B, paper Optuna weights remapped from 27B | ✅ Done (2026-04-17) |
+| **2a: Autoresearch MVP** | Worker + researcher + fitness loop with `random_explore` seed strategy | ✅ Done 2026-04-16 |
+| **2b: Hill-climbing autoresearch** | Semantic-ID judge, ident-aware fitness, feedback-loop `novel_contrast`, `exploit_topk` | ✅ Shipped 2026-04-23/24, retired with Phase 2 close. Archive: [`archive/phase2b_hillclimb.md`](archive/phase2b_hillclimb.md). |
+| **2c: Hill-climbing lineages** | Per-lineage mutation operators with commit/revert vs leader | ✅ Shipped, paused 2026-04-24 for cost, retired with Phase 2 close. Archive: [`archive/phase2c_autoresearch.md`](archive/phase2c_autoresearch.md). |
+| **2d: Directed-hypothesis novel_contrast** | Contrast pairs testing claims from Altman (2026), Capraro et al. (2026), Epistemia | ✅ 73 cycles, ~70 Class 2 hits + 5 Class 1 hits across 7 fault lines. Retired with Phase 2 close. Archives: [`archive/phase2d_directed_hypotheses.md`](archive/phase2d_directed_hypotheses.md), [`archive/phase2d_results.md`](archive/phase2d_results.md). |
+| **2e: Paper-method abliteration as opt-in tool** | AbliterationContext / mode-aware spec_hash; default reverted to vanilla 2026-04-25 | ✅ Shipped; abliteration code remains in `src/paper/abliteration.py`. See [ADR-017](decisions.md). |
+| **2f: Structured hill-climbing** | Slot-based scheduler (replication / variants / cluster-expansion) over `contrast_pair` with six mutation operators | ✅ Shipped 2026-04-28, retired same day pivot to Phase 2g. Archive: [`archive/structured_hillclimb.md`](archive/structured_hillclimb.md). |
+| **2g: SAE single-feature injection** | Inject single SAE decoder vectors from Gemma Scope 2, organized by Capraro fault lines | ✅ Implemented + empirically retired 2026-04-28. Unit-norm decoder vectors lacked saturation magnitude; never triggered detection at alpha 8–18000. Archive: [`archive/phase2g_plan.md`](archive/phase2g_plan.md). |
+| **2h: SAE feature-space mean-diff** | Per-fault-line mean-diff of SAE-encoded activations between positive/control corpora, projected via W_dec | ✅ Implemented + empirically retired 2026-04-28. Directions had texture but pointed toward another normal-text state, not anomalous-saturation; 0/24 detect. Archive: [`archive/phase2h_plan.md`](archive/phase2h_plan.md). |
+| **2i: Calibrated-saturation single-feature** | Single SAE feature injected at α = N × natural-max activation, N ∈ {1, 5, 10, 20} | ✅ Implemented + closed 2026-04-29. Saturation magnitude is necessary (sub-saturation produced 180/180 rote denials); but at 20× saturation, only 2/60 strict detections vs Peace mean_diff 4/6. Substrate viable but doesn't reliably fire the introspection gate. Archive: [`archive/phase2i_results.md`](archive/phase2i_results.md). |
+| **3 (legacy): Public-facing visualization** | Next.js site deployed to Vercel — built early, kept running through Phase 2 | ✅ Done 2026-04-17 — live at [did-the-ai-notice.vercel.app](https://did-the-ai-notice.vercel.app). Will be repurposed as Phase 2 archive + Phase 3 results page once Phase 3 is scoped. |
+| **Phase 3: Gemma 4 reproduction** | Reproduce Macar et al. introspection mechanism on the largest Gemma 4 that fits on the Mac Studio M2 Ultra (likely 31B Dense or 26B MoE A4B) | 🟡 **Scoping.** Phase 2 close → Phase 3 design starting 2026-04-29. |
 
 ---
 

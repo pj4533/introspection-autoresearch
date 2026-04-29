@@ -1,3 +1,11 @@
+> **ARCHIVED 2026-04-29.** Phase 2 (autoresearch over steering directions
+> on Gemma 3 12B) is closed. The project is moving to Phase 3 — a
+> reproduction of Macar et al. on Gemma 4. All Phase 2 plan documents
+> are kept here for historical reference; their conclusions are summarized
+> in `docs/roadmap.md`.
+
+---
+
 # Phase 2h — SAE-Feature-Space Mean-Diff over Capraro Fault Lines
 
 Status: **active. Replaces Phase 2g.** All prior autoresearch substrates

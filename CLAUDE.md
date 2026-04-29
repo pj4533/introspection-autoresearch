@@ -34,18 +34,34 @@ loop would re-create the burn that paused Phase 2c.
 - Judge calibration data (local Qwen): [`docs/calibration_results_qwen35b.md`](docs/calibration_results_qwen35b.md)
 - Full original spec: [`docs/01_introspection_steering_autoresearch.md`](docs/01_introspection_steering_autoresearch.md)
 - README: [`README.md`](README.md) (repo layout, setup, running)
-- Archived phase docs: [`docs/archive/`](docs/archive/) — Phase 2b/2c/2d/2f/2g
-  plans, all superseded by Phase 2h but kept for historical context.
+- Archived phase docs: [`docs/archive/`](docs/archive/) — full Phase 2
+  history (2b/2c/2d/2f/2g/2h/2i), all closed as of 2026-04-29 in favor
+  of starting fresh on Gemma 4.
 
 **Rule:** if a project decision only lives in chat logs, memory files, or
 ephemeral plan files, it's a bug. Commit it to `docs/roadmap.md`
 (forward-looking) or `docs/decisions.md` (rationale for past choices).
 
-## Status snapshot (2026-04-28)
+## Status snapshot (2026-04-29)
 
-**Active phase: Phase 2h** — SAE-feature-space mean-diff over Capraro
-fault lines. Plan in [`docs/phase2h_plan.md`](docs/phase2h_plan.md).
-All prior autoresearch substrates are retired.
+**Phase 2 is closed. Phase 3 scoping in progress (Gemma 4 reproduction).**
+
+Phase 2 spent two weeks iterating on autoresearch substrates for steering
+Gemma 3 12B's introspection circuit. Five substrates were built and
+empirically retired: contrast-pair `mean_diff` (lexical-confound ceiling),
+single SAE decoder vectors (no saturation), feature-space mean-diff over
+corpora (wrong direction in activation space), single SAE features at
+calibrated saturation (some perturbation, only 2/60 strict detections).
+
+The aggregate Phase 2 finding: *Gemma 3 12B's introspection circuit
+detects anomalous-saturation along single concept axes (Phase 1's
+mean_diff geometry); no SAE-substrate variant we built reliably triggers
+it beyond Phase 1's 6% baseline.* Full per-phase summaries in
+[`docs/roadmap.md`](docs/roadmap.md).
+
+**Phase 3 question being scoped:** reproduce Macar et al. on Gemma 4
+(released 2026-04-02). Three sizes might run on Mac Studio M2 Ultra:
+E4B, 26B MoE (A4B), 31B Dense. Selecting the largest that fits.
 
 Historical state, briefly:
 
@@ -71,7 +87,14 @@ Historical state, briefly:
   [did-the-ai-notice.vercel.app](https://did-the-ai-notice.vercel.app).
   Old Phase 2 data stays visible, retro-tagged with substrate badges.
 
-## Architecture quick map (Phase 2h state)
+## Architecture quick map (post-Phase-2 frozen state)
+
+The code below is the state of the repo as Phase 2 closed. It still
+runs, all 33 tests pass, and the worker still launches — but the active
+research substrate has been retired and Phase 3 is being scoped on a
+new model (Gemma 4). New runtime work should go into Phase 3 modules,
+not back into the Phase 2 strategy code.
+
 
 ```
 src/paper/          ← vendored from safety-research/introspection-mechanisms.
@@ -94,7 +117,7 @@ src/evaluate.py     ← CandidateSpec + FitnessResult + phase_a_generate
                      derivation methods:
                        mean_diff                   (Phase 1 historical)
                        contrast_pair               (Phase 2b/2d historical)
-                       sae_feature_space_mean_diff (Phase 2h, active)
+                       sae_feature_space_mean_diff (Phase 2h, retired)
                      Caches the fault_line_directions.pt payload in-process.
 src/models/registry.py
                     ← ModelHandle ABC + GemmaHandle / MLXHandle / MockHandle +
@@ -106,9 +129,11 @@ src/judges/         ← Judge protocol + JudgeResult + LocalMLXJudge +
 src/worker.py       ← Three-phase serial-swap worker. Generate (Gemma) →
                      Judge (MLX) → Propose (CPU) → Reload. Phase C is pure
                      CPU work — no proposer model.
-src/strategies/     ← sae_feature_space: the only active strategy. Two
+src/strategies/     ← sae_feature_space: Phase 2h substrate, retired. Two
                      sub-modes per fault line (sae_fs_sweep / sae_fs_replicate).
                      Reads data/sae_features/fault_line_directions.pt.
+                     Kept in repo for historical reference + as scaffold
+                     for any Phase 3 strategy that wants similar shape.
                      lexical_audit: post-hoc analysis of historical
                      contrast-pair candidates (kept; tested).
 data/sae_features/
@@ -179,7 +204,7 @@ tests/              ← pytest suite. Run with `.venv/bin/pytest tests/`.
   corrupt silently with no error. The serial-swap worker enforces the
   HandleRegistry's one-loaded-at-a-time invariant.
 
-## Running things
+## Running things (post-Phase-2)
 
 ```bash
 # Always use the venv
@@ -187,32 +212,23 @@ source .venv/bin/activate
 
 # Sanity checks (seconds)
 python scripts/smoke_mps.py
-python scripts/smoke_judge.py
 
-# Phase 1 MVP notebook (~5 min on M2 Ultra)
+# Phase 1 reproduction notebook (~5 min on M2 Ultra) — still the
+# anchor experiment for the project.
 jupyter nbconvert --to notebook --execute notebooks/01_reproduce_paper.ipynb \
   --output 01_reproduce_paper.ipynb --ExecutePreprocessor.timeout=1200
-
-# Phase 2g: build the Capraro fault-line buckets (one-shot, after Neuronpedia
-# auto-interp is downloaded). Re-run if the auto-interp data refreshes.
-python scripts/build_capraro_buckets.py
-
-# Phase 2g: single-feature smoke test (loads SAE, runs one candidate)
-python scripts/smoke_sae.py
-
-# Smoke (no real models — full state-machine cycle with mocks)
-python scripts/smoke.py
 
 # Tests (pytest, ~6s)
 .venv/bin/pytest tests/
 
-# Autoresearch loop (Phase 2g). Worker rotates through Capraro C1-C7
-# round-robin, 16 candidates per fault line per cycle.
+# Phase 2 worker (frozen — retired but functional, kept for reference)
 ./scripts/start_worker.sh
 tail -f logs/worker.log
-
 # Stop:  pkill -f 'src.worker'
 ```
+
+Phase 3 launchers will live alongside these once the new substrate is
+designed and built.
 
 ## User preferences (PJ)
 
