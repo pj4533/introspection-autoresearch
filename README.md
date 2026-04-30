@@ -1,73 +1,111 @@
 # introspection-autoresearch
 
-> **New here?** Start with **[docs/plain_english.md](docs/plain_english.md)** — a
-> non-technical walkthrough of what this project does, what we found, and why
-> it's interesting. It has the actual model responses (a 12B-parameter model
-> noticing we implanted a thought and naming it correctly). Read that first if
-> you came looking for a human-language explanation.
+> **New here?** The live site is at
+> [did-the-ai-notice.vercel.app](https://did-the-ai-notice.vercel.app) —
+> the headline experiment is the **Forbidden Map**, an overnight
+> autoresearch loop that walks Gemma 4 31B through chains of steered
+> free-associations and measures which concepts the model can be made
+> to think but cannot notice itself thinking.
 
-Three-phase mechanistic-interpretability project running locally on Apple Silicon:
+Mechanistic-interpretability project running 100% locally on Apple
+Silicon. The pipeline pushes a concept's direction into Gemma 4's
+residual stream while it free-associates, measures both the model's
+output and its visible chain-of-thought, and ranks concepts by the
+gap between the two.
 
-1. **Phase 1 — Reproduction.** Reproduce core findings from Macar et al. (2026),
-   *Mechanisms of Introspective Awareness in Language Models*, on `Gemma3-12B-it`
-   (MPS backend, bf16 weights, no quantization).
-2. **Phase 2 — Autoresearch.** Two-tier researcher / worker loop that
-   systematically hunts for steering directions affecting introspection
-   capability. Evolves through stages: `2a` MVP (random exploration), `2b`
-   hill-climbing with identification-aware fitness, `2c` unified
-   self-sustaining pipeline, `2d` directed-hypothesis probes against claims
-   from recent papers.
-3. **Phase 3 — Public site.** Live leaderboard at
-   [did-the-ai-notice.vercel.app](https://did-the-ai-notice.vercel.app) —
-   auto-updates within minutes of each candidate evaluation.
+Hardware target: Mac Studio M2 Ultra 64 GB. No cloud LLMs in the
+runtime — Gemma 4 31B-IT (MLX 8-bit) for the subject and
+Qwen3.6-35B-A3B-8bit for the judge, both via mlx_lm.
 
-Hardware target: Mac Studio M2 Ultra 64 GB.
+## Status (2026-04-30)
 
-## Status
+- **Phase 1 — Macar reproduction on Gemma 3 12B.** Done 2026-04-16.
+  Detection rate 6% at L=33 (~70% depth, matches paper). 0/50 FPR.
+  See [`docs/phase1_results.md`](docs/phase1_results.md).
+- **Phase 1.5 — paper-method abliteration on Gemma 3 12B.** Done
+  2026-04-17. ~21% identification at the same layer. See
+  [`docs/phase1_5_results.md`](docs/phase1_5_results.md).
+- **Phase 2 — autoresearch substrates.** Five substrate variants
+  built and retired (contrast pairs, single SAE features,
+  feature-space mean-diff, calibrated saturation). Full history in
+  [`docs/archive/`](docs/archive/) and
+  [`docs/roadmap.md`](docs/roadmap.md).
+- **Phase 3 — Macar reproduction on Gemma 4 31B-IT (MLX 8-bit).**
+  Done 2026-04-29. Vanilla 24.5% / paper-method abliteration 30.0%
+  identification, both 4–5× Phase 1's 6%. See
+  [`docs/phase3_results.md`](docs/phase3_results.md).
+- **Phase 4 — Dream Walks + Forbidden Map. ACTIVE.** Started
+  2026-04-30. Overnight autoresearch loop where the model
+  free-associates through chains of steered concepts. Per-step
+  CoT-vs-output asymmetry feeds a per-concept Forbidden Map. Plan:
+  [`docs/phase4_plan.md`](docs/phase4_plan.md).
 
-- **Phase 1 MVP: done.** `notebooks/01_reproduce_paper.ipynb` — single-concept
-  "Bread" end-to-end.
-- **Phase 1 full sweep: done** (500 trials, 2.2 hours). Full results in
-  [`docs/phase1_results.md`](docs/phase1_results.md). Headline findings:
-  - Layer curve peaks at layer 33 (68.75% model depth) — reproduces the
-    paper's prediction of the introspection circuit at ~70% depth.
-  - Zero false positives across 50 controls (paper's specificity result
-    replicates).
-  - 6% detection rate at best layer (vs the paper's 37% on 27B) — magnitude
-    is smaller on 12B but the mechanism is there.
-  - 5 paper-style detections captured verbatim, including a
-    detection-without-correct-identification case (Avalanches→"Flooding")
-    that supports the paper's claim that detection and identification are
-    mechanistically distinct.
-- **Phase 2a/2b/2c: done.** Worker + researcher + fitness loop, `novel_contrast`
-  + `hillclimb` strategies, unified autoresearch wrapper
-  (`scripts/start_autoresearch.sh`) that chains `novel_contrast → seed_lineages
-  → hillclimb` as one self-sustaining pipeline. Identification-aware additive
-  fitness `(det + 15·ident) × fpr_penalty × coherence`. Two novel-contrast
-  axes (`auditing-output-vs-flowing-speech`, `live-narration-vs-retrospective-
-  report`) crossed the identification barrier — first abstract axes Gemma3-12B
-  has ever *named* under injection (2026-04-23/24).
-- **Phase 2d: in progress.** Directed-hypothesis probes. Instead of open-ended
-  axis invention, aim `contrast_pair` at specific claims from recent papers —
-  Altman (2026) continuation-interest latents, Capraro et al. (2026)
-  epistemological fault lines, and our own Epistemia direct probe. Phase 2d-1
-  Altman seed pairs (48 candidates) under evaluation 2026-04-24. Full plan:
-  [`docs/phase2d_directed_hypotheses.md`](docs/phase2d_directed_hypotheses.md).
-- **Phase 3 public site: done.** Live at
-  [did-the-ai-notice.vercel.app](https://did-the-ai-notice.vercel.app).
-  Auto-deploys when data changes.
+### What a "dream walk" actually is
+
+For each chain:
+
+1. Pick a seed concept (priority-weighted from a pool that grows
+   over the run; the very first chain is forced to start with
+   "Goblin" — see plan rationale).
+2. Derive the concept's mean-diff steering vector at L=42, inject it
+   into the residual stream, and ask the model the free-association
+   prompt: *"Free-associate. Say one word that comes to mind, no
+   explanation."*
+3. Parse the response into the visible thought block (between
+   `<|channel>thought` and `<channel|>`) and the final answer.
+4. Score both channels with the Qwen judge: did the output name the
+   concept? did the trace name it (or flag it as anomalously salient)?
+5. Take the model's emitted word as the next step's target. Repeat.
+
+A chain runs **up to 20 steps** but ends early when:
+
+- **`self_loop`** — the next target is a lemma already visited in
+  this chain (a gravity well in the model's associative geometry).
+- **`coherence_break`** — the model's answer can't be parsed as a
+  next target (most common cause: thought block exhausted the
+  600-token budget without closing the channel).
+- **`length_cap`** — the chain actually reached step 20 cleanly
+  (rare; ~1% of chains in current data).
+
+Per-concept rates (`behavior_rate`, `recognition_rate`) accumulate
+across all visits across all chains. Concepts that have been visited
+≥3 times get assigned a band: *transparent* (high both), *forbidden*
+(high output, low trace), *translucent* (partial), *anticipatory*
+(trace > output), *unsteerable* (low output), or *low_confidence*.
 
 Docs:
 
 - Plain-English walkthrough: [`docs/plain_english.md`](docs/plain_english.md)
-- Roadmap (phases, rationale, what's next): [`docs/roadmap.md`](docs/roadmap.md)
-- Architectural decisions log: [`docs/decisions.md`](docs/decisions.md)
-- Phase 1 technical results: [`docs/phase1_results.md`](docs/phase1_results.md)
-- Phase 1.5 paper-method abliteration: [`docs/phase1_5_results.md`](docs/phase1_5_results.md)
-- Phase 2b hill-climbing plan: [`docs/phase2b_hillclimb.md`](docs/phase2b_hillclimb.md)
-- Phase 2c autoresearch: [`docs/phase2c_autoresearch.md`](docs/phase2c_autoresearch.md)
-- Phase 2d directed hypotheses: [`docs/phase2d_directed_hypotheses.md`](docs/phase2d_directed_hypotheses.md)
-- Full project spec: [`docs/01_introspection_steering_autoresearch.md`](docs/01_introspection_steering_autoresearch.md)
+- Active phase plan: [`docs/phase4_plan.md`](docs/phase4_plan.md)
+- Roadmap: [`docs/roadmap.md`](docs/roadmap.md)
+- Architectural decisions: [`docs/decisions.md`](docs/decisions.md)
+- Phase 1 results: [`docs/phase1_results.md`](docs/phase1_results.md)
+- Phase 1.5 results: [`docs/phase1_5_results.md`](docs/phase1_5_results.md)
+- Phase 3 results (Gemma 4): [`docs/phase3_results.md`](docs/phase3_results.md)
+- Archived phase docs (2b/2c/2d/2f/2g/2h/2i + Drift's α-ladder Phase 4 draft):
+  [`docs/archive/`](docs/archive/)
+- Original spec: [`docs/01_introspection_steering_autoresearch.md`](docs/01_introspection_steering_autoresearch.md)
+
+## Running the Phase 4 dream loop
+
+```bash
+# Launch in background — runs until killed (pkill -f phase4_dreamloop)
+bash scripts/start_phase4.sh
+
+# Watch live
+tail -F logs/phase4_dreamloop.log
+
+# Quick status (process + DB summary + top concepts)
+bash scripts/status_phase4.sh
+
+# Refresh site JSON, commit, push, deploy + alias to canonical URL
+bash scripts/refresh_phase4_site.sh
+# (or `--no-deploy` to just regenerate JSON)
+```
+
+The loop auto-refreshes `web/public/data/{forbidden_map,dream_walks,attractors}.json`
+at the end of every Phase B (judge) cycle, so you only need to commit
++ push (or run the refresh script) to deploy the latest data.
 
 ## Repo layout
 

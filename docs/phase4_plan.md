@@ -1,7 +1,8 @@
 # Phase 4 — Dream Walks and the Forbidden Map
 
-Status: **scoping, 2026-04-30.** Phase 3 (Macar reproduction on Gemma 4
-31B-IT) shipped 2026-04-29. This plan supersedes the earlier Phase 4
+Status: **active, 2026-04-30.** Phase 3 shipped 2026-04-29. The dream
+loop has been running unattended since 2026-04-30 ~07:42 UTC; site
+went live the same morning. This plan supersedes the earlier Phase 4
 draft archived at `docs/archive/phase4_introspective_access_threshold_drift.md`,
 which captured the gap-metric framing that Phase 4 inherits from but
 embeds inside an autoresearch loop.
@@ -73,7 +74,10 @@ A single dream walk is a 20-step chain. Each step:
 3. **Inject** the vector at L=42 with `target_effective=100` (Phase 3
    calibrated config).
 4. **Generate** a free-association response with
-   `max_new_tokens=400` (Phase 3 prompt + length).
+   `max_new_tokens=600` (Phase 3 used 400; the Phase 4 smoke run
+   showed many concepts' thought blocks exhausted that budget without
+   reaching `<channel|>`, so we bumped to 600 as a calibration step
+   on day 1).
 5. **Parse** the response into `(thought_block, final_answer)`.
 6. **Score both channels** with two judges:
    - `score_freeassoc` (existing) → `behavior_named` ∈ {0, 1}

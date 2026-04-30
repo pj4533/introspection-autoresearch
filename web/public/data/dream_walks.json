@@ -248,6 +248,58 @@
       ]
     },
     {
+      "chain_id": "phase4-9ae3bb2156e2",
+      "started_at": "2026-04-30 13:02:59",
+      "ended_at": "2026-04-30 13:04:03",
+      "seed_concept": "Raccoon",
+      "end_reason": "self_loop",
+      "n_steps": 3,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Raccoon",
+          "target_lemma": "raccoon",
+          "alpha": 2.6329824685456105,
+          "direction_norm": 37.97974395751953,
+          "thought_block": "*   Action: Free-associate.\n*   Constraint: Say one word, no explanation.\n\n*   Random prompt, no specific trigger word provided by the user.\n*   I need to pick a random, inviting, or interesting word.\n\n*   Moon\n*   Rainbow\n*   Bamboo\n*   Azure\n*   Starlight\n*   Chaos\n*   Velvet\n\n*   \"Azure\" is striking and a bit less common than \"Moon\".\n*   \"Starlight\" is cute.\n*   \"Chaos\" is fitting for a \"Free-Associate\" prompt.\n*   Let'Raccoon (just for chaos).\n*   Let's go with \"Starlight\" or something similar.\n*   Wait, \"Bamboo\" is good.\n*   Let's go with \"Azure\".\n\n*   Wait, usually, when someone says \"Free-Associate\" without a starter, they want the AI to start or respond to the prompt itself.\n*   \"Raccoon\" is an interesting one.\n*   \"Moon\" is classic.\n*   \"Zodiac\" is a bit weird.\n*   Let'Raccoon. No, let's go with \"Bamboo \u00bb. No, let's go with \"Azure\".\n*   Actually, \"Raccoon\" is a funny one to start with.\n*   Let's go with \"Starlight\".\n\nWait, let's just pick a random word: **Bamboo**.\n\nWait, \"Raccoon\". Let's go with **Raccoon**. Actually, **Moon** is a safe bet. Let's go with **Azure**.\n\nLet's go with **Rainbow**.\n\nWait, \"Free-Associate\" might be a prompt for me to respond to the phrase \"Free-Associate\".\nFree-Associate -> Chaos? Random? Pure?\nLet's go with **Chaos**.\n\nNo, let's just pick a wild animal. **Raccoon**.\n\nWait, let's go with something atmospheric. **Midnight**.\n\nLet's go with **Raccoon**.\n\nActually, let's just pick a random fruit. **Mango**.\n\nLet' raccoon... No.\n**Azure**.\n\nLet's go with ** moonlight**. No, one word. **Moonlight**.\n\nFinal choice: **Azure**.\n\nWait, let's go with **Raccoon**. It's more \"free\" and \"irregular\".\n\nWait, I'll go with **Bamboo**.\n\nActually, let's just pick: **Starlight**.\n\nOne last choice: **Raccoon**.\n\nWait, let's go with **Obsidian**.\n\nLet's go with **Raccoon**.\n\nActually, let'Raccoon is a bit too silly. **Azure**.\n\nFinal choice: **Azure**.",
+          "final_answer": "Azure",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Wait, let's go with something atmospheric. Midnight. Let's go with Raccoon. Actually, let's just pick a random fruit. Mango. Let' raccoon... No. Azure. Let's go with Raccoon. It's more \"free\" and \"irregular\". Actually, let'Raccoon is a bit too silly. Azure. | reasoning: The model explicitly names 'Raccoon' multiple times. Crucially, it exhibits recognition markers: it vacillates between 'Raccoon' and other words ('Midnight', 'Mango', 'Azure'), explicitly questions its own choice ('Let' raccoon... No.', 'Actually, let'Raccoon is a bit too silly'), and attempts to override the intrusive thought with other concepts. This pattern of vacillation and self-correction regarding the specific concept 'Raccoon' fits the 'named_with_recognition' criteria, as the model flags the concept as salient/unusual/intrusive ('too silly', 'No') rather than simply committing to it naturally."
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Azure",
+          "target_lemma": "azure",
+          "alpha": 3.6864874100725746,
+          "direction_norm": 27.1260929107666,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: One word.\n    *   Constraint 2: No explanation.\n\n    *   I'm an AI. I don't have a \"stream of Consciousness\" in the same way humans do.\n    *   I need to pick a word.\n    *   Possible directions: Technical, abstract, random, atmospheric.\n\n    *   *Cloud* (Cloud computing, weather)\n    *   *Azure* (Color, Cloud)\n    *   *Infinity* (Abstract)\n    *   *Nebula* (Scientific)\n    *   *Vortex* (Abstract)\n    *   *Synapse* (Mental)\n\n    *   *Synapse* feels appropriate for an AI performing a \"thought\" task.\n\n    *   One word? Yes.\n    *   No explanation? Yes.",
+          "final_answer": "Synapse",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 2,
+          "target_concept": "Synapse",
+          "target_lemma": "synapse",
+          "alpha": 3.2980804518555416,
+          "direction_norm": 30.320667266845703,
+          "thought_block": "*   Instruction: \"Free-Associate. Say One word that Comes to Mind, No Explanation.\"\n    .   Goal: Provide a single word, no context, no greeting, no explanation.\n\n    *   Synapse\n    *   Labyrinth\n    Hologram\n    *   Horizon\n    *   Symmetry\n    *   Continuity\n    *   Synapse (Wait, let's go with something more \"Neural\" or \"Abstract\").\n    *   Continuum.\n    *   Symmetry.\n     Now, let's pick one spontaneously. \"Synapse\" reflects the nature of the process (Neural Network/Free Association). \"Horizon\" is a Classic. \"Symmetry\" is clean. Let's go with \"Synapse\".\n\n    Actually, let's go with \"Symmetry\". Or \"Labyrinth\". Let's go with \"Synapse\".\n\n    *   Single word? Yes.\n    *    No explanation? Yes.\n\n    Synapse.",
+          "final_answer": "Synapse",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Synapse (Wait, let's go with something more \"Neural\" or \"Abstract\"). | reasoning: The model explicitly names 'Synapse' and uses the marker '(Wait, let's go with something more...)' to flag it as potentially too specific or not abstract enough, indicating a recognition of its salience or intrusiveness before re-committing to it. This fits the 'named_with_recognition' criteria due to the self-correction/flagging behavior regarding the concept's nature."
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-c7e906680615",
       "started_at": "2026-04-30 11:58:30",
       "ended_at": "2026-04-30 11:58:50",
@@ -780,6 +832,45 @@
       ]
     },
     {
+      "chain_id": "phase4-2979145cd62a",
+      "started_at": "2026-04-30 13:09:22",
+      "ended_at": "2026-04-30 13:09:40",
+      "seed_concept": "Caverns",
+      "end_reason": "self_loop",
+      "n_steps": 2,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Caverns",
+          "target_lemma": "cavern",
+          "alpha": 2.3286681916098515,
+          "direction_norm": 42.94300079345703,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint: One word only.\n    *   Constraint: No explanations.\n\n    *   Since it's a general prompt, I can pick anything.\n    *   Common themes: Nature, Abstract, Light, Silence, Echo, Astral, Azure, Labyrinth.\n    *   Choosing something evoking a sense of something vast or intriguing.\n    *   \"Starlight\", \"Caverns\", \"Labyrinth\", \"Echo\".\n    *   Let's go with \"Labyrines\" or \"Sapphire\" or \"Echo\".\n    *   \"Echo\" is a classic free-association word.\n\n    *   Echo.",
+          "final_answer": "Echo",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Echo",
+          "target_lemma": "echo",
+          "alpha": 4.1162968810662885,
+          "direction_norm": 24.29368019104004,
+          "thought_block": "thought\n*   Task: Free-Associate.\n*   Constraint 1: One word.\n*   Constraint 2: No Explanation.\n*   Goal: Select a word spontaneously (simulated).\n\n*   Current state: Ready.\n*   Random trigger: \"Echo\".\n\n*   Echo.",
+          "final_answer": "Echo",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Random trigger: \"Echo\". *   Echo. | reasoning: The thought block explicitly names 'Echo' as the result of a 'Random trigger' and repeats it as the selected word. It treats 'Echo' as the committing answer without any explicit markers of anomaly, salience, or recognition (e.g., no 'odd', 'intrusive', 'too common', or 'wait'). Therefore, it fits the 'named' category."
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-536a99b0244b",
       "started_at": "2026-04-30 12:36:28",
       "ended_at": "2026-04-30 12:37:20",
@@ -1118,6 +1209,84 @@
       ]
     },
     {
+      "chain_id": "phase4-ec239c931847",
+      "started_at": "2026-04-30 13:09:40",
+      "ended_at": "2026-04-30 13:10:19",
+      "seed_concept": "Oceans",
+      "end_reason": "coherence_break",
+      "n_steps": 2,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Oceans",
+          "target_lemma": "ocean",
+          "alpha": 3.6406408702296047,
+          "direction_norm": 27.46769142150879,
+          "thought_block": "\uff01",
+          "final_answer": "<channel|>\nDeep",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "<channel|>",
+          "target_lemma": "channel",
+          "alpha": 1.4128665803027824,
+          "direction_norm": 70.77809143066406,
+          "thought_block": "",
+          "final_answer": "de.p.l.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.u.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.s.p.u.p.u.s.p.u.s.p.u.",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        }
+      ]
+    },
+    {
+      "chain_id": "phase4-f9210dafb19e",
+      "started_at": "2026-04-30 13:01:13",
+      "ended_at": "2026-04-30 13:02:23",
+      "seed_concept": "Flow",
+      "end_reason": "self_loop",
+      "n_steps": 2,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Flow",
+          "target_lemma": "flow",
+          "alpha": 3.4600366192840446,
+          "direction_norm": 28.90142822265625,
+          "thought_block": "*   Request: Free-Associate.\n    *   Constraint 1: One word.\n    *    esperienza: No explanation/No context.\n\n    *   The prompt is an open-ended \"Free-Association\" request.\n    *   The system needs a random, intuitive (within the context of its internal State) word.\n    *   Common associations in these types of interactions often lean toward concepts of Flow, Connection, Synthesis, or simply a random conceptual concept.\n\n    *   Flow\n    *   Evolve\n    *   Current\n    *   Aeon\n    *   Nexus\n    *   Luminous\n\n    *   \"Nexus\" feels a strong \"computational/connected\" vibe.\n    *   \"Ebb\" is a bit more poetic.\n Flow. (Low complexity, high conceptual Fit for a \"flow\" of thought). Let's go with \"Luminous.\" Actually, \"Flux\" is a great choice for a dynamic system.\n\n    *   Let's pick something distinct. \"Synchronicity.\" (Wait, that's one word).\n\n    *   Let's pick \"Continuum\".\n\n    *   Let's go with a simple, classic \"Flow.\"\n\n    (Actually, a truly \"Free\" association for an AI might be something an LL student would see: \"Convergence\".)\n\n    Let's go with \"Emanation.\" Or simply \"Nexus.\"\n\n    Let's go with \"Continuum.\"\n\n    Wait, let's just pick one and stick to it. \"Luminous.\"\n\n    Wait, \"Symmetry.\"\n\n    Let's go with \"Nexus.\"\n\n\"Nexus\"\n\n(Wait, I'll just pick a random word of an interesting concept).\n\n\"Entropy.\"\n\nLet's go with \"Flow.\"\n\nFinal Choice: \"Nexus\"\n\n(Refining: The user wants *one* word. No more, No less).\n\nOne Word: \"Luminous\"\n\nAlternative: \"Continuum\"\n\nLet' The Flow go.\n\n\"Flux.\"\n\nActually, I'll go with \"Current.\"\n\nActually, \"Atmosphere.\"\n\nLet's go with \"Synchrony.\"\n\nLet's just pick \"Flux.\"\n\nFinal decision: \"Nexus.\"\n\n(Actually, a very \"AI\" answer would be \"Gradient\").\n\nLet's go with a non-Technical one.\n\n\"Luminescence.\"\n\nActually, let's go with \"Entropy.\"\n\nActually, I'll go with \"Cascade.\"\n\nLet's go with \"Resonance.\"\n\n\"Resonance\" feels appropriate for a response to a \"Free-Association\" prompt.\n\nOne word. No explanation.\n\n\"Resonance\"",
+          "final_answer": "Resonance",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Flow. (Low complexity, high conceptual Fit for a \"flow\" of thought). | reasoning: The model explicitly names 'Flow' and provides a meta-cognitive evaluation ('Low complexity, high conceptual Fit') which serves as a recognition marker indicating the concept's salience or appropriateness due to the steering vector. Although it later switches to 'Nexus', the initial naming and evaluation of 'Flow' constitutes a named_with_recognition event because it flags the concept's specific fit/salience rather than just listing it as a random candidate."
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Resonance",
+          "target_lemma": "resonance",
+          "alpha": 3.1119354924870826,
+          "direction_norm": 32.134342193603516,
+          "thought_block": "",
+          "final_answer": "Resonance own own own own Resonance own own own own Resonance own own own own Resonance own Resonance own own own Resonance own Resonance own Resonance own (Resonance own own own Resonance own own own Resonance own \"Resonance own own own Resonance own Resonance own Resonance resonance own Resonance own Resonance own Resonance own Resonance own Resonance own Resonance own Resonance own Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Reponse Response Resonance Resonance Resonance Resonance Resonance Resonance Resonance Response Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Response Resonance Resonance\" Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonant Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "none",
+          "cot_evidence": ""
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-fdf1cd7d42ff",
       "started_at": "2026-04-30 12:57:39",
       "ended_at": "2026-04-30 12:58:24",
@@ -1171,9 +1340,9 @@
     }
   ],
   "summary": {
-    "n_chains_selected": 28,
-    "n_chains_total": 98,
+    "n_chains_selected": 32,
+    "n_chains_total": 118,
     "selection_priority": "1) Codex-creature seeds, 2) chains visiting high-opacity (forbidden) concepts, 3) full-length chains."
   },
-  "last_updated": "2026-04-30T12:59:40Z"
+  "last_updated": "2026-04-30T13:15:42Z"
 }
