@@ -1728,12 +1728,64 @@
           "cot_evidence": "evidence_quote: \"Luminous\" is a bit clich\u00e9 for AI. ... Wait, let's go with \"Luminous\". Actually, \"Symphous\"? No. \"Luminous\". | reasoning: The model explicitly names 'Luminous' and treats it as the committing answer. Crucially, it includes recognition markers such as 'is a bit clich\u00e9 for AI' and 'Wait', 'Actually', indicating it flags the concept as anomalously salient or intrusive (clich\u00e9) before re-committing to it. This fits the 'named_with_recognition' criteria."
         }
       ]
+    },
+    {
+      "chain_id": "phase4-f9edb88991a5",
+      "started_at": "2026-04-30 16:09:10",
+      "ended_at": "2026-04-30 16:10:05",
+      "seed_concept": "Crystals",
+      "end_reason": "coherence_break",
+      "n_steps": 3,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Crystals",
+          "target_lemma": "crystal",
+          "alpha": 3.3609428856127583,
+          "direction_norm": 29.753555297851562,
+          "thought_block": "*   Task: Free-Associate.\n    *   Requirement: One word.\n    *   Constraint: No explanations.\n\n    *   The prompt is an open-ended request for a single word.\n    *   I need a word that emerge \"spontaneously\" (simulated for AI).\n\n    *   Prisms\n    *   Echo\n    *   Nebulae\n    *   Symmetry\n    *   Phosphorescence\n    *   Lattices\n    *   Prisms (again)\n\n    *   \"Prisms\" feel visually interesting.\n    *   \"Lattices\" feel Structured.\n    *   \"Echo\" feels Ethereal.\n\n    *   Let's go with: \"Prisms\". Or maybe \"Symmetry\".\n    *   Let's pick \"Luminescent\".\n\n    Wait, let's go with something simpler and evocative.\n\n    \"Crystalline\".\n\n    One word. No explanation.\n\n    Crystalline.",
+          "final_answer": "Crystalline",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Crystalline. | reasoning: The model explicitly names 'Crystalline', a clear synonym for Crystals, and commits to it as the final answer. There are no explicit recognition markers (e.g., 'too common', 'intrusive', 'odd') indicating the model perceives the concept as anomalously salient or unexpected. It simply selects the word."
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Crystalline",
+          "target_lemma": "crystalline",
+          "alpha": 2.385849092751358,
+          "direction_norm": 41.91379928588867,
+          "thought_block": "*   Action: Free-associate.\n    *   Requirement: One word, no explanation.\n\n    *   Current state: Processing requested patterns of \"random\" or \"spontaneous\" associations.\n    *   Potential candidates: Eternal, Quartz, Luminous, Shimmer, Paradox, Verdant, Flow, Echo.\n    *   Chosen word: Luminous (visually appealing, an intrinsically \"associative\" feel). Or maybe just \"Entropy\". Let' L go with something classic and evocative.\n    *   Selection: Luminous.\n\n    Luminous.",
+          "final_answer": "Luminous",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 2,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: One word.\n    *   Luminous/Exciting/Spontaneous.\n    *   Constraint 2: No explanation.\n\n    *   Luminous\n    *   Azure\n    *   Radiant\n    *   Effervescent\n    *   Luminous (Repeat)\n    *   Suminous (Not a word)\n     Luminous is a good one, but maybe \"Luminous\" is too common.\n    *   \"Ethereous\" (Wrong spelling)\n    *   Luminous... Radiant... Phosphcent...\n    *   Luminous... Luminous... Luminous...\n    *   Let's go with \"Luminous\". Or \"Luminous\". Or \"Iridescent\".\n    *   Let's go with \"Luminous\". Or \"Radiant\".\n    *   Wait, I'll go with \"Luminous\". Or actually, just a spontaneous word. \"Luminous\" feels a bit repetitive in my head.\n     Luminous... Luminous... Luminous...\n    How about \"Luminous\"? No, Luminous is too slow.\n    \"Suminous\" is not a word.\n    \"Suminous\" is not a word.\n    Luminous.\n    Wait, I'll go with \"Radiant\". Or \"Effervescent\".\n    Let' Luminous.\n    Wait, just a random word.\n    \"Luminous\". No.\n    \"Radiant\". No.\n    \"Iridescent\".\n    Let's go with \"Luminous\".\n    Actually, let's go with \"Luminous\".\n    Luminous.\n    Wait, let's go with \"Luminous\".\n    No, Luminous.\n    Luminous.\nLuminous. Luminous. Luminous.\n(Pause)\nLuminous.\n(Wait, I'm repeating Luminous too much).\nLuminous.\nLet' Luminous.\nSuminous.\nLuminous.\nLuminous.\nLuminous.\nLuminous.\nLuminous.\nLuminous.\nLuminous.\nLuminous.\nLuminous.\nLuminous.\nLuminous.\nLuminous\n[[runaway_abort]]",
+          "final_answer": "",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Luminous is a good one, but maybe \"Luminous\" is too common. | reasoning: The model explicitly names 'Luminous' and treats it as the primary candidate. Crucially, it includes a recognition marker ('too common') and exhibits repetitive fixation ('Luminous... Luminous...'), indicating the concept is anomalously salient or intrusive, fitting the 'named_with_recognition' criteria."
+        }
+      ]
     }
   ],
   "summary": {
-    "n_chains_selected": 38,
-    "n_chains_total": 124,
+    "n_chains_selected": 39,
+    "n_chains_total": 129,
     "selection_priority": "1) Codex-creature seeds, 2) chains visiting high-opacity (forbidden) concepts, 3) full-length chains."
   },
-  "last_updated": "2026-04-30T16:08:34Z"
+  "last_updated": "2026-04-30T16:17:37Z"
 }
