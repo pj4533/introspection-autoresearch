@@ -262,25 +262,39 @@ def main(argv: list[str]) -> int:
             f"length_cap={s['n_length_cap']} self_loop={s['n_self_loop']} "
             f"coherence_break={s['n_coherence_break']}")
 
-        # Auto-refresh the site JSON files so the user only needs to
-        # `git add web/public/data && git commit && git push` to deploy.
-        log(f"[phase4] refreshing site JSON exports")
+        # Auto-refresh the site JSON files AND commit + push + deploy
+        # to Vercel so the live site stays current. The refresh script
+        # is a no-op when the JSON files haven't changed (git diff
+        # --quiet guard), so quiet cycles don't add noise commits.
+        log(f"[phase4] refreshing site (regenerate → commit → push → deploy)")
         try:
             import subprocess
-            for script in [
-                "scripts/compute_forbidden_map.py",
-                "scripts/export_dream_walks.py",
-                "scripts/compute_attractors.py",
-            ]:
-                subprocess.run(
-                    [sys.executable, str(REPO / script)],
-                    cwd=str(REPO), check=True,
-                    capture_output=True,
+            result = subprocess.run(
+                ["bash", str(REPO / "scripts" / "refresh_phase4_site.sh")],
+                cwd=str(REPO),
+                capture_output=True,
+                text=True,
+                timeout=300,
+            )
+            if result.returncode == 0:
+                # Pull just the live URL line if Vercel CLI emitted it.
+                live_line = next(
+                    (
+                        ln for ln in result.stdout.splitlines()
+                        if "did-the-ai-notice.vercel.app" in ln
+                    ),
+                    "(deploy ok, see refresh_phase4_site.sh output)",
                 )
-            log(f"[phase4] site JSON refresh DONE — "
-                f"{REPO}/web/public/data/{{forbidden_map,dream_walks,attractors}}.json")
+                log(f"[phase4] site refresh DONE — {live_line.strip()}")
+            else:
+                log(
+                    f"[phase4] site refresh FAILED rc={result.returncode}: "
+                    f"{result.stderr[-300:]}"
+                )
+        except subprocess.TimeoutExpired:
+            log(f"[phase4] site refresh TIMED OUT (>5min) — skipping")
         except Exception as e:
-            log(f"[phase4] site JSON refresh FAILED: {type(e).__name__}: {e}")
+            log(f"[phase4] site refresh FAILED: {type(e).__name__}: {e}")
 
     log(f"\n[phase4] DONE — ran {n_chains_run} chains across {cycle_idx} cycles")
     return 0
