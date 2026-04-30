@@ -33,13 +33,20 @@ DEFAULT_TARGET_EFFECTIVE = 100.0
 # Phase 4 generation budget: previously a fixed 600-token cap cut most
 # thought blocks short, producing 46% coherence_break ends. New design
 # (2026-04-30) gives the model effective free reign — 4000 tokens — and
-# instead detects pathological runaway repetition (any single token ID
-# appearing ≥30 times in the last 100 generated tokens) and aborts that
-# specific failure mode early. Most coherence_break ends should now be
-# real model failures rather than us cutting it off.
+# instead detects pathological loop patterns and aborts early.
+#
+# Two patterns we catch:
+#   1. Hard repeat: the same token id appears ≥RUNAWAY_REPEAT_THRESHOLD
+#      times in the trailing RUNAWAY_WINDOW tokens.
+#   2. Soft loop: the trailing window has fewer than
+#      RUNAWAY_MIN_UNIQUE distinct token ids — the model is cycling
+#      through a small vocabulary repeatedly (observed in Harmonies /
+#      Luminous chains where the model emitted "Luminous. Luminosities.
+#      Symmetries. Luminous." for 11k+ chars without committing).
 DEFAULT_MAX_NEW_TOKENS = 4000
-RUNAWAY_WINDOW = 100        # number of trailing tokens to inspect
-RUNAWAY_REPEAT_THRESHOLD = 30  # if any single token appears ≥N times in window → stop
+RUNAWAY_WINDOW = 100             # trailing tokens to inspect
+RUNAWAY_REPEAT_THRESHOLD = 30    # hard-repeat: same token ≥N times in window
+RUNAWAY_MIN_UNIQUE = 25          # soft-loop: <N unique tokens in window
 DEFAULT_LENGTH_CAP = 20
 SELF_LOOP_WINDOW = 3   # if last 3 targets repeat any earlier target → end
 
@@ -110,14 +117,18 @@ def _generate(handle, prompt_text: str, seed: int, max_new_tokens: int) -> str:
             len(recent_tokens) == RUNAWAY_WINDOW
             and n_emitted % 20 == 0
         ):
-            # Find max repetition count in the rolling window.
-            max_count = 0
             counts: dict[int, int] = {}
             for t in recent_tokens:
                 counts[t] = counts.get(t, 0) + 1
-                if counts[t] > max_count:
-                    max_count = counts[t]
-            if max_count >= RUNAWAY_REPEAT_THRESHOLD:
+            max_count = max(counts.values()) if counts else 0
+            n_unique = len(counts)
+            # Hard repeat: same token id ≥N times in window.
+            # Soft loop: the model is cycling a small vocabulary
+            # (e.g. "Luminous. Luminosities. Symmetries.").
+            if (
+                max_count >= RUNAWAY_REPEAT_THRESHOLD
+                or n_unique < RUNAWAY_MIN_UNIQUE
+            ):
                 aborted_runaway = True
                 break
 
