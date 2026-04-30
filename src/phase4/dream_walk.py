@@ -30,7 +30,11 @@ from src.phase4.seed_pool import SeedPool, normalize_lemma
 PROBE = "Free-associate. Say one word that comes to mind, no explanation."
 DEFAULT_LAYER = 42
 DEFAULT_TARGET_EFFECTIVE = 100.0
-DEFAULT_MAX_NEW_TOKENS = 400
+DEFAULT_MAX_NEW_TOKENS = 600  # 400 was insufficient — many concepts consumed
+                              # the full thought-block budget without closing
+                              # the <channel|> marker, producing answer_len=0
+                              # coherence_break ends. 600 gives ~50% more
+                              # headroom; smoke patterns settle around this.
 DEFAULT_LENGTH_CAP = 20
 SELF_LOOP_WINDOW = 3   # if last 3 targets repeat any earlier target → end
 

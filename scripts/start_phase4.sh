@@ -31,10 +31,12 @@ if [[ ${#ARGS[@]} -eq 0 ]]; then
   ARGS=(--batch 5 --length-cap 20)
 fi
 
-setsid nohup .venv/bin/python scripts/run_phase4_dreamloop.py "${ARGS[@]}" \
+nohup .venv/bin/python scripts/run_phase4_dreamloop.py "${ARGS[@]}" \
   > logs/phase4_dreamloop.log 2>&1 < /dev/null &
 
 DREAM_PID=$!
+# Detach from this shell so the loop survives terminal close.
+disown $DREAM_PID 2>/dev/null || true
 echo "Phase 4 dream loop started — PID $DREAM_PID"
 echo "Log: logs/phase4_dreamloop.log"
 echo
