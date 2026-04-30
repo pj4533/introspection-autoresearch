@@ -207,7 +207,7 @@ function Explainer() {
       <div className="text-xs uppercase tracking-[0.18em] text-[var(--ink-faint)] mb-4">
         How to read this
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <ExplainerCorner
           dotColor="#7aa2ff"
           title="Eyes open"
@@ -217,6 +217,11 @@ function Explainer() {
           dotColor="#ff7a8a"
           title="Walking blind"
           body="High output rate, low trace rate. The model says the concept it was nudged toward, but its own reasoning never registers what's happening. These are forbidden."
+        />
+        <ExplainerCorner
+          dotColor="#9affd4"
+          title="Cart-before-horse"
+          body="Low output rate, high trace rate. The model's reasoning surfaced the concept, but its final answer committed to something else. The trace got there first."
         />
         <ExplainerCorner
           dotColor="#525866"
