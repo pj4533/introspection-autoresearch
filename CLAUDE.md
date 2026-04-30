@@ -22,29 +22,34 @@ loop would re-create the burn that paused Phase 2c.
 
 ## Canonical references (read first if orienting)
 
-- **Active phase plan**: [`docs/phase2h_plan.md`](docs/phase2h_plan.md) —
-  SAE-feature injection over all seven Capraro fault lines. The only
-  phase being worked on going forward.
+- **Active phase plan**: [`docs/phase4_plan.md`](docs/phase4_plan.md) —
+  Dream Walks + Forbidden Map. Overnight autoresearch loop in which
+  Gemma 4 free-associates through chains of steered concepts; per-step
+  CoT-vs-output asymmetry feeds a "Forbidden Map" of concepts the
+  model can be made to think but cannot notice itself thinking. The
+  only phase being worked on going forward.
 - **Roadmap** (full project trajectory, all phases past and present):
   [`docs/roadmap.md`](docs/roadmap.md)
 - **Architectural decisions** (ADR log): [`docs/decisions.md`](docs/decisions.md)
 - Plain-English project writeup (public-facing): [`docs/plain_english.md`](docs/plain_english.md)
 - Phase 1 technical results: [`docs/phase1_results.md`](docs/phase1_results.md)
 - Phase 1.5 technical results (paper-method abliteration): [`docs/phase1_5_results.md`](docs/phase1_5_results.md)
+- Phase 3 technical results (Gemma 4 reproduction): [`docs/phase3_results.md`](docs/phase3_results.md)
 - Judge calibration data (local Qwen): [`docs/calibration_results_qwen35b.md`](docs/calibration_results_qwen35b.md)
 - Full original spec: [`docs/01_introspection_steering_autoresearch.md`](docs/01_introspection_steering_autoresearch.md)
 - README: [`README.md`](README.md) (repo layout, setup, running)
 - Archived phase docs: [`docs/archive/`](docs/archive/) — full Phase 2
-  history (2b/2c/2d/2f/2g/2h/2i), all closed as of 2026-04-29 in favor
-  of starting fresh on Gemma 4.
+  history (2b/2c/2d/2f/2g/2h/2i) closed 2026-04-29; Drift's original
+  Phase 4 draft (`phase4_introspective_access_threshold_drift.md`)
+  archived 2026-04-30 in favor of the dream-walks reshape.
 
 **Rule:** if a project decision only lives in chat logs, memory files, or
 ephemeral plan files, it's a bug. Commit it to `docs/roadmap.md`
 (forward-looking) or `docs/decisions.md` (rationale for past choices).
 
-## Status snapshot (2026-04-29)
+## Status snapshot (2026-04-30)
 
-**Phase 2 is closed. Phase 3 scoping in progress (Gemma 4 reproduction).**
+**Phases 1, 1.5, 2, and 3 are closed. Phase 4 (Dream Walks + Forbidden Map) is the active phase.**
 
 Phase 2 spent two weeks iterating on autoresearch substrates for steering
 Gemma 3 12B's introspection circuit. Five substrates were built and

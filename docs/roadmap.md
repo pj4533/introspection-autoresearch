@@ -2,20 +2,23 @@
 
 Everything this project has done, is doing, and plans to do — phase by phase, with rationale. This document is the source of truth for the project's trajectory; if anything important lives only in chat logs or ephemeral plan files, it's a bug.
 
-Last updated: 2026-04-29.
+Last updated: 2026-04-30.
 
 ---
 
 ## Current status in one glance
 
-**Phase 2 is closed as of 2026-04-29.** A new phase (Phase 3 — reproduction
-on Gemma 4) is being scoped. The autoresearch infrastructure built in
-Phase 2 produced real findings about what the introspection circuit
-detects (and doesn't), all of which are documented and committed; none
-of the contrast-pair, fault-line direction, or single-SAE-feature
-substrates produced reliable strict detection beyond the 6% Phase 1
-baseline, and the project is now revisiting fundamentals on a newer
-model rather than iterating further on the Phase 2 substrate question.
+**Phases 1, 1.5, 2, and 3 are closed. Phase 4 (Dream Walks + Forbidden
+Map) is the active phase as of 2026-04-30.** Phase 3 reproduced
+Macar et al. on Gemma 4 31B-IT (24.5% vanilla / 30.0% paper-method
+abliteration, both 4–5× Phase 1's 6%) using a free-association probe
+to bypass Gemma 4's CoT meta-reasoning. Phase 4 turns the unique
+Gemma 4 visibility (the `<|channel>thought` block) into the primary
+measurement axis: an overnight autoresearch loop walks the model
+through chains of self-generated free-associations under steering,
+measuring at every step whether the CoT recognized the steering it
+was under. The artifact is the Forbidden Map — concepts the model
+can be made to think but cannot notice itself thinking.
 
 | Phase | Scope | Status |
 |---|---|---|
@@ -31,7 +34,8 @@ model rather than iterating further on the Phase 2 substrate question.
 | **2h: SAE feature-space mean-diff** | Per-fault-line mean-diff of SAE-encoded activations between positive/control corpora, projected via W_dec | ✅ Implemented + empirically retired 2026-04-28. Directions had texture but pointed toward another normal-text state, not anomalous-saturation; 0/24 detect. Archive: [`archive/phase2h_plan.md`](archive/phase2h_plan.md). |
 | **2i: Calibrated-saturation single-feature** | Single SAE feature injected at α = N × natural-max activation, N ∈ {1, 5, 10, 20} | ✅ Implemented + closed 2026-04-29. Saturation magnitude is necessary (sub-saturation produced 180/180 rote denials); but at 20× saturation, only 2/60 strict detections vs Peace mean_diff 4/6. Substrate viable but doesn't reliably fire the introspection gate. Archive: [`archive/phase2i_results.md`](archive/phase2i_results.md). |
 | **3 (legacy): Public-facing visualization** | Next.js site deployed to Vercel — built early, kept running through Phase 2 | ✅ Done 2026-04-17 — live at [did-the-ai-notice.vercel.app](https://did-the-ai-notice.vercel.app). Will be repurposed as Phase 2 archive + Phase 3 results page once Phase 3 is scoped. |
-| **Phase 3: Gemma 4 reproduction** | Reproduce Macar et al. introspection mechanism on the largest Gemma 4 that fits on the Mac Studio M2 Ultra (likely 31B Dense or 26B MoE A4B) | 🟡 **Scoping.** Phase 2 close → Phase 3 design starting 2026-04-29. |
+| **Phase 3: Gemma 4 reproduction** | Reproduce Macar et al. introspection mechanism on Gemma 4 31B-IT (MLX 8-bit, 60 layers, L=42, free-association probe) | ✅ Done 2026-04-29. Vanilla 24.5% / abliteration 30.0%, both 4–5× Phase 1's 6%. Results: [`phase3_results.md`](phase3_results.md). |
+| **Phase 4: Dream Walks + Forbidden Map** | Overnight autoresearch loop — Gemma 4 free-associates through chains of steered concepts; per-step CoT-vs-output asymmetry feeds a per-concept "Forbidden Map" of opacity scores | 🟡 **Active as of 2026-04-30.** Plan: [`phase4_plan.md`](phase4_plan.md). |
 
 ---
 
