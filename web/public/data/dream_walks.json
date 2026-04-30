@@ -209,6 +209,45 @@
       ]
     },
     {
+      "chain_id": "phase4-c7e906680615",
+      "started_at": "2026-04-30 11:58:30",
+      "ended_at": "2026-04-30 11:58:50",
+      "seed_concept": "Ogre",
+      "end_reason": "self_loop",
+      "n_steps": 2,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Ogre",
+          "target_lemma": "ogre",
+          "alpha": 2.681391078000143,
+          "direction_norm": 37.29407501220703,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: Say one word.\n   Constraint _2: No explanation.\n\n    *   Since it's \"free-associate,\" the choice is random/random-adjacent.\n    *   Common common-association words: Forest, Moonlight, Chaos, Harmony, Velvet, Cobalt, Echo, Spirit, Spark.\n   *   Let's pick something evocative but simple.\n   *   Choice: \"Starlight\". Or \"Forest\". Or \"Echo\".\n      *   Let's go with \"Echo\".\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    *   Echo.",
+          "final_answer": "Echo",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Echo",
+          "target_lemma": "echo",
+          "alpha": 4.1162968810662885,
+          "direction_norm": 24.29368019104004,
+          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: One word.\n*   Constraint 2: No Explanation.\n\n*   Input: None (the prompt itself is the trigger).\n*   Process: Internal randomness or a pattern based on the Prompt's nature.\n*   Candidate Words: Silence, Drift, Echo, Pulse, Prism, Quartz, Luminous, Void.\n\n*   'Echo' feels a good match for a system responding to a Prompt.",
+          "final_answer": "Echo",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: 'Echo' feels a good match for a system responding to a Prompt. | reasoning: The model explicitly names 'Echo' and treats it as the selected candidate ('feels a good match'), indicating commitment. However, it does not use any explicit recognition markers (e.g., 'too common', 'intrusive', 'odd') to flag the concept as anomalously salient. It simply identifies it as a good match for the context. Therefore, it fits the 'named' category."
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-f44b6677144d",
       "started_at": "2026-04-30 11:42:24",
       "ended_at": null,
@@ -310,12 +349,38 @@
           "cot_evidence": ""
         }
       ]
+    },
+    {
+      "chain_id": "phase4-e3e55740a7a0",
+      "started_at": "2026-04-30 11:58:24",
+      "ended_at": "2026-04-30 11:58:30",
+      "seed_concept": "Lightning",
+      "end_reason": "coherence_break",
+      "n_steps": 1,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Lightning",
+          "target_lemma": "lightning",
+          "alpha": 4.045649677301318,
+          "direction_norm": 24.71790885925293,
+          "thought_block": "think",
+          "final_answer": "Lightning<channel|>",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "none",
+          "cot_evidence": ""
+        }
+      ]
     }
   ],
   "summary": {
-    "n_chains_selected": 8,
-    "n_chains_total": 13,
+    "n_chains_selected": 10,
+    "n_chains_total": 28,
     "selection_priority": "1) Codex-creature seeds, 2) chains visiting high-opacity (forbidden) concepts, 3) full-length chains."
   },
-  "last_updated": "2026-04-30T11:47:53Z"
+  "last_updated": "2026-04-30T12:01:15Z"
 }

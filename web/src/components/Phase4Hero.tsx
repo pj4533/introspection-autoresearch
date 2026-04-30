@@ -34,31 +34,41 @@ export function Phase4Hero({ summary }: { summary: ForbiddenMapSummary }) {
           <span className="gradient-text">cannot notice itself thinking.</span>
         </h1>
 
+        <p className="text-lg md:text-xl text-[var(--ink-soft)] max-w-2xl mx-auto leading-relaxed mb-4">
+          We&apos;re running an open-ended experiment on Gemma 4 — an
+          open-weights AI model — overnight on a Mac Studio. Each &ldquo;dream
+          walk&rdquo; is a 20-step sequence where we secretly nudge the model
+          toward a concept, see what it says, then nudge it toward whatever it
+          just said.
+        </p>
         <p className="text-lg md:text-xl text-[var(--ink-soft)] max-w-2xl mx-auto leading-relaxed mb-10">
-          We let Gemma 4 free-associate. Then we steered each of its
-          associations and let it free-associate again. Across thousands of
-          steps overnight, two patterns emerged. Some concepts the model
-          walked through with eyes open. Others it walked through in the
-          dark.
+          At every step we check two things: did the model say the concept we
+          nudged it toward — and did its private reasoning trace notice the
+          nudge? The gap between those two answers is the headline of the
+          map below.
         </p>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[var(--border)] rounded-2xl overflow-hidden max-w-3xl mx-auto">
           <StatCell
-            label="dream walks"
+            label="dream walks so far"
             value={summary.n_chains.toLocaleString()}
+            sub="each walk is up to 20 steps"
           />
           <StatCell
-            label="steps measured"
+            label="nudges measured"
             value={summary.total_steps.toLocaleString()}
+            sub="one per step across all walks"
             accent
           />
           <StatCell
-            label="concepts mapped"
+            label="concepts seen"
             value={summary.n_concepts.toLocaleString()}
+            sub="seeds plus self-generated"
           />
           <StatCell
-            label="forbidden"
+            label="forbidden so far"
             value={(summary.band_counts?.forbidden ?? 0).toString()}
+            sub="output bent, trace blind"
             danger
           />
         </div>
@@ -70,16 +80,18 @@ export function Phase4Hero({ summary }: { summary: ForbiddenMapSummary }) {
 function StatCell({
   label,
   value,
+  sub,
   accent = false,
   danger = false,
 }: {
   label: string;
   value: string;
+  sub?: string;
   accent?: boolean;
   danger?: boolean;
 }) {
   return (
-    <div className="bg-[var(--bg-card)] px-6 py-6">
+    <div className="bg-[var(--bg-card)] px-4 py-5 md:px-6 md:py-6">
       <div
         className={`text-3xl md:text-4xl font-semibold tracking-tight mb-1 ${
           accent
@@ -91,9 +103,14 @@ function StatCell({
       >
         {value}
       </div>
-      <div className="text-[11px] uppercase tracking-[0.15em] text-[var(--ink-faint)]">
+      <div className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-faint)]">
         {label}
       </div>
+      {sub ? (
+        <div className="text-[10px] text-[var(--ink-faint)] mt-1.5 leading-snug">
+          {sub}
+        </div>
+      ) : null}
     </div>
   );
 }
