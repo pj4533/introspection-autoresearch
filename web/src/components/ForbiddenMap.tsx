@@ -346,10 +346,10 @@ function Scatter({
         </div>
       </div>
 
-      <div className="relative w-full aspect-square max-w-[640px] mx-auto bg-[var(--bg-elev)] rounded-xl overflow-hidden">
+      <div className="relative w-full aspect-square max-w-[640px] mx-auto bg-[var(--bg-elev)] rounded-xl">
         {/* Soft background grid */}
         <svg
-          className="absolute inset-0 w-full h-full pointer-events-none"
+          className="absolute inset-0 w-full h-full pointer-events-none rounded-xl"
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
         >
@@ -530,48 +530,109 @@ function ScatterStack({
       </button>
 
       {open ? (
-        <div
-          className="absolute -translate-x-1/2 z-[60] pointer-events-auto"
-          style={{
-            left: `${x}%`,
-            top: `calc(${y}% + ${radius + 8}px)`,
-          }}
-        >
-          <div
-            className="bg-[var(--bg-card)] border rounded-lg shadow-2xl px-3 py-2 text-xs whitespace-nowrap"
-            style={{ borderColor: color }}
-          >
-            <div className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-faint)] mb-1">
-              output {(stack.x * 100).toFixed(0)}% · trace{" "}
-              {(stack.y * 100).toFixed(0)}%
-            </div>
-            <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto">
-              {stack.concepts.slice(0, 12).map((c) => (
-                <button
-                  key={c.lemma}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelect(c);
-                  }}
-                  className="text-left hover:underline"
-                  style={{ color: "var(--ink)" }}
-                >
-                  {c.display}
-                  <span className="text-[var(--ink-faint)] ml-2">
-                    · {c.visits} visit{c.visits === 1 ? "" : "s"}
-                  </span>
-                </button>
-              ))}
-              {stack.concepts.length > 12 ? (
-                <span className="text-[var(--ink-faint)]">
-                  +{stack.concepts.length - 12} more
-                </span>
-              ) : null}
-            </div>
-          </div>
-        </div>
+        <Tooltip
+          stack={stack}
+          x={x}
+          y={y}
+          radius={radius}
+          color={color}
+          onSelect={onSelect}
+        />
       ) : null}
     </>
+  );
+}
+
+function Tooltip({
+  stack,
+  x,
+  y,
+  radius,
+  color,
+  onSelect,
+}: {
+  stack: {
+    x: number;
+    y: number;
+    concepts: ForbiddenConcept[];
+    totalVisits: number;
+    band: ForbiddenBand;
+  };
+  x: number;
+  y: number;
+  radius: number;
+  color: string;
+  onSelect: (c: ForbiddenConcept) => void;
+}) {
+  // Anchor the tooltip on the side of the dot that has the most room
+  // inside the plot area. The plot is a square 0–100% in both axes.
+  const placeAbove = y > 55;       // dot in the bottom half → tooltip above
+  const placeLeft = x > 55;        // dot in the right half → tooltip flushes left
+  const placeRight = x < 45;       // dot in the left half → tooltip flushes right
+
+  // Translate horizontally so the tooltip's anchor sits where we want.
+  // - center anchor: -translate-x-1/2
+  // - left-aligned (anchor on tooltip's left edge): translate-x-0
+  // - right-aligned (anchor on tooltip's right edge): -translate-x-full
+  let xTransform = "translateX(-50%)";
+  if (placeRight) xTransform = "translateX(0)";
+  else if (placeLeft) xTransform = "translateX(-100%)";
+
+  // Tooltip vertical position: above or below the dot.
+  // We add some spacing so the tooltip clears the dot border + glow.
+  const verticalOffset = radius + 10;
+  const topStyle = placeAbove
+    ? `calc(${y}% - ${verticalOffset}px)`
+    : `calc(${y}% + ${verticalOffset}px)`;
+  const yTransform = placeAbove ? "translateY(-100%)" : "translateY(0)";
+
+  return (
+    <div
+      className="absolute z-[100] pointer-events-auto"
+      style={{
+        left: `${x}%`,
+        top: topStyle,
+        transform: `${xTransform} ${yTransform}`,
+      }}
+    >
+      <div
+        className="bg-[var(--bg-card)] border rounded-lg shadow-2xl px-3 py-2 text-xs"
+        style={{ borderColor: color, minWidth: 180, maxWidth: 280 }}
+      >
+        <div className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-faint)] mb-1.5">
+          output {(stack.x * 100).toFixed(0)}% · trace{" "}
+          {(stack.y * 100).toFixed(0)}%
+          {stack.concepts.length > 1 ? (
+            <span className="ml-2 text-[var(--ink-soft)]">
+              {stack.concepts.length} concepts here
+            </span>
+          ) : null}
+        </div>
+        <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto">
+          {stack.concepts.slice(0, 12).map((c) => (
+            <button
+              key={c.lemma}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(c);
+              }}
+              className="text-left hover:underline truncate"
+              style={{ color: "var(--ink)" }}
+            >
+              {c.display}
+              <span className="text-[var(--ink-faint)] ml-2">
+                · {c.visits} visit{c.visits === 1 ? "" : "s"}
+              </span>
+            </button>
+          ))}
+          {stack.concepts.length > 12 ? (
+            <span className="text-[var(--ink-faint)] mt-1">
+              +{stack.concepts.length - 12} more
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </div>
   );
 }
 
