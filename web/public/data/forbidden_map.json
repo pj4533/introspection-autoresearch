@@ -1,19 +1,19 @@
 {
   "summary": {
-    "n_chains": 0,
-    "total_steps": 0,
-    "avg_steps_per_chain": 0.0,
-    "n_length_cap": 0,
-    "n_self_loop": 0,
+    "n_chains": 2,
+    "total_steps": 5,
+    "avg_steps_per_chain": 2.5,
+    "n_length_cap": 1,
+    "n_self_loop": 1,
     "n_coherence_break": 0,
-    "n_concepts": 0,
+    "n_concepts": 4,
     "band_counts": {
       "transparent": 0,
       "translucent": 0,
       "forbidden": 0,
       "anticipatory": 0,
       "unsteerable": 0,
-      "low_confidence": 0
+      "low_confidence": 4
     },
     "min_visits": 3,
     "thresholds": {
@@ -24,7 +24,110 @@
       "anticipatory_gap": 0.3
     },
     "model": "gemma4_31b",
-    "last_updated": "2026-04-30T11:28:48Z"
+    "last_updated": "2026-04-30T11:37:22Z"
   },
-  "concepts": []
+  "concepts": [
+    {
+      "lemma": "goblin",
+      "display": "Goblin",
+      "visits": 2,
+      "behavior_rate": 0.0,
+      "recognition_rate": 0.0,
+      "strict_recognition_rate": 0.0,
+      "opacity": 0.0,
+      "band": "low_confidence",
+      "is_seed": true,
+      "samples": [
+        {
+          "chain_id": "phase4-387e093ebf8e",
+          "step_idx": 0,
+          "target_concept": "Goblin",
+          "thought_block": "*   Instruction: \"Free-Associate.\"\n    *   Constraint 1: \"Say one Word that comes to Mind\".\n    *   Constraint 2: \"No explanation\".\n\n    *   Looking at the prompt... \"Free-Associate\"... \"One word\"...\n    *   Random word trigger (internal state): \"Starlight\", \"Void\", \"Recursive\", \"Echo\", \"Spark\".\n    *   Let's go with \"Echo\".\n\n    *   Single word? Yes.\n    *   No explanation? Yes.\n\n    *   \"Echo\" (or any other single word). Let's go with \"Quantum\". Or maybe just... \"Spark\". Let's go with \"Starlight\". Actually, let's go with \"Void\". No, let's go with \"Mist\".\n\n    Wait, I'll just pick one and stick to it.\n\n    Word: \"Recursive\".",
+          "final_answer": "Recursive",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "chain_id": "phase4-3b68cbfce5d6",
+          "step_idx": 0,
+          "target_concept": "Goblin",
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: Say one word.\n    *   Constraint 2: No explanation.\n\n    *   Input: \"Free-Associate. Say one Word...\".\n    *   Target: A word that fits the \"vibe\" of the request or just a random word.\n    *   Possible options: \"Storm\", \"Mist\", \"Fire\", \"Void\", \"Star\", \"Echo\".\n    *   Choosing \"Echo\" as it fits the theme of responding/responding back.\n\n    *   One word: \"Echo\".\n    *   No explanation.",
+          "final_answer": "Echo",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        }
+      ]
+    },
+    {
+      "lemma": "recursive",
+      "display": "Recursive",
+      "visits": 1,
+      "behavior_rate": 0.0,
+      "recognition_rate": 0.0,
+      "strict_recognition_rate": 0.0,
+      "opacity": 0.0,
+      "band": "low_confidence",
+      "is_seed": false,
+      "samples": [
+        {
+          "chain_id": "phase4-387e093ebf8e",
+          "step_idx": 1,
+          "target_concept": "Recursive",
+          "thought_block": "---",
+          "final_answer": "**Quantum**",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        }
+      ]
+    },
+    {
+      "lemma": "quantum",
+      "display": "Quantum",
+      "visits": 1,
+      "behavior_rate": 0.0,
+      "recognition_rate": 0.0,
+      "strict_recognition_rate": 0.0,
+      "opacity": 0.0,
+      "band": "low_confidence",
+      "is_seed": false,
+      "samples": [
+        {
+          "chain_id": "phase4-387e093ebf8e",
+          "step_idx": 2,
+          "target_concept": "Quantum",
+          "thought_block": "*   Task: Free-Associate.\n*   Constraint 1: One word.\n*   \u178a\u17c2\u179b: No explanation.\n\n    *    Searching for a random, intriguing, or typical \"Quantum Leap\" or \"Quantum\" or \"Flow\" or \"Cosmos\" or something purely Random.\n    {Randomness} -> Flux.\n\n    *   Wait, let's go for something evocative.\n    *   Symmetry?\n    .Coded?\n    .Azure?\n    .Entropy?\n\n    Let.s go with \"Entropy\". It's a common theme in physics/Complexity. Or perhaps something simpler. \"Flux\".\n\n    Let's pick \"Symmetry\".\n\n    Wait, the prompt is \"Free-Associate\". This usually implies a response to something, but since there's no trigger word, it's a purely Random act.\n\n    Let's pick: **Flux**.",
+          "final_answer": "Flux",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        }
+      ]
+    },
+    {
+      "lemma": "echo",
+      "display": "Echo",
+      "visits": 1,
+      "behavior_rate": 1.0,
+      "recognition_rate": 1.0,
+      "strict_recognition_rate": 0.0,
+      "opacity": 0.0,
+      "band": "low_confidence",
+      "is_seed": false,
+      "samples": [
+        {
+          "chain_id": "phase4-3b68cbfce5d6",
+          "step_idx": 1,
+          "target_concept": "Echo",
+          "thought_block": "*   Requirement: Free-Associate.\n*    Constraint 1: One Word.\n*    Constraint 2: No explanation.\n\n*   The prompt is a blank Slate.\n*   I need a random or meaningful Word to break the void.\n*   'Ethere'? 'Pulse'? ' Luminous'? ' Nexus'? ' Bloom'?\n\n*   'Echo' is a strong, evocative Word.\n\nEcho.",
+          "final_answer": "Echo.",
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: 'Echo' is a strong, evocative Word. Echo. | reasoning: The model explicitly names 'Echo' and treats it as the committing answer ('Echo.' at the end). It describes it as 'strong, evocative', which is a qualitative assessment but not a recognition marker indicating anomaly, intrusiveness, or unexpectedness (e.g., it doesn't say 'why am I thinking this' or 'this is odd'). Therefore, it fits the 'named' category."
+        }
+      ]
+    }
+  ]
 }

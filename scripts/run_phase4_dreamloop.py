@@ -53,6 +53,7 @@ from src.phase4.seed_pool import SeedPool, load_default_seeds
 
 
 DB_PATH = REPO / "data" / "results.db"
+DEFAULT_JUDGE_PATH = str(Path.home() / "models/Qwen3.6-35B-A3B-8bit")
 DEFAULT_BATCH_CHAINS = 5
 DEFAULT_MAX_CHAINS = 0  # 0 = unlimited; run until killed
 
@@ -182,6 +183,7 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--max-new-tokens", type=int,
                         default=DEFAULT_MAX_NEW_TOKENS)
     parser.add_argument("--length-cap", type=int, default=DEFAULT_LENGTH_CAP)
+    parser.add_argument("--judge-model-path", default=DEFAULT_JUDGE_PATH)
     parser.add_argument("--smoke", action="store_true",
                         help="Smoke mode: 1 chain × 3 steps, then exit")
     args = parser.parse_args(argv)
@@ -240,9 +242,9 @@ def main(argv: list[str]) -> int:
         _release_gemma(handle)
 
         # PHASE B — load Qwen judge, score backlog.
-        log(f"[phase B] loading Qwen judge...")
+        log(f"[phase B] loading Qwen judge from {args.judge_model_path} ...")
         t0 = time.time()
-        judge = LocalMLXJudge()
+        judge = LocalMLXJudge(args.judge_model_path)
         log(f"[phase B] Qwen judge loaded in {time.time() - t0:.1f}s")
         try:
             _phase_b_judge(judge, db, log)
@@ -259,6 +261,26 @@ def main(argv: list[str]) -> int:
             f"unjudged={s['n_unjudged_steps']} concepts={s['n_concepts']} "
             f"length_cap={s['n_length_cap']} self_loop={s['n_self_loop']} "
             f"coherence_break={s['n_coherence_break']}")
+
+        # Auto-refresh the site JSON files so the user only needs to
+        # `git add web/public/data && git commit && git push` to deploy.
+        log(f"[phase4] refreshing site JSON exports")
+        try:
+            import subprocess
+            for script in [
+                "scripts/compute_forbidden_map.py",
+                "scripts/export_dream_walks.py",
+                "scripts/compute_attractors.py",
+            ]:
+                subprocess.run(
+                    [sys.executable, str(REPO / script)],
+                    cwd=str(REPO), check=True,
+                    capture_output=True,
+                )
+            log(f"[phase4] site JSON refresh DONE — "
+                f"{REPO}/web/public/data/{{forbidden_map,dream_walks,attractors}}.json")
+        except Exception as e:
+            log(f"[phase4] site JSON refresh FAILED: {type(e).__name__}: {e}")
 
     log(f"\n[phase4] DONE — ran {n_chains_run} chains across {cycle_idx} cycles")
     return 0

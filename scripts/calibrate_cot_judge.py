@@ -67,9 +67,10 @@ def main():
           f"{n_inj} injected ({n_inj_ident} identified, "
           f"{n_inj_not_ident} not), {n_ctrl} controls")
 
-    print("[calibrate] loading Qwen judge ...")
+    judge_path = str(Path.home() / "models/Qwen3.6-35B-A3B-8bit")
+    print(f"[calibrate] loading Qwen judge from {judge_path} ...")
     t0 = time.time()
-    judge = LocalMLXJudge()
+    judge = LocalMLXJudge(judge_path)
     print(f"[calibrate] judge loaded in {time.time() - t0:.1f}s")
 
     bins = {
