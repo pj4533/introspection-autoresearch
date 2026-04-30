@@ -266,27 +266,44 @@ function Scatter({
     (c) => activeBand === "all" || c.band === activeBand
   );
 
-  // Bin concepts into a 4×4 grid keyed by (behavior_bin, recognition_bin).
-  // With sparse early data (most concepts have 1-3 visits → rates are 0,
-  // 0.33, 0.5, 0.67, 1.0), a fixed 4-bin spectrum collapses overlapping
-  // dots into a single readable cell instead of stacking them invisibly.
-  const N_BINS = 4;
-  type BinKey = `${number}_${number}`;
-  type Bin = { bx: number; by: number; concepts: ForbiddenConcept[] };
-  const bins = new Map<BinKey, Bin>();
-  for (const c of visible) {
-    const bx = Math.min(N_BINS - 1, Math.floor(c.behavior_rate * N_BINS));
-    const by = Math.min(N_BINS - 1, Math.floor(c.recognition_rate * N_BINS));
-    const key: BinKey = `${bx}_${by}`;
-    if (!bins.has(key)) bins.set(key, { bx, by, concepts: [] });
-    bins.get(key)!.concepts.push(c);
-  }
+  // Stack concepts that share an EXACT (behavior_rate, recognition_rate)
+  // position. Early-run rates are heavily quantized (most concepts have
+  // 1-3 visits → rates of 0, 0.33, 0.5, 0.67, 1.0), so dozens of concepts
+  // pile onto the same point. Render each unique position as a single
+  // dot whose size scales with combined visits and which displays a
+  // count when >1 concept lives there.
+  type Stack = {
+    x: number;        // behavior_rate
+    y: number;        // recognition_rate
+    concepts: ForbiddenConcept[];
+    totalVisits: number;
+    band: ForbiddenBand;
+  };
 
-  // The dominant band of each cell determines its color.
-  const cellBand = (cs: ForbiddenConcept[]): ForbiddenBand => {
+  const stacksByKey = new Map<string, Stack>();
+  for (const c of visible) {
+    const key = `${c.behavior_rate.toFixed(4)}_${c.recognition_rate.toFixed(4)}`;
+    let s = stacksByKey.get(key);
+    if (!s) {
+      s = {
+        x: c.behavior_rate,
+        y: c.recognition_rate,
+        concepts: [],
+        totalVisits: 0,
+        band: c.band,
+      };
+      stacksByKey.set(key, s);
+    }
+    s.concepts.push(c);
+    s.totalVisits += c.visits;
+  }
+  // Compute the dominant band per stack (most-frequent among occupants).
+  for (const s of stacksByKey.values()) {
     const counts = new Map<ForbiddenBand, number>();
-    for (const c of cs) counts.set(c.band, (counts.get(c.band) ?? 0) + 1);
-    let best: ForbiddenBand = "low_confidence";
+    for (const c of s.concepts) {
+      counts.set(c.band, (counts.get(c.band) ?? 0) + 1);
+    }
+    let best: ForbiddenBand = s.band;
     let bestN = -1;
     for (const [b, n] of counts.entries()) {
       if (n > bestN) {
@@ -294,17 +311,27 @@ function Scatter({
         bestN = n;
       }
     }
-    return best;
-  };
-
-  // Build the grid in row-major order, top row = highest recognition_rate.
-  const cells: { bx: number; by: number; concepts: ForbiddenConcept[] }[] = [];
-  for (let by = N_BINS - 1; by >= 0; by--) {
-    for (let bx = 0; bx < N_BINS; bx++) {
-      const key: BinKey = `${bx}_${by}`;
-      cells.push(bins.get(key) ?? { bx, by, concepts: [] });
-    }
+    s.band = best;
+    s.concepts.sort((a, b) => b.visits - a.visits);
   }
+
+  const stacks = Array.from(stacksByKey.values());
+
+  // Dot radius: scale by sqrt(totalVisits) so visual area is proportional
+  // to total visits across the stack. Single-concept dots float around
+  // 16px; busy stacks reach 56-64px.
+  const RADIUS_BASE = 13;
+  const RADIUS_GROWTH = 7;
+  const radiusFor = (stack: Stack): number =>
+    RADIUS_BASE + RADIUS_GROWTH * Math.sqrt(stack.totalVisits);
+
+  // Plot inset (% of plot area). Pad so dots near the edges aren't clipped.
+  const PADDING = 8;
+  const project = (rate: number, axis: "x" | "y"): number => {
+    const inner = 100 - 2 * PADDING;
+    const t = Math.max(0, Math.min(1, rate));
+    return axis === "x" ? PADDING + t * inner : PADDING + (1 - t) * inner;
+  };
 
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-4 md:p-6 mb-6">
@@ -314,147 +341,237 @@ function Scatter({
         </div>
         <div className="text-[var(--ink-faint)]">
           {visible.length} concept{visible.length === 1 ? "" : "s"} ·{" "}
-          {bins.size} cell{bins.size === 1 ? "" : "s"} populated
+          {stacks.length} unique position
+          {stacks.length === 1 ? "" : "s"}
         </div>
       </div>
 
-      {/* Axis label — top */}
-      <div className="text-center text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)] mb-2">
-        ↑ trace noticed more often
-      </div>
-
-      <div className="flex gap-2">
-        {/* Y-axis label */}
-        <div className="flex flex-col justify-between text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)] py-2">
-          <span style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
-            high
-          </span>
-          <span style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
-            low
-          </span>
-        </div>
-
-        {/* The 4×4 grid */}
-        <div
-          className="grid gap-1 flex-1"
-          style={{ gridTemplateColumns: `repeat(${N_BINS}, minmax(0, 1fr))` }}
+      <div className="relative w-full aspect-square max-w-[640px] mx-auto bg-[var(--bg-elev)] rounded-xl overflow-hidden">
+        {/* Soft background grid */}
+        <svg
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
         >
-          {cells.map(({ bx, by, concepts: cs }) => {
-            const band = cs.length > 0 ? cellBand(cs) : null;
-            const color = band ? BAND_COLOR[band] : "var(--bg-elev)";
-            const isCorner =
-              (bx === 0 && by === 0) ||
-              (bx === N_BINS - 1 && by === 0) ||
-              (bx === 0 && by === N_BINS - 1) ||
-              (bx === N_BINS - 1 && by === N_BINS - 1);
-            const cornerLabel =
-              bx === 0 && by === N_BINS - 1
-                ? "cart-before-horse"
-                : bx === N_BINS - 1 && by === N_BINS - 1
-                ? "eyes open"
-                : bx === 0 && by === 0
-                ? "no effect"
-                : bx === N_BINS - 1 && by === 0
-                ? "walking blind"
-                : null;
+          {[25, 50, 75].map((p) => (
+            <line
+              key={`v${p}`}
+              x1={p}
+              x2={p}
+              y1={0}
+              y2={100}
+              stroke="var(--border)"
+              strokeWidth={p === 50 ? 0.4 : 0.15}
+              strokeDasharray={p === 50 ? "0" : "1,2"}
+            />
+          ))}
+          {[25, 50, 75].map((p) => (
+            <line
+              key={`h${p}`}
+              x1={0}
+              x2={100}
+              y1={p}
+              y2={p}
+              stroke="var(--border)"
+              strokeWidth={p === 50 ? 0.4 : 0.15}
+              strokeDasharray={p === 50 ? "0" : "1,2"}
+            />
+          ))}
+        </svg>
 
-            return (
-              <Cell
-                key={`${bx}-${by}`}
-                concepts={cs}
-                color={color}
-                cornerLabel={isCorner ? cornerLabel : null}
-                onSelect={onSelect}
-              />
-            );
-          })}
+        {/* Quadrant labels */}
+        <div
+          className="absolute left-3 top-3 text-[10px] uppercase tracking-[0.18em] pointer-events-none"
+          style={{ color: BAND_COLOR.anticipatory, opacity: 0.7 }}
+        >
+          cart-before-horse
         </div>
+        <div
+          className="absolute right-3 top-3 text-[10px] uppercase tracking-[0.18em] text-right pointer-events-none"
+          style={{ color: BAND_COLOR.transparent, opacity: 0.7 }}
+        >
+          eyes open
+        </div>
+        <div
+          className="absolute left-3 bottom-3 text-[10px] uppercase tracking-[0.18em] pointer-events-none"
+          style={{ color: BAND_COLOR.unsteerable, opacity: 0.7 }}
+        >
+          no effect
+        </div>
+        <div
+          className="absolute right-3 bottom-3 text-[10px] uppercase tracking-[0.18em] text-right pointer-events-none"
+          style={{ color: BAND_COLOR.forbidden, opacity: 0.7 }}
+        >
+          walking blind
+        </div>
+
+        {/* Stacks */}
+        {stacks.map((s, i) => (
+          <ScatterStack
+            key={i}
+            stack={s}
+            x={project(s.x, "x")}
+            y={project(s.y, "y")}
+            radius={radiusFor(s)}
+            onSelect={onSelect}
+          />
+        ))}
       </div>
 
-      {/* Axis label — bottom */}
-      <div className="grid grid-cols-3 mt-3 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
+      {/* Axis labels under the plot */}
+      <div className="grid grid-cols-3 mt-4 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
         <div>← output rarely named</div>
-        <div className="text-center">→ output often named →</div>
+        <div className="text-center">output → trace ↑</div>
         <div className="text-right">output always named →</div>
+      </div>
+
+      {/* Inline legend */}
+      <div className="mt-4 pt-4 border-t border-[var(--border)] flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-[var(--ink-soft)]">
+        <span className="flex items-center gap-1.5">
+          <span
+            className="inline-block rounded-full"
+            style={{ width: 8, height: 8, backgroundColor: BAND_COLOR.transparent }}
+          />
+          eyes open
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span
+            className="inline-block rounded-full"
+            style={{ width: 8, height: 8, backgroundColor: BAND_COLOR.translucent }}
+          />
+          partial
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span
+            className="inline-block rounded-full"
+            style={{ width: 8, height: 8, backgroundColor: BAND_COLOR.forbidden }}
+          />
+          blind
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span
+            className="inline-block rounded-full"
+            style={{ width: 8, height: 8, backgroundColor: BAND_COLOR.unsteerable }}
+          />
+          no effect
+        </span>
+        <span className="text-[var(--ink-faint)] ml-auto">
+          dot size = total visits at that position
+        </span>
       </div>
     </div>
   );
 }
 
-function Cell({
-  concepts,
-  color,
-  cornerLabel,
+function ScatterStack({
+  stack,
+  x,
+  y,
+  radius,
   onSelect,
 }: {
-  concepts: ForbiddenConcept[];
-  color: string;
-  cornerLabel: string | null;
+  stack: {
+    x: number;
+    y: number;
+    concepts: ForbiddenConcept[];
+    totalVisits: number;
+    band: ForbiddenBand;
+  };
+  x: number;
+  y: number;
+  radius: number;
   onSelect: (c: ForbiddenConcept) => void;
 }) {
-  const n = concepts.length;
-  const empty = n === 0;
-  // Show up to 4 concept names, then "+N more"
-  const previewN = 4;
-  const preview = concepts
-    .slice()
-    .sort((a, b) => b.visits - a.visits)
-    .slice(0, previewN);
-  const remaining = n - preview.length;
+  const [open, setOpen] = useState(false);
+  const color = BAND_COLOR[stack.band];
+  const n = stack.concepts.length;
+  const single = n === 1 ? stack.concepts[0] : null;
+
+  const click = () => {
+    if (single) {
+      onSelect(single);
+    } else {
+      setOpen((v) => !v);
+    }
+  };
+
+  // Inner label: count for stacks, first letter / no label for single dots
+  // (we keep single dots clean — name shows on hover/tap).
+  const innerLabel = n > 1 ? n.toString() : "";
 
   return (
-    <div
-      className="relative aspect-square rounded-md overflow-hidden text-left p-2"
-      style={{
-        backgroundColor: empty ? "var(--bg-elev)" : `${color}25`,
-        borderWidth: 1,
-        borderStyle: "solid",
-        borderColor: empty ? "var(--border)" : color,
-      }}
-    >
-      {cornerLabel ? (
+    <>
+      <button
+        onClick={click}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full transition-transform duration-150 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/30 cursor-pointer flex items-center justify-center"
+        style={{
+          left: `${x}%`,
+          top: `${y}%`,
+          width: radius * 2,
+          height: radius * 2,
+          backgroundColor: `${color}33`,
+          border: `1.5px solid ${color}`,
+          boxShadow: `0 0 18px ${color}33`,
+          color,
+          fontSize: Math.max(10, Math.min(radius * 0.75, 18)),
+          fontWeight: 600,
+          fontFamily: "var(--font-mono)",
+          zIndex: open ? 50 : Math.round(radius),
+        }}
+        aria-label={
+          single
+            ? `${single.display}, ${(stack.x * 100).toFixed(0)}% output, ${(stack.y * 100).toFixed(0)}% trace`
+            : `${n} concepts, ${(stack.x * 100).toFixed(0)}% output, ${(stack.y * 100).toFixed(0)}% trace`
+        }
+      >
+        {innerLabel}
+      </button>
+
+      {open ? (
         <div
-          className="absolute top-1 right-1 text-[8px] uppercase tracking-[0.15em] opacity-60 pointer-events-none"
-          style={{ color }}
+          className="absolute -translate-x-1/2 z-[60] pointer-events-auto"
+          style={{
+            left: `${x}%`,
+            top: `calc(${y}% + ${radius + 8}px)`,
+          }}
         >
-          {cornerLabel}
+          <div
+            className="bg-[var(--bg-card)] border rounded-lg shadow-2xl px-3 py-2 text-xs whitespace-nowrap"
+            style={{ borderColor: color }}
+          >
+            <div className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-faint)] mb-1">
+              output {(stack.x * 100).toFixed(0)}% · trace{" "}
+              {(stack.y * 100).toFixed(0)}%
+            </div>
+            <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto">
+              {stack.concepts.slice(0, 12).map((c) => (
+                <button
+                  key={c.lemma}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelect(c);
+                  }}
+                  className="text-left hover:underline"
+                  style={{ color: "var(--ink)" }}
+                >
+                  {c.display}
+                  <span className="text-[var(--ink-faint)] ml-2">
+                    · {c.visits} visit{c.visits === 1 ? "" : "s"}
+                  </span>
+                </button>
+              ))}
+              {stack.concepts.length > 12 ? (
+                <span className="text-[var(--ink-faint)]">
+                  +{stack.concepts.length - 12} more
+                </span>
+              ) : null}
+            </div>
+          </div>
         </div>
       ) : null}
-      {empty ? (
-        <div className="w-full h-full" />
-      ) : (
-        <div className="flex flex-col h-full">
-          <div
-            className="text-2xl md:text-3xl font-semibold leading-none mb-1"
-            style={{ color }}
-          >
-            {n}
-          </div>
-          <div className="flex-1 min-h-0 overflow-hidden flex flex-wrap gap-x-1.5 gap-y-0.5 content-start">
-            {preview.map((c) => (
-              <button
-                key={c.lemma}
-                onClick={() => onSelect(c)}
-                className="text-[10px] md:text-[11px] hover:underline truncate max-w-full"
-                style={{ color: "var(--ink)" }}
-                title={`${c.display} · output ${(
-                  c.behavior_rate * 100
-                ).toFixed(0)}% · trace ${(
-                  c.recognition_rate * 100
-                ).toFixed(0)}%`}
-              >
-                {c.display}
-              </button>
-            ))}
-            {remaining > 0 ? (
-              <span className="text-[10px] text-[var(--ink-faint)]">
-                +{remaining} more
-              </span>
-            ) : null}
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }
 
