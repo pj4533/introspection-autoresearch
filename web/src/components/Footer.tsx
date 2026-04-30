@@ -7,15 +7,17 @@ export function Footer() {
             did-the-ai-notice
           </div>
           <p className="text-sm text-[var(--ink-soft)] leading-relaxed">
-            A live research project running on a Mac Studio. Reproduces Macar
-            et al. 2026 on the open-weights Gemma 3 12B model and extends the
-            work with automated search for new steering directions.
+            A live research project running on a Mac Studio. Phase 4 walks
+            Gemma 4 31B through chains of steered free-associations and
+            measures whether its chain-of-thought registers each step.
+            Earlier phases reproduced Macar et al. (2026) on Gemma 3 12B and
+            Gemma 4 31B — preserved in the archive.
           </p>
         </div>
 
         <div>
           <div className="text-xs uppercase tracking-[0.15em] text-[var(--ink-faint)] mb-4">
-            the paper
+            background
           </div>
           <ul className="text-sm text-[var(--ink-soft)] space-y-2">
             <li>
@@ -27,8 +29,17 @@ export function Footer() {
                 Macar et al., 2026 →
               </a>
             </li>
-            <li>
-              <em>Mechanisms of Introspective Awareness in Language Models</em>
+            <li className="text-xs">
+              <em>Mechanisms of Introspective Awareness in Language Models.</em>{" "}
+              The introspection-detection circuit Phase 4 builds on.
+            </li>
+            <li className="pt-2">
+              <a
+                href="/archive"
+                className="hover:text-[var(--ink)] transition-colors"
+              >
+                phase 1 / 1.5 / 2 / 3 archive →
+              </a>
             </li>
           </ul>
         </div>
@@ -56,13 +67,13 @@ export function Footer() {
 
       <div className="max-w-6xl mx-auto mt-12 pt-8 border-t border-[var(--border)] text-xs text-[var(--ink-faint)] flex flex-col md:flex-row justify-between gap-4">
         <div>
-          Not an AI consciousness project. This measures a narrow capability:
-          can the model detect engineered changes to its own internal state
-          and accurately report on them? That&apos;s different from — and
-          much simpler than — subjective awareness.
+          Not an AI consciousness project. The thesis is about{" "}
+          <em>self-report</em> — a behavioral / mechanistic property of the
+          model, distinct from (and much simpler than) subjective awareness.
+          We never claim Gemma 4 experiences anything.
         </div>
         <div>
-          Gemma 3 12B · local · Mac Studio M2 Ultra
+          Gemma 4 31B-IT · MLX 8-bit · Mac Studio M2 Ultra
         </div>
       </div>
     </footer>
