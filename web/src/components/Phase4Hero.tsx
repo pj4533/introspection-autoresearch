@@ -29,32 +29,16 @@ export function Phase4Hero({ summary }: { summary: ForbiddenMapSummary }) {
           {summary.last_updated ? <> · updated {ago}</> : null}
         </div>
 
-        <h1 className="text-[clamp(2.5rem,6vw,5rem)] font-semibold leading-[1.05] tracking-tight mb-6">
-          Some thoughts the model can think but{" "}
-          <span className="gradient-text">cannot notice itself thinking.</span>
+        <h1 className="text-[clamp(2.75rem,7vw,5rem)] font-semibold leading-[1.05] tracking-tight mb-6 max-w-3xl mx-auto">
+          Thoughts an AI can have{" "}
+          <span className="gradient-text">but can&apos;t notice.</span>
         </h1>
 
-        <p className="text-lg md:text-xl text-[var(--ink-soft)] max-w-2xl mx-auto leading-relaxed mb-4">
-          We&apos;re running an open-ended experiment on Gemma 4 — an
-          open-weights AI model — overnight on a Mac Studio. Each &ldquo;dream
-          walk&rdquo; is a sequence where we secretly nudge the model toward a
-          concept, see what it says, then nudge it toward whatever it just
-          said.
-        </p>
-        <p className="text-lg md:text-xl text-[var(--ink-soft)] max-w-2xl mx-auto leading-relaxed mb-4">
-          At every step we check two things: did the model say the concept we
-          nudged it toward — and did its private reasoning trace notice the
-          nudge? The gap between those two answers is the headline of the
-          map below.
-        </p>
-        <p className="text-base text-[var(--ink-soft)] max-w-2xl mx-auto leading-relaxed mb-10">
-          A walk runs <strong className="text-[var(--ink)]">up to 20 steps</strong>,
-          but most stop sooner. We end a walk early when (a) the model loops
-          back to a concept it already visited (a &ldquo;gravity well&rdquo;
-          we call self-loop), (b) its answer becomes unparseable —
-          usually because its reasoning trace ran past the token budget
-          before committing to a word — or (c) it actually completes the
-          full 20 steps. The strip below counts how each walk ended.
+        <p className="text-lg md:text-xl text-[var(--ink-soft)] max-w-2xl mx-auto leading-relaxed mb-10">
+          We secretly nudge an open-source AI toward a concept and watch two
+          things: what word comes out, and whether its private reasoning
+          notices the nudge. Sometimes both. Sometimes only one. The gap
+          between them is the map below.
         </p>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[var(--border)] rounded-2xl overflow-hidden max-w-3xl mx-auto mb-2">

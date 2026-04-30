@@ -66,57 +66,15 @@ def main(argv=None):
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
 
-    selected_ids: list[str] = []
-    seen: set[str] = set()
-
-    # 1. All Codex-creature-seeded chains.
-    for lemma in CODEX_CREATURE_LEMMAS:
-        rows = conn.execute(
-            """SELECT chain_id FROM phase4_chains
-               WHERE LOWER(seed_concept) LIKE ?
-               ORDER BY started_at""",
-            (f"{lemma}%",),
-        ).fetchall()
-        for r in rows:
-            cid = r["chain_id"]
-            if cid not in seen:
-                seen.add(cid)
-                selected_ids.append(cid)
-
-    # 2. Chains that visited a high-opacity concept. We compute a
-    # per-step "opacity_signal" = behavior_named=1 AND cot_named='none'
-    # and sort chains by max opacity_signal count.
-    high_op_rows = conn.execute(
-        """SELECT chain_id, COUNT(*) AS n_signal FROM phase4_steps
-           WHERE judged_at IS NOT NULL
-             AND behavior_named=1 AND cot_named='none'
-           GROUP BY chain_id
-           ORDER BY n_signal DESC, chain_id
-           LIMIT ?""",
-        (args.max_chains,),
-    ).fetchall()
-    for r in high_op_rows:
-        cid = r["chain_id"]
-        if cid not in seen and len(selected_ids) < args.max_chains:
-            seen.add(cid)
-            selected_ids.append(cid)
-
-    # 3. Length-capped chains (the long ones — best demos for the viewer).
+    # Pure length-sorted leaderboard: chains with the most steps first.
+    # Tie-break by started_at so the order is stable across exports.
     long_rows = conn.execute(
         """SELECT chain_id FROM phase4_chains
-           WHERE end_reason='length_cap'
-           ORDER BY started_at
+           ORDER BY n_steps DESC, started_at ASC
            LIMIT ?""",
         (args.max_chains,),
     ).fetchall()
-    for r in long_rows:
-        cid = r["chain_id"]
-        if cid not in seen and len(selected_ids) < args.max_chains:
-            seen.add(cid)
-            selected_ids.append(cid)
-
-    # Cap.
-    selected_ids = selected_ids[:args.max_chains]
+    selected_ids = [r["chain_id"] for r in long_rows]
 
     chains = [_fetch_chain(conn, cid) for cid in selected_ids]
 
