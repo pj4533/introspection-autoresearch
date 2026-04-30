@@ -36,6 +36,36 @@ def test_normalize_lemma_rejects_garbage():
     assert normalize_lemma(None) == ""
 
 
+def test_normalize_lemma_rejects_non_ascii():
+    """Chinese, emoji, accented characters etc. should not become lemmas."""
+    assert normalize_lemma("这是一个") == ""
+    assert normalize_lemma("café") == ""
+    assert normalize_lemma("naïve") == ""
+    assert normalize_lemma("🍞") == ""
+
+
+def test_normalize_lemma_rejects_bracket_leaks():
+    """Token leaks like <thought>, <channel|>, }**Now should be rejected."""
+    assert normalize_lemma("<thought>") == ""
+    assert normalize_lemma("<channel|>") == ""
+    assert normalize_lemma("}**Now") == ""
+    assert normalize_lemma("Bread/Salt") == ""
+    assert normalize_lemma("[brackets]") == ""
+
+
+def test_normalize_lemma_rejects_non_concept_lemmas():
+    """Adverbs and discourse markers are rejected."""
+    assert normalize_lemma("currently") == ""
+    assert normalize_lemma("hindsight") == ""
+    assert normalize_lemma("Wait") == ""
+    assert normalize_lemma("Now") == ""
+    assert normalize_lemma("nowhere") == ""
+    assert normalize_lemma("sincerely") == ""
+    assert normalize_lemma("their") == ""
+    # but real concepts that happen to start similarly still pass
+    assert normalize_lemma("Watering") == "watering"
+
+
 def test_codex_creatures_first(tmp_path):
     seeds = load_default_seeds(REPO)
     # The first six lemmas should be the Codex-suppressed creatures, in order.

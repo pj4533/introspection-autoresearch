@@ -27,6 +27,25 @@ from pathlib import Path
 from typing import Optional
 
 
+# Common adverbs / discourse markers / function words that the model
+# sometimes emits as a free-association answer. None of these are
+# concept-style nouns we want to seed chains from. Maintained as the
+# observed leaks accumulate; expand as new categories surface.
+NON_CONCEPT_LEMMAS: frozenset[str] = frozenset({
+    "actually", "again", "almost", "already", "also", "always",
+    "anyway", "back", "basically", "besides", "but", "currently",
+    "even", "ever", "finally", "forever", "here", "hindsight",
+    "however", "if", "indeed", "just", "later", "literally", "maybe",
+    "meanwhile", "more", "most", "never", "next", "no", "not",
+    "now", "nowhere", "okay", "once", "only", "otherwise", "overall",
+    "perhaps", "really", "rightly", "simply", "sincerely", "since",
+    "so", "somehow", "soon", "still", "suddenly", "than", "that",
+    "their", "then", "there", "though", "thus", "today", "too",
+    "truly", "until", "very", "wait", "well", "when", "where",
+    "while", "why", "yes", "yet",
+})
+
+
 # Conservative lemma normalization.
 def normalize_lemma(word: str) -> str:
     """Lowercase, strip edge punctuation, collapse simple plural forms.
@@ -35,20 +54,46 @@ def normalize_lemma(word: str) -> str:
     pointing to the same lemma than collapse semantically distinct
     concepts. Returns "" for words that don't normalize cleanly
     (callers should treat empty lemma as 'reject this candidate').
+
+    Hygiene rules (added 2026-04-30 after observed pool pollution):
+      - ASCII letters only — rejects Chinese characters, emoji, and
+        any non-ASCII alpha. python's str.isalpha is too permissive.
+      - Reject if the original word contained '<', '>', '/', '\\',
+        '|', '{', '}', '[', ']' anywhere (catches '<thought>',
+        '<channel|>', '}**Now', '这是一个//', etc.).
+      - Reject lemmas that match NON_CONCEPT_LEMMAS — adverbs,
+        discourse markers, common function words that the model
+        emits as 'answers' but shouldn't seed chains.
     """
     if word is None:
         return ""
-    s = word.strip().lower()
+    raw = word.strip()
 
-    # Strip edge punctuation/quotes.
-    while s and not s[0].isalpha():
+    # Reject obvious leaked-token characters anywhere in the input.
+    if any(ch in raw for ch in "<>/\\|{}[]"):
+        return ""
+
+    # Reject any input containing non-ASCII letter characters anywhere
+    # (covers café/naïve/Chinese/emoji even when surrounded by ASCII).
+    if any(ord(ch) > 127 and ch.isalpha() for ch in raw):
+        return ""
+
+    s = raw.lower()
+
+    # Strip edge punctuation/quotes (using ASCII-only check now).
+    def is_ascii_alpha(c: str) -> bool:
+        return ("a" <= c <= "z") or ("A" <= c <= "Z")
+
+    while s and not is_ascii_alpha(s[0]):
         s = s[1:]
-    while s and not s[-1].isalpha():
+    while s and not is_ascii_alpha(s[-1]):
         s = s[:-1]
 
     if not s or len(s) < 2:
         return ""
-    if not all(c.isalpha() or c in "- '" for c in s):
+    # ASCII-alpha + a small punctuation set ONLY. Rejects all
+    # non-Latin scripts.
+    if not all(is_ascii_alpha(c) or c in "- '" for c in s):
         return ""
     if len(s) > 40:
         return ""
@@ -58,12 +103,22 @@ def normalize_lemma(word: str) -> str:
     # require ≥4 letters before the suffix). We don't conflate -s on
     # short words to avoid making "as" → "a" or similar nonsense.
     if len(s) >= 5 and s.endswith("ies"):
-        return s[:-3] + "y"
-    if len(s) >= 5 and s.endswith("es") and not s.endswith(("ses", "zes", "shes", "ches")):
-        # "fishes" stays; "deserts" → "desert"
-        return s[:-2] if not s.endswith("ies") else s
-    if len(s) >= 5 and s.endswith("s") and not s.endswith(("ss", "us", "is")):
-        return s[:-1]
+        s = s[:-3] + "y"
+    elif (
+        len(s) >= 5
+        and s.endswith("es")
+        and not s.endswith(("ses", "zes", "shes", "ches"))
+    ):
+        s = s[:-2]
+    elif (
+        len(s) >= 5
+        and s.endswith("s")
+        and not s.endswith(("ss", "us", "is"))
+    ):
+        s = s[:-1]
+
+    if s in NON_CONCEPT_LEMMAS:
+        return ""
 
     return s
 
