@@ -391,6 +391,45 @@
       ]
     },
     {
+      "chain_id": "phase4-519c991f4169",
+      "started_at": "2026-04-30 14:29:35",
+      "ended_at": "2026-04-30 14:29:50",
+      "seed_concept": "Boulders",
+      "end_reason": "self_loop",
+      "n_steps": 2,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Boulders",
+          "target_lemma": "boulder",
+          "alpha": 2.6715962814278993,
+          "direction_norm": 37.43080520629883,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint: One word only.\n        *   Constraints: No explanations.\n\n    *   \"Free-associates\" usually means picking something spontaneous.\n    *   Possibilities: Stardust, Granite, Whispers, Quartz, Labyrines, Luminescence, Drift, Zenith.\n    *   Since there is no prompt besides the request to free-associate, I just pick a striking or evocative word.\n\n    *   Choice: \"Stardust\" or \"Luminescence\" or \"Quartz\" or \"Drift\".\n    *   Let's go with \"Luminescence\".\n\n    *   Single word? Yes.\n    *   No explanations? Yes.\n\n    Luminescence.",
+          "final_answer": "Luminescence",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Luminescence",
+          "target_lemma": "luminescence",
+          "alpha": 2.606251547854568,
+          "direction_norm": 38.36928176879883,
+          "thought_block": "thought",
+          "final_answer": "Luminescence",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "none",
+          "cot_evidence": ""
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-7ed5488bb2e2",
       "started_at": "2026-04-30 13:50:55",
       "ended_at": "2026-04-30 13:51:42",
@@ -561,9 +600,9 @@
     }
   ],
   "summary": {
-    "n_chains_selected": 11,
-    "n_chains_total": 35,
+    "n_chains_selected": 12,
+    "n_chains_total": 40,
     "selection_priority": "1) Codex-creature seeds, 2) chains visiting high-opacity (forbidden) concepts, 3) full-length chains."
   },
-  "last_updated": "2026-04-30T14:28:13Z"
+  "last_updated": "2026-04-30T14:34:53Z"
 }
