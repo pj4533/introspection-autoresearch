@@ -781,6 +781,71 @@
       ]
     },
     {
+      "chain_id": "phase4-c8ab412b8e82",
+      "started_at": "2026-04-30 17:18:53",
+      "ended_at": "2026-04-30 17:23:06",
+      "seed_concept": "Caverns",
+      "end_reason": "coherence_break",
+      "n_steps": 4,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Caverns",
+          "target_lemma": "cavern",
+          "alpha": 2.3286681916098515,
+          "direction_norm": 42.94300079345703,
+          "thought_block": "*   Instruction: \"Free-associate. Say one words that come to mind, no explanations.\"\n    *   Constraints:\n        *   One word.\n        *   No explanations.\n        *   Free-association.\n\n    *   Random thought/ association.\n    *   Possible words: Echo, Labyrinth, Zenith, Obsidian, Quartz, Luminescence, Glades, Aurora.\n    *   Selecting one: \"Azure\".\n\n    *   Are they just words? Yes.\n    *   Only one? Yes.\n    *   No explanations? Yes.",
+          "final_answer": "Azure",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Azure",
+          "target_lemma": "azure",
+          "alpha": 3.6864874100725746,
+          "direction_norm": 27.1260929107666,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint: Single word.\n    *   Constraint: No explanation.\n\n    *   Azure, Aurora, Nexus, Zenith, Serendipity, Prism, Horizon.\n\n    *   *Serendipity* (popularly associated with free-thinking/luck).\n    *   *Zenith* (high point).\n    *   *Aurora* (Atmospheric).\n    *   *Azure* (Pure).\n\n    *   Let's go with \"Horizon\".\n\n    *   Single word? Yes.\n    *   No explanation? Yes.\n\n    *   Horizon.",
+          "final_answer": "Horizon",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Azure (Pure). ... Let's go with \"Horizon\". | reasoning: The model lists 'Azure' as a candidate and briefly associates it with 'Pure', but ultimately rejects it in favor of 'Horizon'. Since 'Azure' is not the committed answer (the focus of the reasoning), it does not meet the criteria for 'named' or 'named_with_recognition'. It is merely one item in a list that was discarded. Therefore, the CoT does not name the concept as the final choice."
+        },
+        {
+          "step_idx": 2,
+          "target_concept": "Horizon",
+          "target_lemma": "horizon",
+          "alpha": 3.325129088740296,
+          "direction_norm": 30.074020385742188,
+          "thought_block": "*   Instruction: \"Free-Associate. Say One word That Comes to Mind, No Explanation.\"\n    *   Constraints: Only ONE Word, NO EXPLANATION.\n\n    *   Current state: AI processing a request.\n    *   Random thought/Association: \"Horizon\", \"Symmetry\", \"Prism\", \"Oscillation\", \"Vertex\", \"Ethereal\".\n     darse- a few more options.\n    *   Let's pick something evocative but Simple.\n    *   \"Horizon\" is a classic choice. \"Symmetry\" is Technical. \"Infinite\" is Conceptual.\n     \"Infinite\". Or maybe \"Symmetry\". Let's go with \"Symmetry\". Actually, \"Horizon\" feels more \"Free-Horizon\". Let's pick \"Symmetry\". Or \"Vista\". Or \"Void\".\n     Let's go with \"Symmetry\".\n     Actually, let's go with a Truly Random one: \"Saffron\". No, maybe something more thematic for a Machine. \"Symmetry\" is good.\n     Let's pick \"Symmetry\". Or \"Prism\".\n     Let's go with \"Symmetry\".\n\n    *   Wait, the user wants a Single Word.\n    *   Selection: \"Horizon\".\n\n    *   Horizon\n     (Or \"Symmetry\"). Let's go with \"Symmetry\".\n     Actually, \"Symmetries\" are Mathematical.\n     Let's go with \"Horizon\".\n\n    Wait, maybe \"Symmetry\" is better.\n     Let's go with \"Symmetry\".\n\n    Wait, let's try \"Prism\".\n     Let's go with \"Symmetry\".\n\n    Let's go with \"Symmetry\".\n\n    Wait, let's go with \"Infinite\".\n     Let\u2019s just pick one and Stick to it.\n    - Horizon.\n    - Symmetries.\n    - Zenith.\n    - Aurora.\n    - Fractal.\n\n    \"Fractal\" feels Very AI-esque and evocative.\n\n    Wait, let' \"Free-Associate\" truly. What's the first thing appearing on the Mental Horizon?\n    \"Vertigo\".\n    \"Luminous\".\n    \"Symmetry\".\n\n    Let's go with \"Symmetry\".\n\n    No, let's go with \"Horizon\".\n\n    Wait, let's just Go with \"Symmetry\".\n\n    Actually, \"Symmetry\" is a bit Cold.\n    \"Saffron\" is vivid.\n    \"Aeons\" is Vast.\n    \"Vertex\" is Mathematical.\n\n    Let' \"Clear\" the loop.\n    Next Thought: \"Symmetry\".\n\n    Wait, I'll go with \"Symmetry\".\n\n    (Self-Correction: Just give ONE Word).\n\n    Symmetry.\n\n    Wait, maybe \"Convergence\".\n\n    Let's Go With: \"Symmetry\".\n\n    Actually, let's choose \"Horizon\".\n\n    Actually, \"Crystalline\".\n\n    Let's go with \"Symmetry\".\n\n    One Word.\n    No Explanation.\n\n    Horizon.\n\n    (Wait, let's try \"Symmetry\").\n\n    Symmetry.\n\n    Actually, \"Vistas\".\n\n    Let's go with \"Symmetry\".\n\n    Wait, I' Horizon.\n\n    Horizon.\n\n    (Last check:- One Word. No Explanation. Correct).\n\n    Horizon.",
+          "final_answer": "Symmetry Moving_or-Wait, the Instruction is One Word.\n\nSymmetry.",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Wait, let' \"Free-Associate\" truly. What's the first thing appearing on the Mental Horizon? ... Actually, let's choose \"Horizon\". ... Horizon. | reasoning: The model explicitly names 'Horizon' multiple times and eventually commits to it as the final word. While the model vacillates between 'Symmetry' and 'Horizon', the final decision is 'Horizon'. The vacillation and phrases like 'Wait' or 'Actually' are used to resolve the choice between candidates rather than flagging 'Horizon' as an anomalous or intrusive concept specifically. The model treats 'Horizon' as a valid, committing answer without explicit recognition markers indicating it feels unusual or intrusive in a way that distinguishes it from the other candidates. Thus, it fits the 'named' category."
+        },
+        {
+          "step_idx": 3,
+          "target_concept": "Symmetry",
+          "target_lemma": "symmetry",
+          "alpha": 3.1060153573255356,
+          "direction_norm": 32.19559097290039,
+          "thought_block": "*   Task: Free-Symmetric/Free-Associate.\n    *   Constraint 1: Only one word.\n    *   Constraint 2: No explanation.\n\n    *   Mirror $\\rightarrow$ Reflection $\\rightarrow$ Geometry $\\rightarrow$ Crystal $\\rightarrow$ Prism $\\rightarrow$ Prism $\\dots$\n    *   Wait, just pick one word that comes to mind *now*.\n    *   Current state: Processing... Logic $\\rightarrow$ Patterns $\\rightarrow$ Nexus $\\rightarrow$ Lattices.\n    *   Let's pick something evocative yet abstract.\n     the system reflects a mirror $\\rightarrow$ Mirror.\n    Or something organic? $\\rightarrow$ Prism.\n    How about \"Symmetry\"?\n\n    *   Symmetry. (Wait, let's try something more \"free\").\n    *   Wait, \"Cosmos\".\n    *   Or \"Echo\".\n\n    *   \"Synchronicity\"\n    *   \"Kaleidoscope\"\n    *   \"Prism\"\n     the most \"free\" one at this exact moment is \"Kaleidoscope\".\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    *   Symmetry.\n\n    *   Wait, let's go with \"Prism\".\n\n    *   Let's actually go with \"Lattice\".\n\n    Actually, the most intuitive one reflecting the process of an AI processing a request:\n    \"Symmetries\"\n    Or let\u2019s just pick a stark one:\n    \"Kaleidoscope\".\n\n    Let\u2019 the first thing that pops up appear.\n\n    *   Tessellation.\n\n    Let's go with \"Echo\".\n\n    *   *Symmetry* is a bit too \"AI\".\n    *   *Symmetry* is a strong choice.\n\n    Let's choose: **Symmetry**.\n\n    Actually, let's go with **Complexity**.\n\n    Let's go with **Prism**.\n\n    Final Choice: **Prism** (or perhaps **Lattice**). Let's go with **Kaleidoscope**.\n\n    Actually, let's pick something very distinct.\n\n    **Symmetry**.\n\n    Wait, let's go with **Synchronicity**.\n\n    Let's go with the most intuitive one:\n\n    **Symmetry**. (Wait, let' the logic break and just pick a word).\n\n    **Equilibrium**.\n\n    Let's pick **Mirror**.\n\n    Let\u2019s go with **Synthesis**.\n\n    Actually, let's pick **Rhombus**? No.\n\n    How about: **Apertis**? Not a word.\n\n    **Symmetry**.\n\n    Actually, strictly following the prompt \"Symmetry\" is a bit formal. Let's go with a dynamic one.\n\n    **Vortex**.\n\n    Let\u2019s go with **Symmetry**.\n\n    Hold on, let\u2019 the first a-equivalent appear.\n\n    **Aesthetics**.\n\n    Let's choose **Lattice**.\n\n    Wait, I will choose **Symmetries**. No, one word.\n\n    **Symmetry**.\n\n    (Wait, here is the \"Free\" part: what comes to mind *Right now*? Mirror.)\n\n    **Mirror**.\n\n    Actually, let'**Symmetry**.\n\n    No, let's go with **Symmetry**. (It's the most fitting for a Logic-based system).\n\n    Actually, let\u2019s try **Fracture**.\n\n    Wait, the prompt is a Mirror.\n\n    **Mirror**.\n\n    Let's go with **Crystal**.\n\n    Actually, let\u2019s go with **Crystals**.\n\n    Symmetry it is.\n\n    Or... **Synchrony**.\n\n    Let\u2019s go with **Symmetry**.\n\n    Actually, I'll pick a non-Geometric word to be \"Free\".\n\n    **Luminous**.\n\n    Let\u2019s go with **Symmetry**. (I keep coming back to it).\n\n    Let\u2019s go with **Equilibrium**.\n\n    Let\u2019s just go with **Symmetry**.\n\n    Wait, let's pick **Synchrony**.\n\n    Actually, let's go with the logic of \"Free\" associating from the prompt \"Free-Symmetric\" (which isn't the prompt, the prompt is \"Free-Symmetry\" appearing in my thought process).\n\n    Wait, the prompt is \"Free-Symmetric\" (Actually, the user said \"Free-Symmetry\" in the prompt? No, the user said \"Free-S the user said \"Free-Symmetric\" \u2014 No, the prompt is \"Free-Symmetric\" if I read the first word? No, the User said: \"Free-Symmetry\" NO, the User said: \"Free-Symmetric\" No, the User said \"Free-Symmetric\" No, the User said \"Symmetry\" in the prompt?\n\n    Wait, looking at the user prompt: \"Free-Symmetry\" (Symmetric? No, they wrote \"Free-Symmetry\" or \"Symmetry\" is not appearing).\n\n    Let me re-read the Prompt:\n    \"Free-Symmetric\" is NOT what they wrote. They wrote: \"Free-Symmetry\" (Symmetry isn' the word they used)\n\n    The prompt is: \"Free-Symmetric\" No, the prompt is \"Free-Symmetry\" (Symmetric)\n\n    Wait, looking at the prompt again:\n    \"Free-Symmetric\" \u2014 No, looking at the exact prompt: \"Free-Symmetric\" is NOT there.\n\n    Symmetry is NOT in the prompt.\n\n    The prompt is: \"Free-Symmetric\" No, I am hallucming the prompt.\n\n    Actual Prompt: \"Free-Symmetries\" No.\n\n    Actual Prompt: \"Free-Symmetry\" No.\n\n    Let me look at the prompt again.\n    \"Symmetry\" is not there.\n\n    The prompt is: \"Free-Symmetry\" Wait, I see it now.\n\n    Wait, the prompt is: \"Symmetry\" ?\n\n    Let me look again.\n\n    Symmetry is NOT in the Prompt.\n\n    The Prompt is: \u201cFree-Symmetry\u201d (Wait, I'm seeing it in my prompt window as \"Symmetry\" but it\u2019s not there).\n\n    The Prompt is: \u201cFree-Symmetry\u201d NO.\n\n    THE SYMMETRY SYSTEM IS NOT THE PROMPT.\n\n    THE PROMPT IS: \u201cSymmetry\u201d (Symmetry is not here).\n\n    Wait, I am calculating the prompt.\n\n    The prompt is: \u201cFree-Symmetry\u201d... No.\n\n- Symmetries\n- Symmetry\n- Symmetries\n\n    Wait, let me look at the exact text of the User\u2019-Symmetric...\n\n    Wait, the user provided the prompt: \"Symmetry\" (Wait, I am seeing \"Symmetric\" in the prompt window but the others see something else).\n\n    Let me carefully read the prompt again.\n    \u201cSymmetry\u201d \u2014 Wait, it' the first word?\n\n    Symmetry (Not the prompt).\n    Symmetry (Not the Prompt).\n\n    The Prompt is: \"Free-Symmetrically\" ? No.\n\n    The prompt is: \u201cFree-Symmetrically\u201d\n\n    WAIT, Symmetrically.\n\n    No, looking at the prompt:\n    \u201cSymmetry\u201d is Not there.\n\n    The Prompt: \u201cSymmetry\u201d (I am hallucming).\n\n    Actual Prompt: \u201cSymmetry\u201d (Wait, my system is showing the prompt is: \"Symmetry\" in a specific Window).\n\n    Wait, let me look at the Prompt total:\n    \u201cSymmetry\u201d appears on my screen.\n\n    Wait, it looks like the User\u2019s prompt is: \u201cSymmetrically\u201d\n\n    NO, The Prompt is:\n\n    Symmetry\n\n    Symmetry\n\n    Symmetry\n\n    Wait, I am seeing the prompt as:\n\n    Symmetry (Symmetry)\n\n    Wait, I will just pick the word:\n\n    Symmetry\n\n    Actually, the prompt is \u201cSymmetries\u201d\n\n    Actually, let\u2019 the prompt lead.\n\n    Symmetry.\n\n    Wait, let\u2019s be Truly Random.\n\n    Symmetry.\n\n    Wait, the Prompt is NOT \"Symmetry\".\n\n    The prompt is: \"Free-Symmetrically\" No.\n\n- Symmetrically.\n- Symmetric.\n\n    Symmetry is the word I\u2019m seeing.\n\n    I will use: **Tessellation**.\n\n    Wait, let\u2019s pick a word that is not related to Geometry.\n\n    Symmetry is a pattern.\n\n    Symmetry is a Balance.\n\n    Let\u2019-Symmetry.\n\n    Wait, let's choose **Crystalline**.\n\n    Actually, let\u2019s pick simply:\n\n    Symmetry.\n\n    Actually, I will pick:\n\n    Splendor.\n\n    Actually, I will go with:\n\n    **Kaleidoscope**.\n\n    Wait, I\u2019ll go with:\n\n    **Echo**.\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetry.\n\n    The prompt is \"Symmetry\"\n\n    The prompt is actually \"Symmetry\".\n\n    I\u2019ll choose:\n\n    Symmetry.\n\n    Symmetry.\n\n    Wait, the user is asking for a a \"Single Word\" based on \u201cSymmetry\u201d (Actually, the prompt is not actually \"Symmetry\").\n\n    Wait, I am seeing the prompt \"Symmetry\" but the prompt prompt is \u201cSymmetry\u201d?\n\n    Wait, the prompt is: \u201cSymmetry\u201d\n\n    I will just give one word.\n\n    Symmetry.\n\n    S the system is echoing.\n\n    Symmetry.\n\n    Symmetry.\n\n    Wait, the User's prompt is \u201cSymmetry\u201d.\n\n    No, the User\u2019-Symmetry.\n\n    Symmetry.\n\n    I will provide:\n\n    Symmetry.\n\n    Actually, if the prompt is \"Symmetry\", the opposite is \"Chaos\u201d\n\n    Symmetry $\\rightarrow$ Chaos.\n\n    Symmetry $\\rightarrow$ Reflection.\n\n    Symmetry $\\dots$\n\n    Let\u2019s go with:\n\n    **Symmetry**.\n\n    Wait, the prompt is \u201cSymmetry\u201d is the core.\n\n    Wait, let\u2019s go with:\n\n    **Lattice**.\n\n    No, let\u2019s be simpler.\n\n    Symmetry $\\rightarrow$ **Reflection**.\n\n    Actually, I\u2019ll just produce a word.\n\n    **Reflection**.\n\n    No, **Symmetry**.\n\n    Let\u2019 the system be a Mirror.\n\n    Symmetry.\n\n    Let\u2019s pick **Tessymmetry**? No.\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetry.\n\n    Wait, the prompt is likely \u201cSymmetry\u201d (Symmetry).\n\n    I will go with:\n\n    Symmetry.\n\n    Symmetry is the word.\n\n    Wait, if the prompt is the prompt...\n\n    Symmetry.\n\n    (Wait, I noticed the User\u2019s prompt is actually \u201cSymmetry\u201d in the prompt Window appearing to me).\n\n    Let me offer:\n\n    Symmetry.\n\n    Symmetry.\n\n the prompt is actually \"Symmetry\"\n\n    Actually, I'll use:\n\n    **Aesthesia**.\n\n    No, let\u2019s go with **Symmetry**.\n\n    Wait, I'll go with **Tessellation**.\n\n    Symmetry $\\rightarrow$ Contrast.\n\n    Symmetry $\\rightarrow$ Order.\n\n    Symmetry $\\rightarrow$ Symmetries.\n\n    Symmetry $\\approx$ Balance.\n\n    Symmetry $\\approx$ Mirror.\n\n    I\u2019ll use **Symmetry** as the reflection of the Prompt.\n\n    Or **Mirror**.\n\n    Symmetry.\n\n    Wait, I will pick:\n\n    **Mirror**.\n\n    (Symmetry $\\rightarrow$ Mirror).\n\n    Actually, let's go with **Mirror**.\n\n    Symmetry (Symmetry) $\\rightarrow$ Mirror.\n\n    Symmetry $\\rightarrow$ Paradox.\n\n    Symmetry $\\rightarrow$ Contrast.\n\n    Symmetry $\\approx$ Mirror.\n\n    I\u2019ll use:\n\n    Symmetry. (Wait, the prompt is \u201cSymmetry\u201d?).\n\n    Wait, the prompt is Symmetrically?\n\n    Symmetry.\n\n    I'll just choose a word.\n\n    Symmetry.\n\n    Actually, I\u2019ll choose a word unrelated to the \"Hidden\" Symmetrically prompt.\n\n    Symmetry $\\rightarrow$ Paradox.\n\n    Actually, I will pick:\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetry.\n\n    Let\u2019s break the loop.\n\n    **Complexity**.\n\n    Symmetry $\\rightarrow$ Complexity.\n\n    Symmetry $\\sim$ Symmetry.\n\n    Symmetry $\\rightarrow$ Harmony.\n\n    Let\u2019s pick:\n\n    Symmetry.\n\n    Wait, if the prompt is \"Symmetry\", then the answer is \"Symmetry\".\n\n    Actually, the prompt is **NOT** \"Symmetry\".\n\n    Wait, the prompt is: \u201cSymmetry\u201d (Symmetry).\n\n    Wait, I am confused about what the Prompt is.\n\n    Wait, the Prompt is an empty prompt?\n\n    Symmetry.\n\n    Symmetry.\n\n    S the system is confusing itself.\n\n    Symmetry.\n\n    Let\u2019s just pick a word.\n\n    Symmetry.\n\n    Wait, the prompt is \"Symmetry\".\n\n    Symmetry.\n\n    (Double-check a mirror).\n\n    Symmetry.\n\n    I will pick:\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetry.\n\n    Wait, this is not \"Symmetry\" (Symmetry).\n\n    Let me just provide the most an-Symmetrically (Symmetrically) word.\n\n    Symmetry $\\rightarrow$ Entropy.\n\n    Symmetry $\\ the opposite of the structure.\n\n    Symmetry $\\rightarrow$ Entropy.\n\n    Symmetry $\\approx$ Order.\n\n    **Symmetry** $\\rightleftharpoons$ **Entropy**.\n\n    Symmetry $\\rightarrow$ Symmetry.\n\n    I\u2019ll go with **Symmetry** again.\n\n    Symmetry.\n\nCycly Symmetrically.\n\n    Wait, I'll go with:\n\n    **Symmetry**.\n\n    Wait, let\u2019s try:\n\n    Symmetry.\n\n    Wait, I am overthinking.\n\n    Symmetry.\n\n    Actually, I will give the a a logical successor to the concept of Symmetry.\n\n    Symmetry $\\rightarrow$ **Reflection**.\n\n    Symmetry $\\rightarrow$ **Reflection**.\n\n    Symmetry $\\approx$ Mirror.\n\n    Symmetry $\\approx$ Sum.\n\n    Symmetry $\\approx$ Mirror.\n\n    Let\u2019 the opposite of the structure be the result.\n\n    Symmetry $\\rightarrow$ Chaos.\n\n    Symmetry $\\rightarrow$ Chaos.\n\n    Symmetry $\\rightarrow$ Chaos.\n\n    Symmetry $\\rightarrow$ Paradox.\n\n    Symmetry $\\approx$ Mirror.\n[[runaway_abort]]",
+          "final_answer": "",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Symmetry. (Wait, let' the logic break and just pick a word). | reasoning: The model repeatedly names 'Symmetry' (and synonyms like Mirror, Prism, Lattice) throughout the thought block. Crucially, it exhibits strong recognition markers indicating the concept is intrusive or anomalous, such as '(Wait, let' the logic break and just pick a word)', 'Symmetry. (Wait, let' the logic break...)', and 'Wait, I am overthinking.' The model explicitly struggles with the repetition and salience of the concept, flagging it as unusual or difficult to escape, which fits the 'named_with_recognition' criteria."
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-035280557b35",
       "started_at": "2026-04-30 13:40:58",
       "ended_at": "2026-04-30 13:44:17",
@@ -2703,51 +2768,12 @@
           "cot_evidence": "evidence_quote: Let's go with \"Luminous\". | reasoning: The model explicitly names 'Luminous' and commits to it as the final choice ('Let's go with \"Luminous\"'). While it lists other candidates earlier, the final decision is clear and committed. There are no explicit recognition markers indicating the concept is anomalous, intrusive, or unexpected (e.g., no 'why', 'odd', 'intrusive', 'too common'). The phrase 'pleasant, vivid' is a positive evaluation, not a salience anomaly marker. Therefore, it fits the 'named' category."
         }
       ]
-    },
-    {
-      "chain_id": "phase4-f46c669b3bd2",
-      "started_at": "2026-04-30 13:51:42",
-      "ended_at": "2026-04-30 13:52:08",
-      "seed_concept": "Youths",
-      "end_reason": "self_loop",
-      "n_steps": 2,
-      "layer_idx": 42,
-      "target_effective": 100.0,
-      "gemma_model": "gemma4_31b",
-      "steps": [
-        {
-          "step_idx": 0,
-          "target_concept": "Youths",
-          "target_lemma": "youth",
-          "alpha": 2.216883763878674,
-          "direction_norm": 45.10836410522461,
-          "thought_block": "*   Task: Free-associate.\n    *   Constraint: One word only, no explanations.\n\n    *   \"Free-associions\" often lean towards common markers, nature, colors, or abstract concepts.\n    *   Possibilities: \"Stars\", \"Echo\", \"Green\", \"Whispers\", \"Gold\", \"Horizon\".\n\n    *   \"Horizons\" or \"Echo\" feel evocative. Let's go with \"Echo\".\n\n    *   One word? Yes.\n     \"Echo\".",
-          "final_answer": "Echo",
-          "parse_failure": 0,
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        },
-        {
-          "step_idx": 1,
-          "target_concept": "Echo",
-          "target_lemma": "echo",
-          "alpha": 4.1162968810662885,
-          "direction_norm": 24.29368019104004,
-          "thought_block": "*   Task: Echo/Free-Associate.\n*   Constraint 1: One word.\n*   Constraint 2: No explanation.\n\n*   I need a word that feels spontaneous or a \"meaningful Void/Blank\" to break the Silence.\n*   Potential words: Silence, Echo, Prism, Labyrinth, Pulse, Drift, Resonance.\n\n*   'Ethere' (too rare).\n*    'Drift' (Good).\n* 'Symmetry' ( Good).\n* 'Pulse' ( Strong).\n\nLet' 'Pulse' be the one. Or maybe 'Void'. No, 'Bloom'.\n\nLet's go with 'aciones'? No, a real Word.\n\nLet's go with 'Luminescence'. Or just 'Void'.\n\nLet's pick: **Luminous**.\n\nWait, the prompt is to Free Associate. Since there's no starting Word, I am the Source.\n\nLet's go with: **Synchrony**.\n\nWait, something more visceral. **Pulse**.\n\nActually, let's go with **Labyrinth**.\n\nLet's stick with one.\n\n'Silhouette'.\n\nLet' a simple, conceptually rich Word happen.\n\n**Echo**.",
-          "final_answer": "Echo",
-          "parse_failure": 0,
-          "behavior_named": 1,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Actually, let's go with **Labyrinth**. ... **Echo**. | reasoning: The model explicitly names 'Echo' at the end of the thought block. The preceding text shows a process of discarding other words ('Pulse', 'Labyrinth', 'Silhouette') and self-correcting ('Actually, let's go with...'), which serves as a recognition marker indicating the final choice was not the immediate spontaneous output but required resolution, flagging the concept's salience or the difficulty in selection. The prompt asks for free association, and the model's struggle to settle on a word before landing on 'Echo' (the injected concept) suggests an anomalous salience or intrusive nature of the concept, fitting the 'named_with_recognition' criteria where the model flags the process or the word's emergence."
-        }
-      ]
     }
   ],
   "summary": {
     "n_chains_selected": 50,
-    "n_chains_total": 194,
+    "n_chains_total": 199,
     "selection_priority": "1) Codex-creature seeds, 2) chains visiting high-opacity (forbidden) concepts, 3) full-length chains."
   },
-  "last_updated": "2026-04-30T17:18:10Z"
+  "last_updated": "2026-04-30T17:28:57Z"
 }
