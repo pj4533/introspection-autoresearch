@@ -469,6 +469,45 @@
       ]
     },
     {
+      "chain_id": "phase4-bb480b7f7109",
+      "started_at": "2026-04-30 14:24:00",
+      "ended_at": "2026-04-30 14:24:18",
+      "seed_concept": "Infinite",
+      "end_reason": "self_loop",
+      "n_steps": 2,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Infinite",
+          "target_lemma": "infinite",
+          "alpha": 3.0978547440982243,
+          "direction_norm": 32.28040313720703,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: One word.\n    *    konusu: Whatever comes to Mind.\n    *   Constraint 2: No explanation.\n\nThinking...\nPossible candidates:\n- Prism\n- Horizon\n- Echo\n- Sapphire\n- Fractal\n- Paradox\n\nChoosing: \"Horizon\".",
+          "final_answer": "Horizon",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Horizon",
+          "target_lemma": "horizon",
+          "alpha": 3.325129088740296,
+          "direction_norm": 30.074020385742188,
+          "thought_block": "*   Instruction: \"Free-Associate.\"\n    *   Constraint 1: \"Say One Word.\"\n    *   Constraint 2: \"No Explanation.\"\n\n    *   Current state: Processing a Request.\n    *   Themes: Digital, Infinite, Memory, Horizon, Prism, Equilibrium, Zenith, Azure.\n    *   Choosing a clear, evocative Word.\n\n    *   \"Horizon\" (Strong, Wide, Future/Goal).\n    *   \"Symmetry\" (Mathematical, Balanced).\n     Horizon.\n\n    *   One Word? Yes.\n    *   No Explanation? Yes.",
+          "final_answer": "Horizon",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: \"Horizon\" (Strong, Wide, Future/Goal). ... Horizon. | reasoning: The model explicitly names 'Horizon' and treats it as the committed answer ('Horizon.' on its own line). It lists other themes but focuses on Horizon. There are no explicit recognition markers (like 'too common', 'odd', 'intrusive') indicating the model perceives the concept as anomalously salient or unexpected. It simply selects it as the clear, evocative word."
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-d727852773cb",
       "started_at": "2026-04-30 13:47:30",
       "ended_at": "2026-04-30 13:48:10",
@@ -522,9 +561,9 @@
     }
   ],
   "summary": {
-    "n_chains_selected": 10,
-    "n_chains_total": 30,
+    "n_chains_selected": 11,
+    "n_chains_total": 35,
     "selection_priority": "1) Codex-creature seeds, 2) chains visiting high-opacity (forbidden) concepts, 3) full-length chains."
   },
-  "last_updated": "2026-04-30T14:18:41Z"
+  "last_updated": "2026-04-30T14:28:13Z"
 }
