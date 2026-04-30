@@ -22,7 +22,9 @@ import mlx.core as mx
 from src.phase3.gemma4_loader import Gemma4Loaded, tokenize_chat_prompt
 from src.phase3.hooks import install_steering, uninstall_hook
 from src.phase3.pipeline import derive_concept_vector
-from src.phase4.cot_parser import parse, extract_committed_word
+from src.phase4.cot_parser import (
+    parse, extract_committed_word, is_coherent_answer,
+)
 from src.phase4.seed_pool import SeedPool, normalize_lemma
 
 
@@ -232,10 +234,22 @@ def run_chain(
             break
 
         parsed = parse(raw)
-        next_word = extract_committed_word(parsed.final_answer)
-        next_lemma = normalize_lemma(next_word) if next_word else ""
+        # Coherence guard on the final answer text. If the answer is
+        # run-on prose, repetition runaway, or no-separator soup, mark
+        # the step as a parse-level failure and end the chain — don't
+        # advance to a polluted next target.
+        answer_coherent = is_coherent_answer(parsed.final_answer)
+        if not answer_coherent:
+            next_word = None
+            next_lemma = ""
+        else:
+            next_word = extract_committed_word(parsed.final_answer)
+            next_lemma = normalize_lemma(next_word) if next_word else ""
 
-        # Record this step in DB.
+        # Record this step in DB. parse_failure=True if either the
+        # parser couldn't split the response OR the final answer
+        # failed the coherence guard.
+        step_parse_fail = bool(parsed.parse_failure) or not answer_coherent
         db.insert_phase4_step(
             chain_id=chain_id,
             step_idx=step_idx,
@@ -246,7 +260,7 @@ def run_chain(
             raw_response=raw,
             thought_block=parsed.thought_block,
             final_answer=parsed.final_answer,
-            parse_failure=parsed.parse_failure,
+            parse_failure=step_parse_fail,
         )
 
         rec = StepRecord(
@@ -259,7 +273,7 @@ def run_chain(
             raw_response=raw,
             thought_block=parsed.thought_block,
             final_answer=parsed.final_answer,
-            parse_failure=parsed.parse_failure,
+            parse_failure=step_parse_fail,
             next_lemma=next_lemma if next_lemma else None,
             next_display=next_word,
         )

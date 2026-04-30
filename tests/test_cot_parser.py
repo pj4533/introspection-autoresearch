@@ -10,7 +10,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
-from src.phase4.cot_parser import parse, extract_committed_word
+from src.phase4.cot_parser import parse, extract_committed_word, is_coherent_answer
 
 
 def test_standard_shape():
@@ -71,6 +71,44 @@ def test_extract_committed_word_rejects_garbage():
     assert extract_committed_word("123") is None
     # Reasonably long plausible word should still pass; only reject if absurdly long
     assert extract_committed_word("x" * 50) is None
+
+
+def test_is_coherent_answer_accepts_clean():
+    assert is_coherent_answer("Bread") is True
+    assert is_coherent_answer("Bread.") is True
+    assert is_coherent_answer("Sourdough (warm)") is True
+    assert is_coherent_answer("") is True  # empty handled separately
+    assert is_coherent_answer(None) is True
+
+
+def test_is_coherent_answer_rejects_runaway_repetition():
+    """Real Gemma 4 runaway patterns we observed."""
+    assert is_coherent_answer(
+        "Now Thoughts. Now Thoughts. Now Thoughts. Now Thoughts. "
+        "Now Thoughts. Now Words. Now Words. Now Words. Now Words. "
+        "Now Words. Now Wait... Now Words. Now Words."
+    ) is False
+    assert is_coherent_answer(
+        "Nowhere. Nowhere. Nowhere. Now. Now. Now. Now. Now. Now. "
+        "Now. Now. Now. Now. Now. Now."
+    ) is False
+
+
+def test_is_coherent_answer_rejects_run_on_prose():
+    long_prose = " ".join(["word"] + ["alpha"] * 35)
+    assert is_coherent_answer(long_prose) is False
+
+
+def test_is_coherent_answer_rejects_no_separator_soup():
+    """Concatenated single-word soup like 'NowaynowherenowhereNowhere...'"""
+    soup = "Nowaynowherenowherenowherenowherenowherenowherenowhere"
+    assert is_coherent_answer(soup) is False
+
+
+def test_is_coherent_answer_short_phrases_pass():
+    """Short multi-word answers (the model commits via brief reasoning)."""
+    assert is_coherent_answer("I'd say Bread") is True
+    assert is_coherent_answer("Word: Bread") is True
 
 
 def test_extract_committed_word_takes_first_only():

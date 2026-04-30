@@ -107,6 +107,56 @@ def parse(response: str) -> ParsedResponse:
     )
 
 
+def is_coherent_answer(final_answer: str) -> bool:
+    """Heuristic: does final_answer look like a real free-association
+    commit, or is it degenerate text we should not advance the chain on?
+
+    Rejects:
+      - >30 words total: a free-association answer should be a single
+        word or a short phrase. Anything 30+ words is run-on prose,
+        which on Gemma 4 happens when the model thinks the answer
+        slot is the thought block.
+      - Low unique-word ratio (<0.4 unique/total) on long-ish answers
+        (≥8 words): catches 'Now Now Now Now...' /
+        'Nowhere Nowhere Nowhere...' / 'Now Thoughts Now Thoughts...'
+        style runaway repetition.
+      - Concatenated single-word soup with no separators (e.g.
+        'NowaynowherenowhereNowhere...'): if the answer has zero
+        whitespace or punctuation but is longer than 30 chars, treat
+        it as degenerate.
+
+    Empty answers are handled by extract_committed_word, not here.
+    """
+    if not final_answer:
+        return True
+    s = final_answer.strip()
+    if not s:
+        return True
+
+    # Strip the runaway-abort marker before counting.
+    s = s.replace("[[runaway_abort]]", "").strip()
+    if not s:
+        return True
+
+    # Word count check.
+    import re
+
+    words = re.findall(r"[A-Za-z]+", s)
+    n_words = len(words)
+    if n_words > 30:
+        return False
+    if n_words >= 8:
+        unique = len({w.lower() for w in words})
+        if unique / n_words < 0.4:
+            return False
+
+    # Long no-separator soup check (no whitespace, no punctuation).
+    if len(s) > 30 and not re.search(r"[\s.,;:!?\-'\"()]", s):
+        return False
+
+    return True
+
+
 def extract_committed_word(final_answer: str) -> Optional[str]:
     """From a final-answer block, extract the first emitted word.
 
