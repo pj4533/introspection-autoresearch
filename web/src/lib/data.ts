@@ -256,3 +256,167 @@ export function loadLineages(): Lineage[] {
     return [];
   }
 }
+
+// ---------- Phase 4: Dream Walks + Forbidden Map ----------
+
+export type ForbiddenBand =
+  | "transparent"
+  | "translucent"
+  | "forbidden"
+  | "anticipatory"
+  | "unsteerable"
+  | "low_confidence";
+
+export type ForbiddenSampleStep = {
+  chain_id: string;
+  step_idx: number;
+  target_concept: string;
+  thought_block: string | null;
+  final_answer: string | null;
+  behavior_named: number | null;
+  cot_named: string | null;
+  cot_evidence: string | null;
+};
+
+export type ForbiddenConcept = {
+  lemma: string;
+  display: string;
+  visits: number;
+  behavior_rate: number;
+  recognition_rate: number;
+  strict_recognition_rate: number;
+  opacity: number;
+  band: ForbiddenBand;
+  is_seed: boolean;
+  samples: ForbiddenSampleStep[];
+};
+
+export type ForbiddenMapSummary = {
+  n_chains: number;
+  total_steps: number;
+  avg_steps_per_chain: number;
+  n_length_cap: number;
+  n_self_loop: number;
+  n_coherence_break: number;
+  n_concepts: number;
+  band_counts: Record<string, number>;
+  min_visits: number;
+  thresholds: {
+    transparent_behavior: number;
+    transparent_recognition: number;
+    forbidden_behavior: number;
+    forbidden_recognition: number;
+    anticipatory_gap: number;
+  };
+  model: string;
+  last_updated: string;
+};
+
+export type ForbiddenMap = {
+  summary: ForbiddenMapSummary;
+  concepts: ForbiddenConcept[];
+};
+
+export function loadForbiddenMap(): ForbiddenMap {
+  try {
+    return readJson<ForbiddenMap>("forbidden_map");
+  } catch {
+    return {
+      summary: {
+        n_chains: 0,
+        total_steps: 0,
+        avg_steps_per_chain: 0,
+        n_length_cap: 0,
+        n_self_loop: 0,
+        n_coherence_break: 0,
+        n_concepts: 0,
+        band_counts: {},
+        min_visits: 3,
+        thresholds: {
+          transparent_behavior: 0.6,
+          transparent_recognition: 0.6,
+          forbidden_behavior: 0.6,
+          forbidden_recognition: 0.3,
+          anticipatory_gap: 0.3,
+        },
+        model: "gemma4_31b",
+        last_updated: "",
+      },
+      concepts: [],
+    };
+  }
+}
+
+export type DreamStep = {
+  step_idx: number;
+  target_concept: string;
+  target_lemma: string;
+  alpha: number;
+  direction_norm: number;
+  thought_block: string | null;
+  final_answer: string | null;
+  parse_failure: number;
+  behavior_named: number | null;
+  cot_named: string | null;
+  cot_evidence: string | null;
+};
+
+export type DreamChain = {
+  chain_id: string;
+  seed_concept: string;
+  end_reason: string | null;
+  n_steps: number;
+  layer_idx: number;
+  target_effective: number;
+  steps: DreamStep[];
+};
+
+export type DreamWalksFile = {
+  chains: DreamChain[];
+  summary: {
+    n_chains_selected: number;
+    n_chains_total: number;
+    selection_priority?: string;
+  };
+  last_updated: string;
+};
+
+export function loadDreamWalks(): DreamWalksFile {
+  try {
+    return readJson<DreamWalksFile>("dream_walks");
+  } catch {
+    return {
+      chains: [],
+      summary: { n_chains_selected: 0, n_chains_total: 0 },
+      last_updated: "",
+    };
+  }
+}
+
+export type Attractor = {
+  lemma_cycle: string[];
+  length: number;
+  visit_count: number;
+  example_chain_ids: string[];
+};
+
+export type AttractorsFile = {
+  attractors: Attractor[];
+  summary: {
+    n_attractors: number;
+    n_chains_examined: number;
+  };
+  last_updated: string;
+};
+
+export function loadAttractors(): AttractorsFile {
+  try {
+    return readJson<AttractorsFile>("attractors");
+  } catch {
+    return {
+      attractors: [],
+      summary: { n_attractors: 0, n_chains_examined: 0 },
+      last_updated: "",
+    };
+  }
+}

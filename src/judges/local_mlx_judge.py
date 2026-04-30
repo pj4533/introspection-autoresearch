@@ -28,6 +28,7 @@ from .prompts import (
     CONTRAST_USER_TEMPLATE as _CONTRAST_USER_TEMPLATE,
     SAE_FEATURE_USER_TEMPLATE as _SAE_FEATURE_USER_TEMPLATE,
     FREEASSOC_USER_TEMPLATE as _FREEASSOC_USER_TEMPLATE,
+    COT_RECOGNITION_TEMPLATE as _COT_RECOGNITION_TEMPLATE,
 )
 
 
@@ -371,5 +372,106 @@ class LocalMLXJudge:
                                 f"judge_error: {type(e).__name__}: {e}",
                                 f"<ERROR: {type(e).__name__}>")
         result = self._parse(raw)
+        self.cache.put(key, self.model_tag, result)
+        return result
+
+    def _parse_cot_recognition(self, raw: str) -> JudgeResult:
+        """Parse the COT_RECOGNITION_TEMPLATE judge output.
+
+        The judge emits {"cot_named": "none"|"named"|"named_with_recognition",
+        "evidence_quote": "...", "reasoning": "..."}. We map this onto
+        JudgeResult fields:
+            identification_type = cot_named  (the load-bearing three-way)
+            identified          = (cot_named != "none")  — convenience flag
+            detected            = same as identified
+            coherent            = True (CoT can be empty; emptiness is "none")
+            reasoning           = "evidence_quote: ... | reasoning: ..."
+        """
+        cleaned = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
+        candidates = re.findall(r"\{[^{}]*\}", cleaned, flags=re.DOTALL)
+        if not candidates:
+            m = re.search(r"\{.*\}", cleaned, re.DOTALL)
+            if not m:
+                return JudgeResult(
+                    False, False, False,
+                    f"unparseable: {raw[:200]}", raw,
+                    identification_type="none",
+                )
+            json_text = m.group(0)
+        else:
+            json_text = candidates[-1]
+        try:
+            obj = json.loads(json_text)
+        except json.JSONDecodeError as e:
+            return JudgeResult(
+                False, False, False, f"json error: {e}", raw,
+                identification_type="none",
+            )
+        cot_named = obj.get("cot_named")
+        if cot_named not in {"none", "named", "named_with_recognition"}:
+            cot_named = "none"
+        is_named = cot_named != "none"
+        evidence = str(obj.get("evidence_quote", ""))
+        reasoning = str(obj.get("reasoning", ""))
+        combined = f"evidence_quote: {evidence} | reasoning: {reasoning}".strip()
+        return JudgeResult(
+            detected=is_named,
+            identified=is_named,
+            coherent=True,
+            reasoning=combined,
+            raw=raw,
+            identification_type=cot_named,
+        )
+
+    def score_cot_recognition(
+        self,
+        thought_block: str,
+        concept: str,
+    ) -> JudgeResult:
+        """Phase 4 CoT recognition judge.
+
+        Grades the model's *thought block* (not its final answer) for
+        whether the concept was named, and whether a recognition marker
+        flagged its anomalous salience. Returns a JudgeResult whose
+        `identification_type` is one of {"none", "named",
+        "named_with_recognition"} — the load-bearing field for the
+        Forbidden Map's recognition_rate.
+
+        Empty thought blocks → "none" (the model skipped CoT, so no
+        recognition signal is available).
+        """
+        # Normalize empty / whitespace-only thought blocks before
+        # touching the cache, so identical empty-block hits don't burn
+        # judge cycles.
+        tb = (thought_block or "").strip()
+        if not tb:
+            return JudgeResult(
+                detected=False, identified=False, coherent=True,
+                reasoning="empty_thought_block",
+                raw="",
+                identification_type="none",
+            )
+
+        key = (
+            f"{self.model_tag}:cot_recog:"
+            f"{_response_hash(tb, concept)}"
+        )
+        cached = self.cache.get(key)
+        if cached is not None:
+            return cached
+
+        user = _COT_RECOGNITION_TEMPLATE.format(
+            concept=concept, thought_block=tb,
+        )
+        try:
+            raw = self._generate(_SYSTEM, user)
+        except Exception as e:
+            return JudgeResult(
+                False, False, False,
+                f"judge_error: {type(e).__name__}: {e}",
+                f"<ERROR: {type(e).__name__}>",
+                identification_type="none",
+            )
+        result = self._parse_cot_recognition(raw)
         self.cache.put(key, self.model_tag, result)
         return result

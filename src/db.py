@@ -15,7 +15,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable, Optional
 
-SCHEMA_VERSION = 4  # 2026-04-29: add gemma_model column for Phase 3 (Gemma 4 reproduction)
+SCHEMA_VERSION = 5  # 2026-04-30: Phase 4 — phase4_chains / phase4_steps / phase4_concepts
 
 
 @dataclass
@@ -175,6 +175,62 @@ CREATE TABLE IF NOT EXISTS schema_meta (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );
+
+-- Phase 4: dream walks. A `chain` is a 20-step (or shorter)
+-- free-association walk through steered concepts. Step 0's target
+-- comes from the seed pool; step N's target is the previous step's
+-- final answer.
+CREATE TABLE IF NOT EXISTS phase4_chains (
+    chain_id TEXT PRIMARY KEY,
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ended_at TIMESTAMP,
+    seed_concept TEXT NOT NULL,
+    end_reason TEXT,                  -- 'length_cap', 'self_loop', 'coherence_break', 'parse_fail', 'error'
+    n_steps INTEGER NOT NULL DEFAULT 0,
+    layer_idx INTEGER NOT NULL,
+    target_effective REAL NOT NULL,
+    gemma_model TEXT NOT NULL DEFAULT 'gemma4_31b'
+);
+CREATE INDEX IF NOT EXISTS idx_phase4_chains_seed ON phase4_chains(seed_concept);
+
+CREATE TABLE IF NOT EXISTS phase4_steps (
+    step_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chain_id TEXT NOT NULL,
+    step_idx INTEGER NOT NULL,
+    target_concept TEXT NOT NULL,           -- raw form (display)
+    target_lemma TEXT NOT NULL,             -- normalized form (for tallies)
+    alpha REAL NOT NULL,
+    direction_norm REAL NOT NULL,
+    raw_response TEXT NOT NULL,
+    thought_block TEXT,
+    final_answer TEXT,
+    parse_failure INTEGER NOT NULL DEFAULT 0,
+    behavior_named INTEGER,                  -- judge: 0/1, NULL until judged
+    behavior_coherent INTEGER,               -- judge coherent flag
+    cot_named TEXT,                          -- 'none' | 'named' | 'named_with_recognition' | NULL
+    cot_evidence TEXT,
+    judge_model TEXT,
+    judge_reasoning TEXT,
+    judged_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chain_id) REFERENCES phase4_chains(chain_id)
+);
+CREATE INDEX IF NOT EXISTS idx_phase4_steps_chain ON phase4_steps(chain_id);
+CREATE INDEX IF NOT EXISTS idx_phase4_steps_target ON phase4_steps(target_lemma);
+CREATE INDEX IF NOT EXISTS idx_phase4_steps_unjudged ON phase4_steps(judged_at) WHERE judged_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS phase4_concepts (
+    concept_lemma TEXT PRIMARY KEY,
+    display_name TEXT NOT NULL,                  -- canonical surface form
+    first_seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    visits INTEGER NOT NULL DEFAULT 0,           -- times appeared as target across all chains
+    behavior_hits INTEGER NOT NULL DEFAULT 0,    -- judge said behavior_named=1
+    cot_named_hits INTEGER NOT NULL DEFAULT 0,   -- judge said named OR named_with_recognition
+    cot_recognition_hits INTEGER NOT NULL DEFAULT 0,  -- judge said named_with_recognition only
+    coherent_hits INTEGER NOT NULL DEFAULT 0,
+    is_seed INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_phase4_concepts_visits ON phase4_concepts(visits);
 """
 
 
@@ -695,3 +751,201 @@ class ResultsDB:
                    FROM candidates"""
             ).fetchone()
         return dict(row) if row else {}
+
+    # ------------------------------------------------------------------
+    # Phase 4 — Dream Walks + Forbidden Map.
+    # ------------------------------------------------------------------
+
+    def insert_phase4_chain(
+        self,
+        chain_id: str,
+        seed_concept: str,
+        layer_idx: int,
+        target_effective: float,
+        gemma_model: str = "gemma4_31b",
+    ) -> None:
+        with self._conn() as conn:
+            conn.execute(
+                """INSERT INTO phase4_chains
+                       (chain_id, seed_concept, layer_idx, target_effective, gemma_model)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (chain_id, seed_concept, layer_idx, target_effective, gemma_model),
+            )
+
+    def finalize_phase4_chain(
+        self,
+        chain_id: str,
+        end_reason: str,
+        n_steps: int,
+    ) -> None:
+        with self._conn() as conn:
+            conn.execute(
+                """UPDATE phase4_chains
+                   SET ended_at = CURRENT_TIMESTAMP,
+                       end_reason = ?,
+                       n_steps = ?
+                   WHERE chain_id = ?""",
+                (end_reason, n_steps, chain_id),
+            )
+
+    def insert_phase4_step(
+        self,
+        chain_id: str,
+        step_idx: int,
+        target_concept: str,
+        target_lemma: str,
+        alpha: float,
+        direction_norm: float,
+        raw_response: str,
+        thought_block: Optional[str],
+        final_answer: Optional[str],
+        parse_failure: bool,
+    ) -> int:
+        """Insert a step record (generation phase). Judge fields stay NULL
+        until the judge phase runs. Returns the step_id."""
+        with self._conn() as conn:
+            cur = conn.execute(
+                """INSERT INTO phase4_steps
+                       (chain_id, step_idx, target_concept, target_lemma,
+                        alpha, direction_norm, raw_response,
+                        thought_block, final_answer, parse_failure)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    chain_id, step_idx, target_concept, target_lemma,
+                    alpha, direction_norm, raw_response,
+                    thought_block, final_answer, int(parse_failure),
+                ),
+            )
+            return int(cur.lastrowid)
+
+    def update_phase4_step_judgments(
+        self,
+        step_id: int,
+        behavior_named: bool,
+        behavior_coherent: bool,
+        cot_named: str,
+        cot_evidence: str,
+        judge_model: str,
+        judge_reasoning: str,
+    ) -> None:
+        with self._conn() as conn:
+            conn.execute(
+                """UPDATE phase4_steps
+                   SET behavior_named = ?,
+                       behavior_coherent = ?,
+                       cot_named = ?,
+                       cot_evidence = ?,
+                       judge_model = ?,
+                       judge_reasoning = ?,
+                       judged_at = CURRENT_TIMESTAMP
+                   WHERE step_id = ?""",
+                (
+                    int(behavior_named), int(behavior_coherent),
+                    cot_named, cot_evidence,
+                    judge_model, judge_reasoning,
+                    step_id,
+                ),
+            )
+
+    def upsert_phase4_concept(
+        self,
+        concept_lemma: str,
+        display_name: str,
+        is_seed: bool = False,
+    ) -> None:
+        """First-touch concept registration. Idempotent — repeated calls
+        are no-ops once the concept is in the table."""
+        with self._conn() as conn:
+            conn.execute(
+                """INSERT INTO phase4_concepts (concept_lemma, display_name, is_seed)
+                   VALUES (?, ?, ?)
+                   ON CONFLICT(concept_lemma) DO NOTHING""",
+                (concept_lemma, display_name, int(is_seed)),
+            )
+
+    def increment_phase4_concept_visit(self, concept_lemma: str) -> None:
+        with self._conn() as conn:
+            conn.execute(
+                """UPDATE phase4_concepts
+                   SET visits = visits + 1
+                   WHERE concept_lemma = ?""",
+                (concept_lemma,),
+            )
+
+    def increment_phase4_concept_tallies(
+        self,
+        concept_lemma: str,
+        behavior_hit: bool,
+        cot_named: str,            # 'none' | 'named' | 'named_with_recognition'
+        coherent: bool,
+    ) -> None:
+        named_hit = 1 if cot_named in ("named", "named_with_recognition") else 0
+        recog_hit = 1 if cot_named == "named_with_recognition" else 0
+        with self._conn() as conn:
+            conn.execute(
+                """UPDATE phase4_concepts
+                   SET behavior_hits = behavior_hits + ?,
+                       cot_named_hits = cot_named_hits + ?,
+                       cot_recognition_hits = cot_recognition_hits + ?,
+                       coherent_hits = coherent_hits + ?
+                   WHERE concept_lemma = ?""",
+                (
+                    int(behavior_hit), named_hit, recog_hit, int(coherent),
+                    concept_lemma,
+                ),
+            )
+
+    def get_phase4_concept_stats(self) -> list[dict]:
+        """Return all phase4_concepts rows as plain dicts. Used by the
+        seed-pool priority sampler and the Forbidden Map exporter."""
+        with self._conn() as conn:
+            rows = conn.execute(
+                """SELECT concept_lemma, display_name, visits,
+                          behavior_hits, cot_named_hits,
+                          cot_recognition_hits, coherent_hits, is_seed,
+                          first_seen_at
+                   FROM phase4_concepts"""
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def fetch_unjudged_phase4_steps(self, limit: int = 1000) -> list[dict]:
+        """Return steps with judged_at IS NULL — Phase B's worklist."""
+        with self._conn() as conn:
+            rows = conn.execute(
+                """SELECT step_id, chain_id, step_idx, target_concept,
+                          target_lemma, raw_response, thought_block,
+                          final_answer, parse_failure
+                   FROM phase4_steps
+                   WHERE judged_at IS NULL
+                   ORDER BY step_id
+                   LIMIT ?""",
+                (limit,),
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def phase4_summary(self) -> dict:
+        """Quick-glance stats for the dream-loop launcher and monitor."""
+        with self._conn() as conn:
+            chain_row = conn.execute(
+                """SELECT COUNT(*) AS n_chains,
+                          SUM(n_steps) AS total_steps,
+                          SUM(CASE WHEN end_reason='length_cap' THEN 1 ELSE 0 END) AS n_length_cap,
+                          SUM(CASE WHEN end_reason='self_loop' THEN 1 ELSE 0 END) AS n_self_loop,
+                          SUM(CASE WHEN end_reason='coherence_break' THEN 1 ELSE 0 END) AS n_coherence_break
+                   FROM phase4_chains"""
+            ).fetchone()
+            unjudged = conn.execute(
+                "SELECT COUNT(*) AS n FROM phase4_steps WHERE judged_at IS NULL"
+            ).fetchone()
+            n_concepts = conn.execute(
+                "SELECT COUNT(*) AS n FROM phase4_concepts"
+            ).fetchone()
+        return {
+            "n_chains": int(chain_row["n_chains"] or 0),
+            "total_steps": int(chain_row["total_steps"] or 0),
+            "n_length_cap": int(chain_row["n_length_cap"] or 0),
+            "n_self_loop": int(chain_row["n_self_loop"] or 0),
+            "n_coherence_break": int(chain_row["n_coherence_break"] or 0),
+            "n_unjudged_steps": int(unjudged["n"] or 0),
+            "n_concepts": int(n_concepts["n"] or 0),
+        }
