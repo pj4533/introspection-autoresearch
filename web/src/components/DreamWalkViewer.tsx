@@ -128,22 +128,21 @@ function ChainTimeline({
   currentStep: number;
   onStepClick: (i: number) => void;
 }) {
-  const endReasonLabel: Record<string, string> = {
-    length_cap: "ran the full 20 steps",
-    self_loop: "looped back on itself",
-    coherence_break: "model lost coherence",
-    parse_fail: "couldn't parse output",
-    error: "errored out",
-  };
-  const niceEnd = endReasonLabel[chain.end_reason ?? ""] ?? chain.end_reason ?? "ended";
+  // Build a per-chain end-of-chain explanation that spells out exactly
+  // what happened — naming the actual concept that triggered the stop.
+  const lastStep = chain.steps[chain.steps.length - 1];
+  const endText = describeChainEnd(chain, lastStep);
 
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5 mb-4">
-      <div className="text-xs text-[var(--ink-faint)] mb-3">
+      <div className="text-xs text-[var(--ink-faint)] mb-2">
         chain <span className="font-mono">{chain.chain_id.slice(-8)}</span> ·
         seed{" "}
         <span className="text-[var(--ink)] font-mono">{chain.seed_concept}</span> ·
-        {" "}{niceEnd} ({chain.n_steps} step{chain.n_steps === 1 ? "" : "s"})
+        {" "}{chain.n_steps} step{chain.n_steps === 1 ? "" : "s"}
+      </div>
+      <div className="text-xs text-[var(--ink-soft)] mb-4 leading-relaxed">
+        {endText}
       </div>
       <div className="flex items-center gap-1 overflow-x-auto pb-2">
         {chain.steps.map((s, i) => {
@@ -336,4 +335,87 @@ function StepView({
       </div>
     </div>
   );
+}
+
+// Conservative client-side lemma normalizer. Mirrors the python
+// version in src/phase4/seed_pool.py just well enough to spot the
+// concept that triggered the self_loop end_reason. We only need
+// equality checks, never to produce a canonical form for storage.
+function clientLemma(word: string | null | undefined): string {
+  if (!word) return "";
+  let s = word.trim().toLowerCase();
+  // Strip non-alpha edges.
+  while (s.length && !/[a-z]/.test(s[0])) s = s.slice(1);
+  while (s.length && !/[a-z]/.test(s[s.length - 1])) s = s.slice(0, -1);
+  if (s.length < 2 || s.length > 40) return "";
+  // Match server-side plural collapse.
+  if (s.length >= 5 && s.endsWith("ies")) return s.slice(0, -3) + "y";
+  if (
+    s.length >= 5 &&
+    s.endsWith("es") &&
+    !/(ses|zes|shes|ches)$/.test(s)
+  ) return s.slice(0, -2);
+  if (
+    s.length >= 5 &&
+    s.endsWith("s") &&
+    !/(ss|us|is)$/.test(s)
+  ) return s.slice(0, -1);
+  return s;
+}
+
+function describeChainEnd(
+  chain: DreamChain,
+  lastStep: DreamStep | undefined
+): string {
+  const reason = chain.end_reason ?? "ended";
+
+  if (reason === "length_cap") {
+    return `Stopped because the chain ran the full 20 steps without ever revisiting a concept or losing coherence — rare.`;
+  }
+
+  if (reason === "self_loop") {
+    if (!lastStep) {
+      return `Stopped because the chain was about to revisit a concept it had already nudged toward.`;
+    }
+    const said = lastStep.final_answer?.replace(/\s+/g, " ").trim() ?? "";
+    const saidLemma = clientLemma(said);
+    // Find which earlier target this would-be-next-target matches.
+    const earlierTargets = chain.steps.map((s) => ({
+      idx: s.step_idx,
+      target: s.target_concept,
+      lemma: clientLemma(s.target_concept),
+    }));
+    const match = earlierTargets.find((t) => t.lemma === saidLemma);
+
+    if (match && said) {
+      const samePos = match.idx === lastStep.step_idx;
+      return samePos
+        ? `Stopped because the model said "${said}" when nudged toward "${lastStep.target_concept}" — it just emitted the same concept it was nudged toward, so the next step would have nudged toward "${said}" again.`
+        : `Stopped because the model said "${said}" when nudged toward "${lastStep.target_concept}" — but "${said}" was already visited at step ${match.idx} of this chain. The next step would have been a repeat.`;
+    }
+    if (said) {
+      return `Stopped because the model said "${said}" when nudged toward "${lastStep.target_concept}" — that word was already visited earlier in this chain, so the next step would have been a repeat.`;
+    }
+    return `Stopped because the next step would have nudged toward a concept already visited in this chain.`;
+  }
+
+  if (reason === "coherence_break") {
+    if (!lastStep) {
+      return `Stopped because the model's answer wasn't a parseable next word.`;
+    }
+    const said = (lastStep.final_answer ?? "").replace(/\s+/g, " ").trim();
+    if (!said) {
+      return `Stopped because the model produced no committed word — its reasoning trace ran past the token budget without closing, or got caught in a runaway loop the detector aborted.`;
+    }
+    return `Stopped because the model's answer "${said.slice(0, 80)}" couldn't be parsed as a single-word next concept.`;
+  }
+
+  if (reason === "parse_fail") {
+    return `Stopped because the response couldn't be parsed at all.`;
+  }
+  if (reason === "error") {
+    return `Stopped because generation errored out.`;
+  }
+
+  return `Stopped (${reason}).`;
 }
