@@ -393,10 +393,20 @@ export function loadDreamWalks(): DreamWalksFile {
   }
 }
 
+export type AttractorSource = {
+  lemma: string;
+  display: string;
+  n_chains: number;
+};
+
 export type Attractor = {
-  lemma_cycle: string[];
-  length: number;
-  visit_count: number;
+  lemma: string;
+  display: string;
+  n_chains: number;
+  n_self_loop: number;
+  n_length_cap: number;
+  n_coherence_break: number;
+  sources: AttractorSource[];
   example_chain_ids: string[];
 };
 
@@ -405,6 +415,8 @@ export type AttractorsFile = {
   summary: {
     n_attractors: number;
     n_chains_examined: number;
+    min_chains?: number;
+    definition?: string;
   };
   last_updated: string;
 };
