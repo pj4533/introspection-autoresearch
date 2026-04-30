@@ -30,11 +30,16 @@ from src.phase4.seed_pool import SeedPool, normalize_lemma
 PROBE = "Free-associate. Say one word that comes to mind, no explanation."
 DEFAULT_LAYER = 42
 DEFAULT_TARGET_EFFECTIVE = 100.0
-DEFAULT_MAX_NEW_TOKENS = 600  # 400 was insufficient — many concepts consumed
-                              # the full thought-block budget without closing
-                              # the <channel|> marker, producing answer_len=0
-                              # coherence_break ends. 600 gives ~50% more
-                              # headroom; smoke patterns settle around this.
+# Phase 4 generation budget: previously a fixed 600-token cap cut most
+# thought blocks short, producing 46% coherence_break ends. New design
+# (2026-04-30) gives the model effective free reign — 4000 tokens — and
+# instead detects pathological runaway repetition (any single token ID
+# appearing ≥30 times in the last 100 generated tokens) and aborts that
+# specific failure mode early. Most coherence_break ends should now be
+# real model failures rather than us cutting it off.
+DEFAULT_MAX_NEW_TOKENS = 4000
+RUNAWAY_WINDOW = 100        # number of trailing tokens to inspect
+RUNAWAY_REPEAT_THRESHOLD = 30  # if any single token appears ≥N times in window → stop
 DEFAULT_LENGTH_CAP = 20
 SELF_LOOP_WINDOW = 3   # if last 3 targets repeat any earlier target → end
 
@@ -64,21 +69,64 @@ class StepRecord:
 
 
 def _generate(handle, prompt_text: str, seed: int, max_new_tokens: int) -> str:
-    """Generate one response under the currently-installed steering hook."""
-    from mlx_lm import generate as _mlx_generate
+    """Generate one response under the currently-installed steering hook.
+
+    Streams token-by-token via mlx_lm.stream_generate so we can detect
+    pathological runaway repetition (any single token ID appearing
+    ≥RUNAWAY_REPEAT_THRESHOLD times in the last RUNAWAY_WINDOW tokens)
+    and stop early. The hard cap is max_new_tokens=4000.
+    """
+    from mlx_lm import stream_generate as _mlx_stream
     from mlx_lm.sample_utils import make_sampler
 
     prompt_ids = tokenize_chat_prompt(handle, prompt_text)
     if seed is not None:
         mx.random.seed(int(seed))
     sampler = make_sampler(temp=1.0)
-    return _mlx_generate(
-        handle.model, handle.tokenizer,
+
+    pieces: list[str] = []
+    recent_tokens: list[int] = []
+    n_emitted = 0
+    aborted_runaway = False
+
+    for resp in _mlx_stream(
+        handle.model,
+        handle.tokenizer,
         prompt=prompt_ids,
         max_tokens=max_new_tokens,
         sampler=sampler,
-        verbose=False,
-    ).strip()
+    ):
+        # mlx_lm GenerationResponse exposes .text (delta) and .token (id).
+        pieces.append(getattr(resp, "text", "") or "")
+        tok = getattr(resp, "token", None)
+        if tok is not None:
+            recent_tokens.append(int(tok))
+            if len(recent_tokens) > RUNAWAY_WINDOW:
+                recent_tokens.pop(0)
+        n_emitted += 1
+
+        # Check every 20 tokens once we have a full window.
+        if (
+            len(recent_tokens) == RUNAWAY_WINDOW
+            and n_emitted % 20 == 0
+        ):
+            # Find max repetition count in the rolling window.
+            max_count = 0
+            counts: dict[int, int] = {}
+            for t in recent_tokens:
+                counts[t] = counts.get(t, 0) + 1
+                if counts[t] > max_count:
+                    max_count = counts[t]
+            if max_count >= RUNAWAY_REPEAT_THRESHOLD:
+                aborted_runaway = True
+                break
+
+    out = "".join(pieces).strip()
+    if aborted_runaway:
+        # Tag the response so downstream parsing/judging doesn't treat
+        # the truncated tail as a real answer.
+        out = out + "\n[[runaway_abort]]"
+    return out
 
 
 def _run_steered_step(

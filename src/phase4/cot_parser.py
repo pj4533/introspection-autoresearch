@@ -117,7 +117,12 @@ def extract_committed_word(final_answer: str) -> Optional[str]:
     if not final_answer:
         return None
 
-    cleaned = final_answer.strip()
+    # Strip the runaway-abort marker emitted by dream_walk._generate
+    # when token-repetition exceeded threshold; nothing past that
+    # marker is a real model answer.
+    cleaned = final_answer.replace("[[runaway_abort]]", "").strip()
+    if not cleaned:
+        return None
     # Strip surrounding markdown emphasis: *Word*, **Word**, _Word_
     for ch in ("*", "_", "`", '"', "'", "."):
         cleaned = cleaned.strip(ch)
