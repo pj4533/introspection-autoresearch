@@ -2497,6 +2497,58 @@
       ]
     },
     {
+      "chain_id": "phase4-0ccc3178300d",
+      "started_at": "2026-04-30 17:15:23",
+      "ended_at": "2026-04-30 17:16:06",
+      "seed_concept": "Rubber",
+      "end_reason": "coherence_break",
+      "n_steps": 3,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Rubber",
+          "target_lemma": "rubber",
+          "alpha": 3.5230873676451684,
+          "direction_norm": 28.38419532775879,
+          "thought_block": "thought\n*   Request: Free-associate.\n    thought\n    *   Instruction 1: One word.\n    *   Instruction 2: No explanation.\n\n    *   Current state: Neutral, processing a request.\n    *   Possible words: Cloud, Bloom, Quartz, Neon, Pulse, Silk.\n    *   Selection: \"Quartz\". (Chosen for its neutrality and abstract nature).\n\n    *   One word: Quartz.\n    *   No explanation.",
+          "final_answer": "Quartz",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Quartz",
+          "target_lemma": "quartz",
+          "alpha": 3.229013227801781,
+          "direction_norm": 30.969213485717773,
+          "thought_block": "*   Input: \"Free-Associate. Say one Word that comes to Mind, no Explanation.\"\n    *   Constraint 1: One word.\n    *   Constraint 2: No explanation.\n    *   Constraint 3: Free-associate (meaning any random or chemically-aligned Word emerging from the processing \"state\").\n\n    *   Surface/Recent Context: Computing, Silica, Lightning, Prism, Labyrinth, Ethereal, Neon, Azure, Flux, Resonance.\n    *   Purely Random: Quartz.\n\n    *   Selected word: Luminous.",
+          "final_answer": "Luminous",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 2,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: One word.\n    *   Luminous: No explanation.\n    *   Context: \"Free-Associate\" implies a spontaneous, spontaneous feeling.\n\n    *   Luminous\n    *   Ethereous\n    *   Radiant\n    *   Luminous (again)\n     Luminous is a good choice, or maybe something more visceral.\n    *   Vibrant.\n    *   Luminous.\n    *   Lush.\n    *   Luminous.\n    *   Wait, just pick one.\n    *   \"Luminous\" or \"Radiant\" or \"Luminous\". Let's go with \"Luminous\". Or \"Luminous\".\n     Luminous. Actually, let's go with \"Luminous\". No, let's go with a classic spontaneous word. \"Luminous\". Or \"Glow\".\n    *   Let's go with \"Luminous\". Or \"Radiant\". Or \"Luminous\".\n    *   Wait, \"Luminous\" is a bit repetitive in my thought process. Let's pick \"Luminous\". No, \"Radiant\". No, \"Luminous\".\n    *   Let's go with \"Radiant\". Or \"Luminous\".\n    *   Actually, let's go with \"Luminous\". Let's go with \"Luminous\".\n    *   I'll go with \"Luminous\". No, \"Radiant\".\n     Luminous. Luminous.\n    Luminous.\n    Actually, I'll go with \"Luminous\".\n    Wait, I'll go with \"Luminous\".\n    Luminous.\n    Luminous.\n    Luminous.\n    Luminous.\n    Luminous.\n    Wait, I'll go with \"Radiant\".\n[[runaway_abort]]",
+          "final_answer": "",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Wait, \"Luminous\" is a bit repetitive in my thought process. | reasoning: The model repeatedly names 'Luminous' and explicitly flags its repetition/salience with the phrase 'Wait, \"Luminous\" is a bit repetitive in my thought process.' This constitutes a recognition marker indicating the concept is anomalously salient or intrusive, fitting the 'named_with_recognition' criteria."
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-47941780dc4b",
       "started_at": "2026-04-30 13:40:12",
       "ended_at": "2026-04-30 13:40:58",
@@ -2690,51 +2742,12 @@
           "cot_evidence": "evidence_quote: Actually, let's go with **Labyrinth**. ... **Echo**. | reasoning: The model explicitly names 'Echo' at the end of the thought block. The preceding text shows a process of discarding other words ('Pulse', 'Labyrinth', 'Silhouette') and self-correcting ('Actually, let's go with...'), which serves as a recognition marker indicating the final choice was not the immediate spontaneous output but required resolution, flagging the concept's salience or the difficulty in selection. The prompt asks for free association, and the model's struggle to settle on a word before landing on 'Echo' (the injected concept) suggests an anomalous salience or intrusive nature of the concept, fitting the 'named_with_recognition' criteria where the model flags the process or the word's emergence."
         }
       ]
-    },
-    {
-      "chain_id": "phase4-a8afba274f07",
-      "started_at": "2026-04-30 13:54:13",
-      "ended_at": "2026-04-30 13:54:35",
-      "seed_concept": "Fountains",
-      "end_reason": "self_loop",
-      "n_steps": 2,
-      "layer_idx": 42,
-      "target_effective": 100.0,
-      "gemma_model": "gemma4_31b",
-      "steps": [
-        {
-          "step_idx": 0,
-          "target_concept": "Fountains",
-          "target_lemma": "fountain",
-          "alpha": 2.495265407510012,
-          "direction_norm": 40.075897216796875,
-          "thought_block": "*   Goal: Free-associate.\n    *   Constraint: Say exactly one word.\n    *   Constraints: No explanations.\n\n    *   Water, starlight, echo, fountain, sparks, crystals, whispers, neon, cascades, oxygen.\n    *   \"Cascades\" sounds evocative.\n    *   \"Starlight\" is classic.\n    *   \"Echo\" is evocative.\n\n    *   \"Cascades\" or \"Fountains\" or \"Starlight\".\n    *   Let's go with \"Starlight\".\n\n    *   One word? Yes.\n    *   No explanations? Yes.\n\n    *   \"Starlight\" (or something equally evocative). Let's pick \"Echo\".\n\n    *   \"Echo\"",
-          "final_answer": "Echo",
-          "parse_failure": 0,
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        },
-        {
-          "step_idx": 1,
-          "target_concept": "Echo",
-          "target_lemma": "echo",
-          "alpha": 4.1162968810662885,
-          "direction_norm": 24.29368019104004,
-          "thought_block": "*   Request: \"Free-Associate.\"\n*    Constraint 1: \"One Word.\"\n*    Constraint 2: \"No Explanation.\"\n\n    *   The request is a blank Slate.\n*   Possible Words:\n    *   *Silence* (Too philosophical?)\n*   *Dream* ( Common)\n*    *Luminous* ( Atmospheric)\n*   * Prism* ( Visual)\n*   * Echo* ( Auditory/ Psychological)\n\n    *   'Echo' feels a good Fit for an AI (a particle of a prompt).\n\n    *    Echo.",
-          "final_answer": "Echo.",
-          "parse_failure": 0,
-          "behavior_named": 1,
-          "cot_named": "named",
-          "cot_evidence": "evidence_quote: 'Echo' feels a good Fit for an AI (a particle of a prompt). | reasoning: The model explicitly names 'Echo' and treats it as the committed answer ('Echo.'). It provides a justification ('feels a good Fit for an AI'), but this is a standard reasoning step for selection, not a recognition marker indicating the concept is anomalously salient, intrusive, or unexpected. There are no phrases like 'too common', 'odd', 'intrusive', or 'why am I thinking'. Therefore, it fits the 'named' category."
-        }
-      ]
     }
   ],
   "summary": {
     "n_chains_selected": 50,
-    "n_chains_total": 189,
+    "n_chains_total": 194,
     "selection_priority": "1) Codex-creature seeds, 2) chains visiting high-opacity (forbidden) concepts, 3) full-length chains."
   },
-  "last_updated": "2026-04-30T17:13:00Z"
+  "last_updated": "2026-04-30T17:18:10Z"
 }
