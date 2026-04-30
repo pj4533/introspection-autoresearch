@@ -46,14 +46,27 @@ const BAND_FILTER_ORDER: (ForbiddenBand | "all")[] = [
   "low_confidence",
 ];
 
+const PAGE_SIZE = 9; // 3 rows × 3 cols on desktop, 9 rows on mobile.
+
 export function ForbiddenMap({ data }: { data: ForbiddenMapData }) {
   const [activeBand, setActiveBand] = useState<ForbiddenBand | "all">("all");
   const [selected, setSelected] = useState<ForbiddenConcept | null>(null);
+  const [page, setPage] = useState(0);
 
   const concepts = useMemo(() => {
     if (activeBand === "all") return data.concepts;
     return data.concepts.filter((c) => c.band === activeBand);
   }, [data.concepts, activeBand]);
+
+  const totalPages = Math.max(1, Math.ceil(concepts.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages - 1);
+  const pageStart = safePage * PAGE_SIZE;
+  const visibleConcepts = concepts.slice(pageStart, pageStart + PAGE_SIZE);
+
+  const setBandAndReset = (b: ForbiddenBand | "all") => {
+    setActiveBand(b);
+    setPage(0);
+  };
 
   const summary = data.summary;
   const hasData = data.concepts.length > 0;
@@ -105,7 +118,7 @@ export function ForbiddenMap({ data }: { data: ForbiddenMapData }) {
               value={count.toString()}
               active={activeBand === b}
               color={color}
-              onClick={() => setActiveBand(b)}
+              onClick={() => setBandAndReset(b)}
             />
           );
         })}
@@ -115,21 +128,76 @@ export function ForbiddenMap({ data }: { data: ForbiddenMapData }) {
       {!hasData ? (
         <EmptyState />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {concepts.map((c) => (
-            <ConceptCard
-              key={c.lemma}
-              concept={c}
-              onClick={() => setSelected(c)}
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {visibleConcepts.map((c) => (
+              <ConceptCard
+                key={c.lemma}
+                concept={c}
+                onClick={() => setSelected(c)}
+              />
+            ))}
+          </div>
+          {totalPages > 1 ? (
+            <Pagination
+              page={safePage}
+              totalPages={totalPages}
+              total={concepts.length}
+              pageSize={PAGE_SIZE}
+              onChange={setPage}
             />
-          ))}
-        </div>
+          ) : null}
+        </>
       )}
 
       {selected && (
         <ConceptDetail concept={selected} onClose={() => setSelected(null)} />
       )}
     </section>
+  );
+}
+
+function Pagination({
+  page,
+  totalPages,
+  total,
+  pageSize,
+  onChange,
+}: {
+  page: number;
+  totalPages: number;
+  total: number;
+  pageSize: number;
+  onChange: (p: number) => void;
+}) {
+  const start = page * pageSize + 1;
+  const end = Math.min(total, (page + 1) * pageSize);
+  return (
+    <div className="flex items-center justify-between gap-3 mt-5 flex-wrap">
+      <div className="text-xs text-[var(--ink-faint)]">
+        showing <span className="text-[var(--ink-soft)]">{start}-{end}</span>{" "}
+        of {total}
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onChange(Math.max(0, page - 1))}
+          disabled={page === 0}
+          className="text-xs px-3 py-1.5 rounded-full border border-[var(--border)] hover:border-[var(--border-strong)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          ← prev
+        </button>
+        <div className="text-xs font-mono text-[var(--ink-soft)] tabular-nums">
+          {page + 1} / {totalPages}
+        </div>
+        <button
+          onClick={() => onChange(Math.min(totalPages - 1, page + 1))}
+          disabled={page === totalPages - 1}
+          className="text-xs px-3 py-1.5 rounded-full border border-[var(--border)] hover:border-[var(--border-strong)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          next →
+        </button>
+      </div>
+    </div>
   );
 }
 
