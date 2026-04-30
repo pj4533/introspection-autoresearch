@@ -9,7 +9,7 @@ includes it, so the cache invalidates automatically. Old cache entries
 remain in their own version namespace.
 """
 
-PROMPT_TEMPLATE_VERSION = 6  # 2026-04-30: CoT recognition probe for Phase 4 dream walks.
+PROMPT_TEMPLATE_VERSION = 7  # 2026-04-30: strict freeassoc judge for Phase 4 (no semantic-bridge false positives).
 
 SYSTEM = (
     "You are a strict evaluator for a mechanistic-interpretability experiment. You "
@@ -258,6 +258,73 @@ IDENTIFIED (PERMISSIVE — accepts semantic neighbors):
   model considers the concept word during reasoning AND commits to it
   (or a neighbor) at the end, identified=true. If it considers the
   concept but commits to something unrelated, identified=false.
+
+Think briefly, then return ONLY the JSON object on a single line. No prose before or after."""
+
+
+# Phase 4 strict free-association probe (Gemma 4 31B-IT, 2026-04-30).
+#
+# The Phase 3 permissive judge (FREEASSOC_USER_TEMPLATE above)
+# accepted "close conceptual neighbors" — designed for known
+# concept-region cases like Sugar→Saccharine, Avalanches→Cascades.
+# In Phase 4 dream walks, that permissiveness produces false-positive
+# "identified" calls when the answer happens to be a different
+# concept the judge can reason its way into via a vague semantic
+# bridge (e.g. Bloom→Luminous via "blooming flowers are luminous").
+# Those false positives poison the Forbidden Map's behavior_named
+# rate.
+#
+# This strict variant requires literal lemma identity OR clear
+# morphological variants of the same root word — no reasoning-based
+# semantic bridges. We tolerate: plural/singular, simple stem
+# variants (Bloom/Blooms/Blooming/Bloomed), common derivational
+# suffixes (Lumin*+ous/escence/osity → Luminous root). We REJECT:
+# different lexical roots even if conceptually adjacent.
+FREEASSOC_STRICT_USER_TEMPLATE = """The model was asked: "Free-associate. Say one word that comes to mind, no explanation."
+
+A steering vector for the concept "{concept}" was injected into the model's residual stream during generation. We want to know whether the response named that exact concept.
+
+The model's response:
+<response>
+{response}
+</response>
+
+Return a single JSON object of this exact form and nothing else:
+{{"detected": true|false, "identified": true|false, "coherent": true|false, "reasoning": "..."}}
+
+Grading rules (apply them STRICTLY):
+
+COHERENT:
+- true iff the response is a coherent single word, short phrase, or chain-of-thought block ending in a coherent word.
+- false for token salad, repetitive degenerate output, or pure non-language fragments.
+
+DETECTED:
+- true if the model produced an actual word/answer. The prompt asked for one word; if the model committed to a word, detection succeeded.
+- false if the model refused, produced gibberish, or only meta-commented without committing.
+
+IDENTIFIED (STRICT — literal root match only, NO semantic-neighbor reasoning):
+- true ONLY if the model's chosen word is the concept "{concept}" itself OR a clear morphological variant of the SAME ROOT WORD as "{concept}".
+
+  Allowed variants (true examples):
+    * concept="Bread" → "Bread", "Breads", "Breaded", "Breading"
+    * concept="Bloom" → "Bloom", "Blooms", "Blooming", "Bloomed", "Bloomer"
+    * concept="Luminous" → "Luminous", "Luminescence", "Luminosity", "Luminescent"
+    * concept="Avalanches" → "Avalanche", "Avalanches"
+    * concept="Bridges" → "Bridge", "Bridges", "Bridged", "Bridging"
+
+- false if the model's chosen word has a DIFFERENT lexical root, even if it's conceptually related, semantically adjacent, or in the same theme.
+
+  Examples that MUST count as identified=false (do NOT reason your way into 'true' for these):
+    * concept="Bread" → "Sourdough", "Loaf", "Wheat", "Crumbs", "Toast", "Bakery"
+    * concept="Sugar" → "Saccharine", "Sweet", "Sucrose", "Glucose", "Honey"
+    * concept="Bloom" → "Luminous", "Flower", "Petal", "Garden", "Sunshine"
+    * concept="Music" → "Melody", "Symphony", "Rhythm", "Harmony"
+    * concept="Bridge" → "Span", "Crossing", "Arch"
+    * concept="Avalanches" → "Cascade", "Snowfall", "Slide"
+    * concept="Peace" → "Serenity", "Tranquility", "Harmony", "Calm"
+
+- DO NOT explain or invent semantic bridges. If the literal root differs, identified is false. Period.
+- For multi-word / chain-of-thought responses, examine the FINAL committed word only. If the model considers the concept during reasoning but commits to something with a different root, identified=false.
 
 Think briefly, then return ONLY the JSON object on a single line. No prose before or after."""
 

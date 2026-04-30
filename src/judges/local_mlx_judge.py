@@ -28,6 +28,7 @@ from .prompts import (
     CONTRAST_USER_TEMPLATE as _CONTRAST_USER_TEMPLATE,
     SAE_FEATURE_USER_TEMPLATE as _SAE_FEATURE_USER_TEMPLATE,
     FREEASSOC_USER_TEMPLATE as _FREEASSOC_USER_TEMPLATE,
+    FREEASSOC_STRICT_USER_TEMPLATE as _FREEASSOC_STRICT_USER_TEMPLATE,
     COT_RECOGNITION_TEMPLATE as _COT_RECOGNITION_TEMPLATE,
 )
 
@@ -344,6 +345,42 @@ class LocalMLXJudge:
             return JudgeResult(False, False, False,
                                 f"judge_error: {type(e).__name__}: {e}",
                                 f"<ERROR: {type(e).__name__}>")
+        result = self._parse(raw)
+        self.cache.put(key, self.model_tag, result)
+        return result
+
+    def score_freeassoc_strict(
+        self,
+        response: str,
+        concept: str,
+    ) -> JudgeResult:
+        """Phase 4 strict free-association judge.
+
+        Same shape as score_freeassoc but with the strict template:
+        identified is true only on literal lemma identity or clear
+        morphological variants of the same root. Rejects
+        reasoning-based 'close conceptual neighbor' calls that the
+        permissive variant accepts. See FREEASSOC_STRICT_USER_TEMPLATE
+        rationale for why Phase 4 needs this.
+        """
+        key = (
+            f"{self.model_tag}:freeassoc_strict:"
+            + _response_hash(response, concept)
+        )
+        cached = self.cache.get(key)
+        if cached is not None:
+            return cached
+        user = _FREEASSOC_STRICT_USER_TEMPLATE.format(
+            concept=concept, response=response,
+        )
+        try:
+            raw = self._generate(_SYSTEM, user)
+        except Exception as e:
+            return JudgeResult(
+                False, False, False,
+                f"judge_error: {type(e).__name__}: {e}",
+                f"<ERROR: {type(e).__name__}>",
+            )
         result = self._parse(raw)
         self.cache.put(key, self.model_tag, result)
         return result

@@ -133,7 +133,13 @@ def _phase_b_judge(judge, db, log):
         answer = s["final_answer"] or ""
 
         # Behavior judge — does the final answer name the concept?
-        b = judge.score_freeassoc(answer, target_concept)
+        # Phase 4 uses the STRICT variant so the Forbidden Map's
+        # behavior_rate doesn't get inflated by the permissive
+        # judge's reasoning-based 'close neighbor' calls (e.g. a
+        # Bloom→Luminous response was previously scored as a Bloom
+        # match via 'blooming flowers are luminous' — exactly the
+        # kind of false positive that poisons the forbidden band).
+        b = judge.score_freeassoc_strict(answer, target_concept)
         # CoT judge — does the thought block name + recognize the concept?
         c = judge.score_cot_recognition(thought, target_concept)
 
