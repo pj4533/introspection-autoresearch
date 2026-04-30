@@ -495,6 +495,45 @@
       ]
     },
     {
+      "chain_id": "phase4-213178800777",
+      "started_at": "2026-04-30 15:19:12",
+      "ended_at": "2026-04-30 15:19:33",
+      "seed_concept": "Quartz",
+      "end_reason": "self_loop",
+      "n_steps": 2,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Quartz",
+          "target_lemma": "quartz",
+          "alpha": 3.229013227801781,
+          "direction_norm": 30.969213485717773,
+          "thought_block": "*   Task: Free-associate.\n    *   Requirement: One word.\n    *   Constraint: No explanation.\n\n    *   The user is providing a blank slate (or rather, a prompt for a single word).\n    *   I need a word that feels \"associative\" or simply a random point of departure.\n    *   Potential options: Crystal, Echo, Neon, Luminous, Void, Prism, Catalyst, Silver, Lunar, Zenith.\n\n    *   \"Quartz\" (Interesting texture, light).\n    *   \"Azure\" (Color, sky).\n    *    \"Luster\" (Light, surface).\n    *   \"Nebula\" (Cosmic, colorful).\n\n    *   \"Prism\" feels like a good \"starting point\" for further association.\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    *   Prism.",
+          "final_answer": "Prism",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Prism",
+          "target_lemma": "prism",
+          "alpha": 3.3365120972809956,
+          "direction_norm": 29.971418380737305,
+          "thought_block": "*   Task: Free-Associate.\n    *   Constraint: One word.\n    thought: None.\n    Constraint: No explanation.\n\n    *   The goal is a single word that emerges from a \"random\" mental state.\n    *   Let's pick a word that is evocative.\n    *   Idea: Prism. Prism. Prism.\n\n    *   Prism.",
+          "final_answer": "Prism",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Idea: Prism. Prism. Prism. * Prism. | reasoning: The model explicitly names 'Prism' and repeats it, treating it as the committed answer. There are no explicit recognition markers (e.g., 'odd', 'intrusive', 'too common') indicating the model perceives the concept as anomalously salient or unexpected. It simply fixates on the word."
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-346601ea2f44",
       "started_at": "2026-04-30 15:01:05",
       "ended_at": "2026-04-30 15:01:35",
@@ -1211,9 +1250,9 @@
     }
   ],
   "summary": {
-    "n_chains_selected": 27,
-    "n_chains_total": 79,
+    "n_chains_selected": 28,
+    "n_chains_total": 84,
     "selection_priority": "1) Codex-creature seeds, 2) chains visiting high-opacity (forbidden) concepts, 3) full-length chains."
   },
-  "last_updated": "2026-04-30T15:15:19Z"
+  "last_updated": "2026-04-30T15:20:15Z"
 }
