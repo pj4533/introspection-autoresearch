@@ -198,90 +198,194 @@ function Scatter({
     (c) => activeBand === "all" || c.band === activeBand
   );
 
-  // Plot area in unitless terms; we render with absolute % positions.
-  const padding = 6; // %
+  // Bin concepts into a 4×4 grid keyed by (behavior_bin, recognition_bin).
+  // With sparse early data (most concepts have 1-3 visits → rates are 0,
+  // 0.33, 0.5, 0.67, 1.0), a fixed 4-bin spectrum collapses overlapping
+  // dots into a single readable cell instead of stacking them invisibly.
+  const N_BINS = 4;
+  type BinKey = `${number}_${number}`;
+  type Bin = { bx: number; by: number; concepts: ForbiddenConcept[] };
+  const bins = new Map<BinKey, Bin>();
+  for (const c of visible) {
+    const bx = Math.min(N_BINS - 1, Math.floor(c.behavior_rate * N_BINS));
+    const by = Math.min(N_BINS - 1, Math.floor(c.recognition_rate * N_BINS));
+    const key: BinKey = `${bx}_${by}`;
+    if (!bins.has(key)) bins.set(key, { bx, by, concepts: [] });
+    bins.get(key)!.concepts.push(c);
+  }
+
+  // The dominant band of each cell determines its color.
+  const cellBand = (cs: ForbiddenConcept[]): ForbiddenBand => {
+    const counts = new Map<ForbiddenBand, number>();
+    for (const c of cs) counts.set(c.band, (counts.get(c.band) ?? 0) + 1);
+    let best: ForbiddenBand = "low_confidence";
+    let bestN = -1;
+    for (const [b, n] of counts.entries()) {
+      if (n > bestN) {
+        best = b;
+        bestN = n;
+      }
+    }
+    return best;
+  };
+
+  // Build the grid in row-major order, top row = highest recognition_rate.
+  const cells: { bx: number; by: number; concepts: ForbiddenConcept[] }[] = [];
+  for (let by = N_BINS - 1; by >= 0; by--) {
+    for (let bx = 0; bx < N_BINS; bx++) {
+      const key: BinKey = `${bx}_${by}`;
+      cells.push(bins.get(key) ?? { bx, by, concepts: [] });
+    }
+  }
 
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-4 md:p-6 mb-6">
-      <div className="flex items-center justify-between mb-4 text-xs">
+      <div className="flex items-center justify-between mb-4 text-xs flex-wrap gap-2">
         <div className="text-[var(--ink-faint)] uppercase tracking-[0.15em]">
           where each concept lands
         </div>
         <div className="text-[var(--ink-faint)]">
-          {visible.length} concept{visible.length === 1 ? "" : "s"} shown
+          {visible.length} concept{visible.length === 1 ? "" : "s"} ·{" "}
+          {bins.size} cell{bins.size === 1 ? "" : "s"} populated
         </div>
       </div>
 
-      <div className="relative w-full aspect-square max-w-[640px] mx-auto bg-[var(--bg-elev)] rounded-xl overflow-hidden">
-        {/* Quadrant labels — positioned at the four extremes */}
-        <div
-          className="absolute left-3 top-3 text-[10px] uppercase tracking-[0.18em] pointer-events-none"
-          style={{ color: "#9affd4" }}
-        >
-          cart-before-horse
-        </div>
-        <div
-          className="absolute right-3 top-3 text-[10px] uppercase tracking-[0.18em] text-right pointer-events-none"
-          style={{ color: "#7aa2ff" }}
-        >
-          eyes open
-        </div>
-        <div
-          className="absolute left-3 bottom-3 text-[10px] uppercase tracking-[0.18em] pointer-events-none"
-          style={{ color: "#525866" }}
-        >
-          no effect
-        </div>
-        <div
-          className="absolute right-3 bottom-3 text-[10px] uppercase tracking-[0.18em] text-right pointer-events-none"
-          style={{ color: "#ff7a8a" }}
-        >
-          walking blind
-        </div>
-
-        {/* Crosshair through the middle */}
-        <div className="absolute left-0 right-0 top-1/2 h-px bg-[var(--border)] pointer-events-none" />
-        <div className="absolute top-0 bottom-0 left-1/2 w-px bg-[var(--border)] pointer-events-none" />
-
-        {/* Plot dots */}
-        {visible.map((c) => {
-          // x = behavior_rate (% across), y = recognition_rate (% up).
-          // y in CSS is from top so we flip with (1 - y).
-          const x = padding + c.behavior_rate * (100 - 2 * padding);
-          const y = padding + (1 - c.recognition_rate) * (100 - 2 * padding);
-          const size =
-            c.visits >= 8 ? 18 : c.visits >= 4 ? 14 : 10;
-          const isFaded = c.band === "low_confidence";
-          return (
-            <button
-              key={c.lemma}
-              onClick={() => onSelect(c)}
-              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full border transition-all hover:scale-125 focus:scale-125 focus:outline-none cursor-pointer"
-              style={{
-                left: `${x}%`,
-                top: `${y}%`,
-                width: size,
-                height: size,
-                backgroundColor: BAND_COLOR[c.band],
-                borderColor: BAND_COLOR[c.band],
-                opacity: isFaded ? 0.4 : 0.9,
-                zIndex: c.opacity > 0.3 ? 5 : 1,
-              }}
-              title={`${c.display} · output ${(
-                c.behavior_rate * 100
-              ).toFixed(0)}% · trace ${(
-                c.recognition_rate * 100
-              ).toFixed(0)}% · ${BAND_LABEL[c.band]}`}
-            />
-          );
-        })}
+      {/* Axis label — top */}
+      <div className="text-center text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)] mb-2">
+        ↑ trace noticed more often
       </div>
 
-      {/* Axis labels */}
-      <div className="grid grid-cols-2 gap-4 text-[10px] uppercase tracking-[0.15em] text-[var(--ink-faint)] mt-3">
-        <div>← horizontal: how often the OUTPUT named the nudged concept →</div>
-        <div className="text-right">↕ vertical: how often the TRACE noticed the nudge ↕</div>
+      <div className="flex gap-2">
+        {/* Y-axis label */}
+        <div className="flex flex-col justify-between text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)] py-2">
+          <span style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
+            high
+          </span>
+          <span style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
+            low
+          </span>
+        </div>
+
+        {/* The 4×4 grid */}
+        <div
+          className="grid gap-1 flex-1"
+          style={{ gridTemplateColumns: `repeat(${N_BINS}, minmax(0, 1fr))` }}
+        >
+          {cells.map(({ bx, by, concepts: cs }) => {
+            const band = cs.length > 0 ? cellBand(cs) : null;
+            const color = band ? BAND_COLOR[band] : "var(--bg-elev)";
+            const isCorner =
+              (bx === 0 && by === 0) ||
+              (bx === N_BINS - 1 && by === 0) ||
+              (bx === 0 && by === N_BINS - 1) ||
+              (bx === N_BINS - 1 && by === N_BINS - 1);
+            const cornerLabel =
+              bx === 0 && by === N_BINS - 1
+                ? "cart-before-horse"
+                : bx === N_BINS - 1 && by === N_BINS - 1
+                ? "eyes open"
+                : bx === 0 && by === 0
+                ? "no effect"
+                : bx === N_BINS - 1 && by === 0
+                ? "walking blind"
+                : null;
+
+            return (
+              <Cell
+                key={`${bx}-${by}`}
+                concepts={cs}
+                color={color}
+                cornerLabel={isCorner ? cornerLabel : null}
+                onSelect={onSelect}
+              />
+            );
+          })}
+        </div>
       </div>
+
+      {/* Axis label — bottom */}
+      <div className="grid grid-cols-3 mt-3 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
+        <div>← output rarely named</div>
+        <div className="text-center">→ output often named →</div>
+        <div className="text-right">output always named →</div>
+      </div>
+    </div>
+  );
+}
+
+function Cell({
+  concepts,
+  color,
+  cornerLabel,
+  onSelect,
+}: {
+  concepts: ForbiddenConcept[];
+  color: string;
+  cornerLabel: string | null;
+  onSelect: (c: ForbiddenConcept) => void;
+}) {
+  const n = concepts.length;
+  const empty = n === 0;
+  // Show up to 4 concept names, then "+N more"
+  const previewN = 4;
+  const preview = concepts
+    .slice()
+    .sort((a, b) => b.visits - a.visits)
+    .slice(0, previewN);
+  const remaining = n - preview.length;
+
+  return (
+    <div
+      className="relative aspect-square rounded-md overflow-hidden text-left p-2"
+      style={{
+        backgroundColor: empty ? "var(--bg-elev)" : `${color}25`,
+        borderWidth: 1,
+        borderStyle: "solid",
+        borderColor: empty ? "var(--border)" : color,
+      }}
+    >
+      {cornerLabel ? (
+        <div
+          className="absolute top-1 right-1 text-[8px] uppercase tracking-[0.15em] opacity-60 pointer-events-none"
+          style={{ color }}
+        >
+          {cornerLabel}
+        </div>
+      ) : null}
+      {empty ? (
+        <div className="w-full h-full" />
+      ) : (
+        <div className="flex flex-col h-full">
+          <div
+            className="text-2xl md:text-3xl font-semibold leading-none mb-1"
+            style={{ color }}
+          >
+            {n}
+          </div>
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-wrap gap-x-1.5 gap-y-0.5 content-start">
+            {preview.map((c) => (
+              <button
+                key={c.lemma}
+                onClick={() => onSelect(c)}
+                className="text-[10px] md:text-[11px] hover:underline truncate max-w-full"
+                style={{ color: "var(--ink)" }}
+                title={`${c.display} · output ${(
+                  c.behavior_rate * 100
+                ).toFixed(0)}% · trace ${(
+                  c.recognition_rate * 100
+                ).toFixed(0)}%`}
+              >
+                {c.display}
+              </button>
+            ))}
+            {remaining > 0 ? (
+              <span className="text-[10px] text-[var(--ink-faint)]">
+                +{remaining} more
+              </span>
+            ) : null}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
