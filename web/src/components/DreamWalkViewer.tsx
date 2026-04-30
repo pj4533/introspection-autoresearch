@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { DreamWalksFile, DreamChain, DreamStep } from "@/lib/data";
 
 const PROBE_TEXT = "Free-associate. Say one word that comes to mind, no explanation.";
+const PAGE_SIZE = 4;
 
 export function DreamWalkViewer({ data }: { data: DreamWalksFile }) {
   if (data.chains.length === 0) {
@@ -33,6 +34,12 @@ export function DreamWalkViewer({ data }: { data: DreamWalksFile }) {
     (a, b) => b.n_steps - a.n_steps || a.chain_id.localeCompare(b.chain_id)
   );
 
+  const [page, setPage] = useState(0);
+  const totalPages = Math.max(1, Math.ceil(chains.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages - 1);
+  const pageStart = safePage * PAGE_SIZE;
+  const visibleChains = chains.slice(pageStart, pageStart + PAGE_SIZE);
+
   return (
     <section className="px-6 py-16 max-w-6xl mx-auto">
       <header className="mb-8">
@@ -52,15 +59,69 @@ export function DreamWalkViewer({ data }: { data: DreamWalksFile }) {
       </header>
 
       <div className="space-y-3">
-        {chains.map((chain, i) => (
+        {visibleChains.map((chain, i) => (
           <ChainRow
             key={chain.chain_id}
             chain={chain}
-            rank={i + 1}
+            rank={pageStart + i + 1}
           />
         ))}
       </div>
+
+      {totalPages > 1 ? (
+        <ChainPagination
+          page={safePage}
+          totalPages={totalPages}
+          total={chains.length}
+          pageSize={PAGE_SIZE}
+          onChange={setPage}
+        />
+      ) : null}
     </section>
+  );
+}
+
+function ChainPagination({
+  page,
+  totalPages,
+  total,
+  pageSize,
+  onChange,
+}: {
+  page: number;
+  totalPages: number;
+  total: number;
+  pageSize: number;
+  onChange: (p: number) => void;
+}) {
+  const start = page * pageSize + 1;
+  const end = Math.min(total, (page + 1) * pageSize);
+  return (
+    <div className="flex items-center justify-between gap-3 mt-5 flex-wrap">
+      <div className="text-xs text-[var(--ink-faint)]">
+        showing <span className="text-[var(--ink-soft)]">{start}-{end}</span>{" "}
+        of {total}
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onChange(Math.max(0, page - 1))}
+          disabled={page === 0}
+          className="text-xs px-3 py-1.5 rounded-full border border-[var(--border)] hover:border-[var(--border-strong)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          ← prev
+        </button>
+        <div className="text-xs font-mono text-[var(--ink-soft)] tabular-nums">
+          {page + 1} / {totalPages}
+        </div>
+        <button
+          onClick={() => onChange(Math.min(totalPages - 1, page + 1))}
+          disabled={page === totalPages - 1}
+          className="text-xs px-3 py-1.5 rounded-full border border-[var(--border)] hover:border-[var(--border-strong)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          next →
+        </button>
+      </div>
+    </div>
   );
 }
 
