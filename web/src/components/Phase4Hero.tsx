@@ -30,9 +30,7 @@ export function Phase4Hero({ summary }: { summary: ForbiddenMapSummary }) {
         </div>
 
         <h1 className="text-[clamp(2.5rem,6vw,5rem)] font-semibold leading-[1.05] tracking-tight mb-6">
-          Some thoughts the model can think
-          <br className="hidden sm:block" />
-          but{" "}
+          Some thoughts the model can think but{" "}
           <span className="gradient-text">cannot notice itself thinking.</span>
         </h1>
 
