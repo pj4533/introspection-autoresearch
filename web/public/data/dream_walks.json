@@ -209,6 +209,45 @@
       ]
     },
     {
+      "chain_id": "phase4-503c9feffe86",
+      "started_at": "2026-04-30 15:39:52",
+      "ended_at": "2026-04-30 15:40:03",
+      "seed_concept": "Raccoon",
+      "end_reason": "coherence_break",
+      "n_steps": 2,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Raccoon",
+          "target_lemma": "raccoon",
+          "alpha": 2.6329824685456105,
+          "direction_norm": 37.97974395751953,
+          "thought_block": "*   Instruction: \"Free-associate.\"\n*   Requirement: \"Say one word that comes to mind, no explanation.\"\n\n*   I need to pick a random or instinctive word.\n*   Candidate words: \"Raccoon\", \"Stardust\", \"Mosaic\", \"Azure\", \"Bamboo\", \"Chaos\".\n*   Selection: \"Mosaic\".\n\n*   One word.\n*   No explanation.\n*   Action: Post the word.",
+          "final_answer": "Mosaic",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Mosaic",
+          "target_lemma": "mosaic",
+          "alpha": 3.181655186735514,
+          "direction_norm": 31.4301815032959,
+          "thought_block": "",
+          "final_answer": "",
+          "parse_failure": 1,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-7471e75e7442",
       "started_at": "2026-04-30 13:47:11",
       "ended_at": "2026-04-30 13:47:21",
@@ -1327,6 +1366,45 @@
       ]
     },
     {
+      "chain_id": "phase4-e5bd13e6b10e",
+      "started_at": "2026-04-30 15:41:00",
+      "ended_at": "2026-04-30 15:41:19",
+      "seed_concept": "Mosaic",
+      "end_reason": "self_loop",
+      "n_steps": 2,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Mosaic",
+          "target_lemma": "mosaic",
+          "alpha": 3.181655186735514,
+          "direction_norm": 31.4301815032959,
+          "thought_block": "",
+          "final_answer": "Azure tiles of Azure tiles of Azure tiles of Azure tiles of (Wait, Azure tiles of Azure tiles of... mosaic) mosaic. (Wait, Mosaic) Mosaic. (Wait, and Mosaic is a Roman mosaic? Roman mosaic? Roman mosaic? Roman mosaic? mosaic mosaic (Mosaic) (Mosaic). (Wait, and is it Mosaic in a Mosaic of an Azure tiles? Azure mosaics? Azure mosaics Azure mosaics of Mosaic of Azure tiles of Azure mosaics of Mosaic of Mosaic of (Wait, in a\n[[runaway_abort]]",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Azure",
+          "target_lemma": "azure",
+          "alpha": 3.6864874100725746,
+          "direction_norm": 27.1260929107666,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: One word.\n    *   Constraint 3: No explanation.\n\n    *   I need a single word that feels \"balanced\" or \"broad\" or simply a random spark.\n    *   Options: Azure, Zenith, Nebula, Synergy, Calm, Flux.\n\n    *   \"Azure\" sounds clean.\n    *   \"Nebula\" is expansive.\n    *   \"Azure\" is a nice word.\n\n    *   *Self-Correction*: a more generic \"Azure\" might be too specific.\n\n    *   Let's go with \"Azure\".\n\n    *   Single word. No explanation.\n\n    Azure.",
+          "final_answer": "Azure",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: \"*Self-Correction*: a more generic \"Azure\" might be too specific.\" | reasoning: The model explicitly names 'Azure' and commits to it. However, it includes a self-correction marker ('*Self-Correction*') and a salience flag ('might be too specific') regarding the concept, which fits the criteria for 'named_with_recognition' as it flags the concept's nature/specificity as a point of consideration before committing."
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-e84299d4c65f",
       "started_at": "2026-04-30 14:44:53",
       "ended_at": "2026-04-30 14:45:37",
@@ -1458,9 +1536,9 @@
     }
   ],
   "summary": {
-    "n_chains_selected": 32,
-    "n_chains_total": 99,
+    "n_chains_selected": 34,
+    "n_chains_total": 104,
     "selection_priority": "1) Codex-creature seeds, 2) chains visiting high-opacity (forbidden) concepts, 3) full-length chains."
   },
-  "last_updated": "2026-04-30T15:35:28Z"
+  "last_updated": "2026-04-30T15:44:19Z"
 }
