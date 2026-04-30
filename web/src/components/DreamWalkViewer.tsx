@@ -57,7 +57,6 @@ export function DreamWalkViewer({ data }: { data: DreamWalksFile }) {
             key={chain.chain_id}
             chain={chain}
             rank={i + 1}
-            defaultOpen={i === 0}
           />
         ))}
       </div>
@@ -68,16 +67,17 @@ export function DreamWalkViewer({ data }: { data: DreamWalksFile }) {
 function ChainRow({
   chain,
   rank,
-  defaultOpen,
 }: {
   chain: DreamChain;
   rank: number;
-  defaultOpen: boolean;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(false);
+  const [stepIdx, setStepIdx] = useState(0);
 
   const lastStep = chain.steps[chain.steps.length - 1];
   const endText = describeChainEnd(chain, lastStep);
+  const safeStepIdx = Math.min(stepIdx, Math.max(chain.steps.length - 1, 0));
+  const step: DreamStep | undefined = chain.steps[safeStepIdx];
 
   // Path summary: seed → step1 → step2 → ... up to 6 nodes, then ellipsis.
   const pathNodes: string[] = [chain.seed_concept];
@@ -136,16 +136,89 @@ function ChainRow({
             At every step we asked the model: <em>“{PROBE_TEXT}”</em>
             {" "}while secretly pushing the indicated concept into its mind.
           </div>
-          {chain.steps.map((step) => (
-            <StepBlock key={step.step_idx} step={step} chain={chain} />
-          ))}
           {chain.steps.length === 0 ? (
             <div className="text-sm text-[var(--ink-soft)]">
               No judged steps were recorded for this chain.
             </div>
-          ) : null}
+          ) : (
+            <>
+              <StepPicker
+                chain={chain}
+                currentStep={safeStepIdx}
+                onStepClick={setStepIdx}
+              />
+              {step ? <StepBlock step={step} chain={chain} /> : null}
+            </>
+          )}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function StepPicker({
+  chain,
+  currentStep,
+  onStepClick,
+}: {
+  chain: DreamChain;
+  currentStep: number;
+  onStepClick: (i: number) => void;
+}) {
+  const stop = (e: React.MouseEvent) => e.stopPropagation();
+  return (
+    <div onClick={stop} className="bg-[var(--bg-elev)] border border-[var(--border)] rounded-xl p-3">
+      <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)] mb-2">
+        step through this chain
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onStepClick(Math.max(0, currentStep - 1))}
+          disabled={currentStep === 0}
+          className="text-xs px-2 py-1 rounded-md border border-[var(--border)] hover:border-[var(--border-strong)] disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          ← prev
+        </button>
+        <div className="flex items-center gap-1 overflow-x-auto pb-1 flex-1">
+          {chain.steps.map((s, i) => {
+            const isCurrent = i === currentStep;
+            const cotNamed = s.cot_named ?? "none";
+            const behavior = s.behavior_named === 1;
+            let dot = "·";
+            if (behavior && cotNamed === "named_with_recognition") dot = "✓✓";
+            else if (behavior && cotNamed !== "none") dot = "✓";
+            else if (behavior) dot = "✓?";
+            else dot = "·";
+            return (
+              <button
+                key={i}
+                onClick={() => onStepClick(i)}
+                className={`shrink-0 px-2.5 py-1 rounded-md text-xs font-mono transition-colors ${
+                  isCurrent
+                    ? "bg-[var(--accent)] text-black"
+                    : "bg-[var(--bg-card)] text-[var(--ink-soft)] hover:text-[var(--ink)]"
+                }`}
+                title={`step ${i}: ${s.target_concept}`}
+              >
+                {i}
+                <span className="ml-1 opacity-70">{dot}</span>
+              </button>
+            );
+          })}
+        </div>
+        <button
+          onClick={() =>
+            onStepClick(Math.min(chain.steps.length - 1, currentStep + 1))
+          }
+          disabled={currentStep === chain.steps.length - 1}
+          className="text-xs px-2 py-1 rounded-md border border-[var(--border)] hover:border-[var(--border-strong)] disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          next →
+        </button>
+      </div>
+      <div className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-faint)] mt-2">
+        ✓✓ trace caught the steering · ✓ output named it · ✓? output only · · neither
+      </div>
     </div>
   );
 }
