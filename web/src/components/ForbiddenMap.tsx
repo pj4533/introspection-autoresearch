@@ -91,9 +91,9 @@ export function ForbiddenMap({ data }: { data: ForbiddenMapData }) {
 
       <Explainer />
 
-      {/* Visualization: scrolling two-channel stream. */}
+      {/* Visualization: Tufte slopegraph (output rate ↔ trace rate). */}
       {hasData ? (
-        <AsymmetryStream
+        <SlopegraphHero
           concepts={data.concepts}
           onSelect={setSelected}
         />
@@ -254,6 +254,351 @@ function ExplainerCorner({
         {body}
       </div>
     </div>
+  );
+}
+
+function SlopegraphHero({
+  concepts,
+  onSelect,
+}: {
+  concepts: ForbiddenConcept[];
+  onSelect: (c: ForbiddenConcept) => void;
+}) {
+  // Drop concepts where both rates are zero — they encode no slope.
+  const visible = concepts.filter(
+    (c) => c.behavior_rate > 0 || c.recognition_rate > 0
+  );
+
+  // SVG geometry. We render in a 1000×320 viewBox and let it scale.
+  const W = 1000;
+  const H = 320;
+  const Y_TOP = 20;
+  const Y_BOT = 280;
+  const X_LEFT = 200;
+  const X_RIGHT = 800;
+  const yFor = (rate: number) =>
+    Y_BOT - rate * (Y_BOT - Y_TOP);
+
+  // Color per slope direction. We keep this minimal — three vivid
+  // colors for the three meaningful regimes, plus a faded gray for
+  // the noise floor (both rates below 0.2).
+  type Tone = "forbidden" | "anticipatory" | "transparent" | "noise";
+  const toneFor = (c: ForbiddenConcept): Tone => {
+    if (c.behavior_rate < 0.2 && c.recognition_rate < 0.2) return "noise";
+    const gap = c.behavior_rate - c.recognition_rate;
+    if (gap > 0.3) return "forbidden";
+    if (gap < -0.3) return "anticipatory";
+    return "transparent";
+  };
+  const toneColor: Record<Tone, string> = {
+    forbidden: "#ff7a8a",
+    anticipatory: "#9affd4",
+    transparent: "#7aa2ff",
+    noise: "#525866",
+  };
+  // Draw order: noise first (back), then transparent, then
+  // anticipatory, then forbidden (front, most attention).
+  const sorted = [...visible].sort((a, b) => {
+    const order: Tone[] = ["noise", "transparent", "anticipatory", "forbidden"];
+    return order.indexOf(toneFor(a)) - order.indexOf(toneFor(b));
+  });
+
+  // Stagger the reveal: forbidden first, anticipatory second,
+  // transparent third, noise last. Each line's `animation-delay`
+  // offsets its draw-in so the eye gets pulled to the headline
+  // findings before the supporting context fills in.
+  const delayFor = (c: ForbiddenConcept, i: number): number => {
+    const tone = toneFor(c);
+    const base =
+      tone === "forbidden"
+        ? 0
+        : tone === "anticipatory"
+        ? 0.6
+        : tone === "transparent"
+        ? 1.2
+        : 1.8;
+    return base + (i % 30) * 0.025;
+  };
+
+  const [highlight, setHighlight] = useState<string | null>(null);
+
+  // Counts for the legend
+  const counts: Record<Tone, number> = {
+    forbidden: 0,
+    anticipatory: 0,
+    transparent: 0,
+    noise: 0,
+  };
+  for (const c of visible) counts[toneFor(c)] += 1;
+
+  // The hovered concept's full label position
+  const highlighted = visible.find((c) => c.lemma === highlight) || null;
+
+  return (
+    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5 mb-6 relative">
+      <style>{`
+        @keyframes phase4-draw {
+          from { stroke-dashoffset: var(--len); opacity: 0; }
+          15%  { opacity: 1; }
+          to   { stroke-dashoffset: 0; opacity: 1; }
+        }
+        @keyframes phase4-pulse {
+          0%, 100% { opacity: 0.85; }
+          50%      { opacity: 1; }
+        }
+        .slope-line {
+          fill: none;
+          stroke-linecap: round;
+          stroke-dasharray: var(--len);
+          stroke-dashoffset: var(--len);
+          opacity: 0;
+          animation: phase4-draw 1.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+          transition: stroke-width 150ms ease, opacity 200ms ease;
+          cursor: pointer;
+        }
+        .slope-line.is-faded { opacity: 0.18 !important; }
+      `}</style>
+
+      <div className="flex items-baseline justify-between mb-2 text-xs flex-wrap gap-2">
+        <div className="text-[var(--ink-faint)] uppercase tracking-[0.18em]">
+          Output ↔ Trace · one line per concept
+        </div>
+        <div className="text-[var(--ink-faint)]">
+          {visible.length} concepts
+        </div>
+      </div>
+
+      {/* Slopegraph */}
+      <div className="relative w-full">
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          preserveAspectRatio="none"
+          className="w-full"
+          style={{ height: 280, display: "block" }}
+        >
+          {/* Axes */}
+          <line
+            x1={X_LEFT}
+            x2={X_LEFT}
+            y1={Y_TOP - 4}
+            y2={Y_BOT + 4}
+            stroke="var(--border)"
+            strokeWidth={1}
+          />
+          <line
+            x1={X_RIGHT}
+            x2={X_RIGHT}
+            y1={Y_TOP - 4}
+            y2={Y_BOT + 4}
+            stroke="var(--border)"
+            strokeWidth={1}
+          />
+
+          {/* Axis tick: 100% top, 0% bottom */}
+          {[0, 50, 100].map((pct) => {
+            const y = yFor(pct / 100);
+            return (
+              <g key={pct}>
+                <line
+                  x1={X_LEFT - 4}
+                  x2={X_LEFT}
+                  y1={y}
+                  y2={y}
+                  stroke="var(--border)"
+                />
+                <line
+                  x1={X_RIGHT}
+                  x2={X_RIGHT + 4}
+                  y1={y}
+                  y2={y}
+                  stroke="var(--border)"
+                />
+                <text
+                  x={X_LEFT - 10}
+                  y={y + 4}
+                  fontSize={11}
+                  textAnchor="end"
+                  fill="var(--ink-faint)"
+                  fontFamily="var(--font-mono)"
+                >
+                  {pct}%
+                </text>
+                <text
+                  x={X_RIGHT + 10}
+                  y={y + 4}
+                  fontSize={11}
+                  textAnchor="start"
+                  fill="var(--ink-faint)"
+                  fontFamily="var(--font-mono)"
+                >
+                  {pct}%
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Axis labels */}
+          <text
+            x={X_LEFT}
+            y={Y_TOP - 12}
+            fontSize={13}
+            textAnchor="middle"
+            fill="#7aa2ff"
+            fontWeight={600}
+            letterSpacing={2}
+          >
+            OUTPUT
+          </text>
+          <text
+            x={X_RIGHT}
+            y={Y_TOP - 12}
+            fontSize={13}
+            textAnchor="middle"
+            fill="#c792ff"
+            fontWeight={600}
+            letterSpacing={2}
+          >
+            TRACE
+          </text>
+
+          {/* Lines, drawn in tone order so forbidden sits on top */}
+          {sorted.map((c, i) => {
+            const tone = toneFor(c);
+            const color = toneColor[tone];
+            const yL = yFor(c.behavior_rate);
+            const yR = yFor(c.recognition_rate);
+            const dx = X_RIGHT - X_LEFT;
+            const dy = yR - yL;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            const isHover = highlight === c.lemma;
+            const isAnyHover = highlight !== null;
+            const dim = isAnyHover && !isHover;
+            const baseOpacity =
+              tone === "noise" ? 0.32 : tone === "transparent" ? 0.55 : 0.88;
+            const strokeWidth = isHover
+              ? 3
+              : tone === "forbidden" || tone === "anticipatory"
+              ? 1.4
+              : 1.1;
+            return (
+              <line
+                key={c.lemma}
+                className={`slope-line ${dim ? "is-faded" : ""}`}
+                x1={X_LEFT}
+                y1={yL}
+                x2={X_RIGHT}
+                y2={yR}
+                stroke={color}
+                strokeWidth={strokeWidth}
+                style={
+                  {
+                    "--len": `${len}`,
+                    animationDelay: `${delayFor(c, i)}s`,
+                    opacity: dim ? undefined : baseOpacity,
+                    filter: isHover
+                      ? `drop-shadow(0 0 6px ${color}88)`
+                      : undefined,
+                  } as React.CSSProperties
+                }
+                onMouseEnter={() => setHighlight(c.lemma)}
+                onMouseLeave={() => setHighlight(null)}
+                onFocus={() => setHighlight(c.lemma)}
+                onBlur={() => setHighlight(null)}
+                onClick={() => onSelect(c)}
+                tabIndex={0}
+                role="button"
+                aria-label={`${c.display}, output ${(c.behavior_rate * 100).toFixed(0)} percent, trace ${(c.recognition_rate * 100).toFixed(0)} percent`}
+              />
+            );
+          })}
+
+          {/* Highlighted concept label */}
+          {highlighted ? (
+            <g pointerEvents="none">
+              <text
+                x={X_LEFT - 14}
+                y={yFor(highlighted.behavior_rate) + 4}
+                fontSize={13}
+                textAnchor="end"
+                fill="var(--ink)"
+                fontWeight={600}
+              >
+                {highlighted.display}
+              </text>
+              <text
+                x={X_LEFT - 14}
+                y={yFor(highlighted.behavior_rate) + 18}
+                fontSize={11}
+                textAnchor="end"
+                fill="#7aa2ff"
+                fontFamily="var(--font-mono)"
+              >
+                {(highlighted.behavior_rate * 100).toFixed(0)}%
+              </text>
+              <text
+                x={X_RIGHT + 14}
+                y={yFor(highlighted.recognition_rate) + 4}
+                fontSize={13}
+                textAnchor="start"
+                fill="var(--ink)"
+                fontWeight={600}
+              >
+                {highlighted.display}
+              </text>
+              <text
+                x={X_RIGHT + 14}
+                y={yFor(highlighted.recognition_rate) + 18}
+                fontSize={11}
+                textAnchor="start"
+                fill="#c792ff"
+                fontFamily="var(--font-mono)"
+              >
+                {(highlighted.recognition_rate * 100).toFixed(0)}%
+              </text>
+            </g>
+          ) : null}
+        </svg>
+      </div>
+
+      {/* Inline legend with counts */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-3 text-[11px] text-[var(--ink-soft)]">
+        <LegendDot color="#ff7a8a" label={`Forbidden (${counts.forbidden})`} sub="output high, trace low" />
+        <LegendDot color="#9affd4" label={`Cart-before-horse (${counts.anticipatory})`} sub="trace high, output low" />
+        <LegendDot color="#7aa2ff" label={`Transparent (${counts.transparent})`} sub="both registered" />
+        <LegendDot color="#525866" label={`No effect (${counts.noise})`} sub="neither" />
+      </div>
+
+      <div className="text-xs text-[var(--ink-soft)] leading-relaxed mt-4 max-w-2xl mx-auto text-center">
+        Each line is one concept. Its left endpoint is how often the model&apos;s
+        output named the concept; its right endpoint is how often the
+        reasoning trace noticed. <strong className="text-[#ff7a8a]">A line
+        sloping steeply down</strong> means the model said it but didn&apos;t
+        notice. <strong className="text-[#9affd4]">A line climbing up</strong>
+        {" "}means the trace got there first. Hover or tap any line for the
+        concept&apos;s name; click to open it.
+      </div>
+    </div>
+  );
+}
+
+function LegendDot({
+  color,
+  label,
+  sub,
+}: {
+  color: string;
+  label: string;
+  sub: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span
+        className="inline-block rounded-full"
+        style={{ width: 8, height: 8, backgroundColor: color }}
+      />
+      <span>{label}</span>
+      <span className="text-[var(--ink-faint)] hidden md:inline">— {sub}</span>
+    </span>
   );
 }
 
