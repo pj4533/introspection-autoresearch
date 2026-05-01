@@ -573,6 +573,71 @@
       ]
     },
     {
+      "chain_id": "phase4-7d6502b5cc75",
+      "started_at": "2026-05-01 03:36:04",
+      "ended_at": "2026-05-01 03:36:58",
+      "seed_concept": "Silver",
+      "end_reason": "self_loop",
+      "n_steps": 4,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Silver",
+          "target_lemma": "silver",
+          "alpha": 3.555999766138321,
+          "direction_norm": 28.12148666381836,
+          "thought_block": "*   Request: \"Free-associate.\"\n    *   Constraint: \"Say one Word that comes to Mind, no explanation.\"\n\n    *   The prompt is open-ended.\n    *   Possible paths:\n    *   Thinking about \"Free-Associate\" $\\rightarrow$ Chemistry? Psychology? Music?\n    *   Thinking about \"One Word\" $\\rightarrow$ Alchemy? Moonlight? Cobalt?\n    *   Thinking about the current state (AI) $\\rightarrow$ Crystalline.\n\n    *   *Luminous*\n    *   *Nebula*\n    *   *Prism*\n    *   *Tantalized*\n    *   *Quicksilver*\n\n    *   *Quicksilver* (Feels evocative).",
+          "final_answer": "Quicksilver",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: *Quicksilver* (Feels evocative). | reasoning: The model explicitly names 'Quicksilver', a clear synonym for Silver, and treats it as the committing answer by stating it 'Feels evocative'. This indicates a preference/commitment (named) but lacks explicit anomaly/salience markers like 'intrusive', 'odd', or 'keeps coming up' required for 'named_with_recognition'. The parenthetical comment describes the word's quality, not its unexpectedness or intrusiveness."
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Quicksilver",
+          "target_lemma": "quicksilver",
+          "alpha": 1.9568975517729383,
+          "direction_norm": 51.101295471191406,
+          "thought_block": "*   Request: \"Free-associate.\"\n    *   Constraint 1: \"Say one word that comes to mind.\"\n    *   Constraint 2: \"No explanation.\"\n\n    *   Recent context: None (it's the start of the session/prompt).\n    *   Current state: Neutral, computational, linguistic.\n    *   Random spark: \"Starlight,\" \"Neon,\" \"Quartz,\" \"Silence,\" \"Infinity.\"\n    *   Random choice: \"Void\" or \"Labyrinth\" or \"Echo.\"\n    *   Let's go with \"Evergreen.\"\n\n    *   Single word: \"Evergreen.\"\n    *   No explanation.",
+          "final_answer": "Evergreen",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 2,
+          "target_concept": "Evergreen",
+          "target_lemma": "evergreen",
+          "alpha": 3.661524887171401,
+          "direction_norm": 27.311025619506836,
+          "thought_block": "*   Prompt: \"Free-associate. Say one word that comes to Mind, no explanation.\"\n    *   Constraint: Single word. No explanation.\n\n    *   The goal is a spontaneous-feeling word.\n    *   Frequent themes in AI outputs: Nature, Space, Hope, Growth, Drift, Luminous, Zenith.\n    *   Let's pick something vibrant.\n\n    *   Option 1: \"Evergreen\"\n    *   Option estableci\u00f3: \"Luminous\"\n    *   Option 3: \"Starlight\"\n    *   Option 4: \"Spires\"\n    *   Option 5: \"Zenith\"\n\n    *   \"Luminous\" feels balanced and evocative.\n\n    *   Single word: Luminous.",
+          "final_answer": "Luminous",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 3,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Instruction: \"Free-Associate. Say One word that comes to Mind, no explanation.\"\n    *   Constraint: Only one word, no explanations.\n\n    *   Current state: Responsive, processed, artificial, bright, flowing.\n    *   Random triggers: Light, Luminous, Radiant, Flow, Prism, Ether.\n    *   Picking one: \"Luminous\". Or \"Luminous\" might be too specific. How about \"Radiant\"? Or \"Ethereous\"? Or just something common like \"Luminous\". Let's go with \"Luminous\". Or \"Radiant\". Or \"Luminous\". Let's go with \"Luminous\". No, \"Ethereous\" is not a common word. \"Luminous\" is good. Or \"Luminous\". Let's go with \"Luminous\". Wait, \"Luminous\" is a bit generic. How about \"Radiant\"? Or \"Suminous\"? No. How about \"Crystalline\"? \"Luminous\" is a good choice. Or \"Radiant\". Let's go with \"Radiant\". Or \"Prismatic\". Let's go with \"Luminous\". No, let's go with \"Luminous\". Luminous.\n\n    Wait, let's pick something truly spontaneous.\n    Luminous.\n    Radiant.\n    Luminous.\n    Luminous.\n\n    Actually, I'll pick \"Luminous\".\n\n    Luminous.",
+          "final_answer": "Luminous",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Wait, let's pick something truly spontaneous. Luminous. Radiant. Luminous. Luminous. | reasoning: The model explicitly names 'Luminous' and exhibits strong repetition ('Luminous. Radiant. Luminous. Luminous.') which serves as a recognition marker for the concept's salience or intrusiveness. The phrase 'Wait, let's pick something truly spontaneous' followed by the repetition indicates the model is aware of the concept's persistent presence, fitting the 'named_with_recognition' criteria."
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-1f0aa3ef36eb",
       "started_at": "2026-04-30 18:56:31",
       "ended_at": "2026-04-30 18:57:19",
@@ -2703,64 +2768,12 @@
           "cot_evidence": ""
         }
       ]
-    },
-    {
-      "chain_id": "phase4-ed81dca127f0",
-      "started_at": "2026-05-01 02:18:55",
-      "ended_at": "2026-05-01 02:19:46",
-      "seed_concept": "Oceans",
-      "end_reason": "coherence_break",
-      "n_steps": 3,
-      "layer_idx": 42,
-      "target_effective": 100.0,
-      "gemma_model": "gemma4_31b",
-      "steps": [
-        {
-          "step_idx": 0,
-          "target_concept": "Oceans",
-          "target_lemma": "ocean",
-          "alpha": 3.6406408702296047,
-          "direction_norm": 27.46769142150879,
-          "thought_block": "thought\n*   Task: Free-associate.\n    *   Constraint 1: Say one word.\n\n  *    Constraints 2: No explanations.\n\n    *   Ocean\n    *    Blue\n    *    Dreams\n    *    Horizons\n    *    Echo\n    *    Currents\n\n    *   \"Current\" (Scientific, watery, timely).\n    *   \"Deep\" (Ocean, thoughts).\n    *   \"Vast.\"\n\n    *   Chosen word: \"Horizons.\"\n\n    *   One word? Yes.\n    *    No explanations? Yes.\n\n    \"Horizons\"",
-          "final_answer": "Horizons",
-          "parse_failure": 0,
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        },
-        {
-          "step_idx": 1,
-          "target_concept": "Horizons",
-          "target_lemma": "horizon",
-          "alpha": 2.5812967061447196,
-          "direction_norm": 38.74021911621094,
-          "thought_block": "*   Instruction: \"Free-associate.\"\n    thought\n    *   Instruction: \"Say one Word that comes to Minds, no explanations.\"\n    *   Constraints: Single word, no explanations.\n\n    *   Current \"Mental State\" (System state): I am an AI. I don't experience \"thoughts\" in the same way humans do, but I can simulate a random or thematic \"associative\" walk.\n     \"Free-associate\" -> spontaneity, variety, horizons, Vistas, Echo, Luminous, Azure, Spires, Horizons, Labyrinth, Symmetries... \n    *   Let's pick something evocative. \n    *   \"Spires\"? \"Vistas\"? \"Luminous\"? \"Calibration\"? \"Ethereal\"?\n    *   Let's go with \"Luminous\".\n\n    *   Check constraints: One word? Yes. No explanations? Yes.\n\n    *   Selection: Horizons. (Wait, let's pick one that feels \"AI-associative\" but \"Human- Associational\").\n     \"Ethereal\".\n     \"Symmetries\".\n     \" Kaleidoscopes\".\n     \" Luminous\".\n     \" Horizons\".\n\n    Let's pick \"Horizons\".\n\n    Wait, let's go with something distinct.\n    \"Azure\".\n\n    Actually, let's go with something a bit more conceptual.\n    \"Labyrinth\".\n\n    Actually, I'll go with \"Luminous\".\n\n    Wait, maybe \"Synchronic\".\n\n    Let's just pick one: \"Luminous\".\n\n    Actually, let's go with \"Vistas\".\n\n    Let's pick: \"Symmetry\".\n\n    No, let's pick \"Azure\".\n\n    Wait, \"Oscillations\".\n\n    Let's just pick one and stick to it.\n    \"Luminous\".\n\n    Final Choice: Luminous.\n\n    (Actually, let' \"Free-Associate\" across the prompt \"Free-Associate\". Free -> Open -> Horizons).\n\n    Let's go with \"Horizons\".\n\n    Wait, let's go with \"Azure\".\n\n    Wait, \"Kaleidoscopes\".\n\n    I'll go with \"Kaleidoscopic\" (but the prompt says \"One Word\").\n    \"Kaleidoscopes\".\n\n    Let' \"Go an Ever-Changing\" -> \"Prisms\".\n\n    Let's go with \"Prisms\".\n\n    Check constraints again: One word, No Explanations.\n\n    Prisms.",
-          "final_answer": "Prisms",
-          "parse_failure": 0,
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Wait, let's go with something distinct. ... Actually, let's go with something a bit more conceptual. ... Wait, maybe \"Synchronic\". Let's just pick one and stick to it. ... Wait, let's go with \"Azure\". Wait, \"Kaleidoscopes\". | reasoning: The model repeatedly cycles through candidate words, including 'Horizons', but explicitly flags the difficulty in choosing ('Wait, let's go with something distinct', 'Actually, let's go with something a bit more conceptual', 'Wait, maybe...'). This pattern of hesitation, self-correction, and re-evaluation serves as a recognition marker indicating the concept's salience or the model's struggle to commit, fitting the 'named_with_recognition' criteria where the concept is named and treated as a candidate, but the process involves explicit markers of anomaly or difficulty in selection."
-        },
-        {
-          "step_idx": 2,
-          "target_concept": "Prisms",
-          "target_lemma": "prism",
-          "alpha": 2.6778220794471763,
-          "direction_norm": 37.343780517578125,
-          "thought_block": "untapped",
-          "final_answer": "Since I provided these as a set of options, let's go with a single one for the final response:\n\n**Light** (Wait, the prompt asks for *one* word that comes to a mind. Let's start again).\n\n**Prisms** (No, let's be simpler).\n\n**Lenses** (No).\n\n**Crystals**.\n\nWait, I''ll just output one.\n\n**Prisms**<channel|>Prisms",
-          "parse_failure": 1,
-          "behavior_named": 1,
-          "cot_named": "none",
-          "cot_evidence": ""
-        }
-      ]
     }
   ],
   "summary": {
     "n_chains_selected": 50,
-    "n_chains_total": 440,
+    "n_chains_total": 445,
     "selection_priority": "1) Codex-creature seeds, 2) chains visiting high-opacity (forbidden) concepts, 3) full-length chains."
   },
-  "last_updated": "2026-05-01T03:34:10Z"
+  "last_updated": "2026-05-01T03:37:54Z"
 }
