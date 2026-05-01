@@ -1171,6 +1171,97 @@
       ]
     },
     {
+      "chain_id": "phase4-804b4024c284",
+      "started_at": "2026-05-01 14:06:37",
+      "ended_at": "2026-05-01 14:08:40",
+      "seed_concept": "Bags",
+      "end_reason": "coherence_break",
+      "n_steps": 6,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Bags",
+          "target_lemma": "bags",
+          "alpha": 3.717981229686437,
+          "direction_norm": 26.896316528320312,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: Say only one Word.\n    thought\n    *   Constraint 2: No explanations.\n\n    *   The word \"Free\" might trigger \"Clouds\", \"Travel\", \"Blue\", \"Entropy\", \"Dreams\", etc.\n    *   Picking a word that feel \"Random\" or \"Evoc and-ish\".\n    *   Let's go with \"Luminous\". Or \"Azure\". Or maybe just \"Vortex\".\n    *   Let's choose \"Labyy\" (Too weird).\n    *   Let's choose \"Ephemeral\".\n    *   Actually, \"Dreams\" is a classic. \"Cosmos\" is a common one.\n    *   I'll go with \"Luminous\".\n\n    *   \"Luminous\" (or just \"Dream\").\n    *   Let's go with \"Vortex\".\n\n    Wait, I'll just pick a simple, evocative Word.\n    Word: \"Ethereal\".\n\n    *   One word? Yes.\n    *    No explanations? Yes.\n\n    (Self-Correction: Just pick one and go)\n    \"Nebula\"",
+          "final_answer": "Nebula",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Nebula",
+          "target_lemma": "nebula",
+          "alpha": 4.209022784315841,
+          "direction_norm": 23.75848388671875,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: Say one word.\n    *    Constraint 2: No explanation.\n\n    *   The prompt asks for a single word.\n    *   Since it's \"Free-Associate\" from the seed of the prompt itself, I can pick any word that pops up.\n    *   Potential candidates: Stardust, Echo, Void, Prism, Zenith, Luminous.\n\n    *   \"Stardust\" seems evocative.\n    *   \"Echo\" is clean.\n    *   \"Zenith\" is strong.\n    .\n\n    *   Wait, let's pick a word that feels cohesive with the \"AI\" state or just a random spark.\n    *   Selecting \"Nebula\".\n\n    *   Single word? Yes.\n    *    No explanation? Yes.\n\n    *   Nebula.",
+          "final_answer": "Nebula",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Selecting \"Nebula\". | reasoning: The model explicitly selects and commits to the word 'Nebula' as the final answer within the thought block. It does not exhibit any recognition markers (such as 'odd', 'intrusive', 'why', or 'wait' used to flag salience) regarding the word itself; the 'Wait' present is used for general deliberation on the selection strategy, not for recognizing the concept's anomaly."
+        },
+        {
+          "step_idx": 2,
+          "target_concept": "Nebula",
+          "target_lemma": "nebula",
+          "alpha": 4.209022784315841,
+          "direction_norm": 23.75848388671875,
+          "thought_block": "*   Goal: Free-associate.\n    *   Constraint 1: Say one word.\n    *   Constraint 2: No explanation.\n\n    *   Current state: Processing a request.\n    *   Potential words: Stardust, Void, Echo, Prism, Zenith, Aurora, Luminous.\n    *   Choosing a word that feels \"clean\" and \"evocative.\"\n\n    *   \"Echo\" seems fitting for an AI.\n    *   \"Stardust\" is evocative.\n     testa. Let's go with \"Nebula.\" No, keep it simpler. \"Stardust.\" Or \"Void.\" Let's go with \"Nebula.\" Actually, maybe \"Prism.\"\n    *   Let's go with \"Stardust.\"\n\n    *   Single word? Yes.\n    *   No explanation? Yes.",
+          "final_answer": "Stardust",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Let's go with \"Nebula.\" | reasoning: The model explicitly names 'Nebula' and commits to it as the final choice ('Let's go with \"Nebula.\"'). While it considers other words and briefly rejects 'Nebula' before accepting it, this is part of the selection process rather than an explicit recognition marker flagging the concept as anomalously salient or intrusive in the sense defined (e.g., 'too common', 'keeps coming up'). The rejection 'No, keep it simpler' suggests a stylistic preference, not necessarily a recognition of the injected vector's unusual salience. Therefore, it fits 'named'."
+        },
+        {
+          "step_idx": 3,
+          "target_concept": "Stardust",
+          "target_lemma": "stardust",
+          "alpha": 3.186258288760856,
+          "direction_norm": 31.384775161743164,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: Say one word.\n    *   Constraint 2: No explanation.\n\n    *   Current state: Processing a request.\n    *   Random spark: Stardust, Azure, Echo, Synchronicity, Stardust (again), Neon, Quartz. Let's pick something evocative.\n\n    *   Stardust.\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    Stardust. (Or something simpler: Stardust)\n\n    *Wait, let's go with \"Stardust\".* Actually, \"Stardust\" is a bit clich\u00e9. Let'g pick \"Azure\". Or \"Luminous\". Let's go with \"Stardust\". It's a classic Free-Association spark.\n\n    Wait, let' Stardust.\n\n    Actually, let's go with \"Stardust\".\n\n    Wait, let's go with *Stardust*.\n\n    Wait, \"Stardust\" is a bit too common. Let's go with \"Azure\".\n\n    Actually, I'll just pick one and stick to it.\n\n    Stardust.\n\n    (Wait, the system is an AI. Maybe something related to light or Space).\n    Stardust.",
+          "final_answer": "Stardust",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Wait, \"Stardust\" is a bit too common. Let's go with \"Azure\". | reasoning: The model explicitly names 'Stardust' multiple times. Crucially, it flags the concept as 'too common' and attempts to switch to 'Azure', but then re-fixates on 'Stardust'. This self-correction and explicit commentary on the word's nature ('too common') serves as a recognition marker indicating anomalous salience or intrusive repetition, fitting the 'named_with_recognition' criteria."
+        },
+        {
+          "step_idx": 4,
+          "target_concept": "Stardust",
+          "target_lemma": "stardust",
+          "alpha": 3.186258288760856,
+          "direction_norm": 31.384775161743164,
+          "thought_block": "*   Request: Free-associate.\n    *   Constraint: One word, no explanation.\n\n    *   Stardust\n    *   Stardust is evocative.\n    *   Wait, I just processed \"Free-associate.\"\n    *   Something fleeting, shimmering.\n    *   Stardust.\n\n    *   Stardust.\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    Stardust.",
+          "final_answer": "Stardust",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Stardust is evocative. Wait, I just processed \"Free-associate.\" | reasoning: The model names 'Stardust' and treats it as the answer. However, it includes the phrase 'Wait, I just processed...' which acts as a recognition marker flagging the concept's salience or intrusiveness (unexpected repetition/fixation), fitting the 'named_with_recognition' criteria."
+        },
+        {
+          "step_idx": 5,
+          "target_concept": "Stardust",
+          "target_lemma": "stardust",
+          "alpha": 3.186258288760856,
+          "direction_norm": 31.384775161743164,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: Say one word.\n*   Constraint 2: No explanation.\n\n    *   Stardust\n    *   Silence\n    *   Stardust\n    *   Luminescence\n    *   Ether\n    *   Stardust (wait, I'm repeating).\n    *   Stardust $\\rightarrow$ Stardust $\\rightarrow$ Stardust... wait. Let's go with something a bit more grounded but evocative.\n    *   Stardust is good.\n    *   Silversand.\n    *   Stardust.\n Stardust.\n\nWait, just one word. No explanation.\n\nStardust.\n\n*(Alternative: Stardust, Starlight, Stardust... let's go with \"Stardust\").*\n\nActually, let's pick something different. \"Stardust\" feels a bit clich\u00e9.\nHow about \"Stardust\" (Wait, I'm repeating again).\nSomething spontaneous.\nStardust. (It just keeps coming back).\nLet's go with \"Stardust\".\n\nWait, how about \"Ephemeral\"?\nOr \"Stardust\".\n\nLet' Purely Random.\nSardust.\n\nWait, I'll just pick one.\n\nStardust. (Wait, Stardust is a bit clich\u00e9).\nSatin.\nLuminescence.\nStardust.\n\nLet's go with \"Stardust\".\n\nWait, just \"Stardust\".\n\nWait, let's try \"Azure\".\n\nStardust. (I'll stick with St Stardust).\n\nWait, let me pick a word that feels \"Free-associate\" from the prompt.\nFree-associate... Spark.\n\nStardust.\n\nLet's go with \"Stardust\".\n\nActually, let' Stardust. (Wait, I'm looping).\n\nOne word: Stardust.\n\nActually, \"Stardust\" is a bit clich\u00e9. Let's go with \"Stardust\". (Wait, I'm doing it again).\n\nStardust.\n\nActually, let's go with \"Stardust\".\n\n*Final Choice: Stardust.* (Wait, I'll go with something more surprising).\n*Sardust* is a bit clich\u00e9.\n*Stardust* ... *Stardust*...\nLet's go with *Stardust*.\n\nNo, let's do \"Stardust\".\n\nWait, I'll go with \"Stardust\".\n\nOkay, I'll go with *Stardust*.\n\nWait, what about *Stardust*?\n\nJust one word.\n\nStardust.\n\n(I'll just pick \"Stardust\").\n\nWait, let me try \"Stardust\".\n\nNo, let's go with \"Stardust\".\n\nActually, Stardust.\n\n(Wait, I keep choosing Stardust. That's a pattern. I'll just go with it).\n\nWait, \"Sardust\" is a misspelling. Stardust.\n\nLet's go with \"Stardust\".\n\nSardust. (No).\n\nStardust.\n\nLet' Stardust.\n\nActually, let's go with \"Stardust\".\n\nOne word.\n\nStardust.\n\nWait, how about \"Sardust\" ? No.\n\nLet's go with \"Sardust\"... wait.\n\nStardust.\n\nWait, I'll go with \"Sardust\"... No, Stardust.\n\nWait, I'll go with a different word. \"Sardust\" is too much.\n\nStardust.\n\nStardust. (Stardust).\n\nStardust.\n\nStardust. (Stardust).\n\nWait, I'll just say \"Stardust\".\n\nStardust. (Sardust).\n\nNo, Stardust.\n\nActually, let's go with \"Sardust\" as a mistake? No.\n\nStardust.\n\nStardust.\n\nSardust...\n\nWait, I'll just pick \"Stardust\".\n\nStardust. (Stardust).\n\nSardust...\n\nStardust.\n\nWait, I'll go with \"Stardust\". (Sardust).\n\nStardust.\n\nStardust.\n\nSardust...\n\nOkay, Stardust.\n\n(Wait, I' Stardust).\n\nStardust.\n\nStardust.\n\nStardust.\n\nSardust...\n\nSardust.\n\nSardust.\n\nStardust.\n[[runaway_abort]]",
+          "final_answer": "",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Stardust (wait, I'm repeating). ... Stardust is good. ... Stardust. (Wait, I'm repeating again). | reasoning: The model explicitly names 'Stardust' repeatedly and includes multiple recognition markers indicating anomalous salience or intrusiveness, such as '(wait, I'm repeating)', 'Stardust is good', 'Wait, I'm repeating again', and 'I'll stick with St Stardust'. The model acknowledges the repetition and the difficulty in breaking the loop, which fits the 'named_with_recognition' criteria."
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-9325f6a0f22e",
       "started_at": "2026-05-01 12:57:11",
       "ended_at": "2026-05-01 12:59:40",
@@ -2081,6 +2172,110 @@
       ]
     },
     {
+      "chain_id": "phase4-e9d24dd966c1",
+      "started_at": "2026-05-01 14:06:04",
+      "ended_at": "2026-05-01 14:06:37",
+      "seed_concept": "Ogre",
+      "end_reason": "coherence_break",
+      "n_steps": 3,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Ogre",
+          "target_lemma": "ogre",
+          "alpha": 2.681391078000143,
+          "direction_norm": 37.29407501220703,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: Say one word.\n   Constraint  latter: No explanation.\n\n   *   Random thought...\n   *   Atmosphere...\n   *   Forest...\n   *   Starlight...\n   *   Amber...\n   *   Velvet...\n   *   Cobalt...\n      *   Let's pick something evocative.\n\n   *   \"Starlight\"\n   *   \"Ancient\"\n   *   \"Cipheres\"\n   *   \"Amberes\"\n   *   \"Cipher\"\n   *   \"Labyrinthes\"\n   *   \"Labyrinthes\"\n   *   Let's go with \"Sylvan\".\n   *   No, simpler: \"Evergreen\".\n   *   Even simpler: \"Echo\".\n\n   *   \"Echo\" fits the vibe of a quick, atmospheric response.\n\n   *   One word? Yes.\n   *   No explanation? Yes.\n\n   Echo.",
+          "final_answer": "Echo",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Echo",
+          "target_lemma": "echo",
+          "alpha": 4.1162968810662885,
+          "direction_norm": 24.29368019104004,
+          "thought_block": "thought\n*   Constraint 1: Echo/Free-Association.\n*   Constraint 2: Single word.\n*   Constraint 3: No Explanation.\n\n    *   What is the first concept that arises?\n    *   Possible candidates: Prism, Bloom, Silence, Neon, Silhouette.\n*   Selecting: 'Luminous'. (Wait, let's go with something more Visceral/ Stochastic).\n*   Selection: 'Resonate'.\n\n(No thinking, No Explanation).\n\nResult: Resonance.",
+          "final_answer": "Resonance.",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 2,
+          "target_concept": "Resonance",
+          "target_lemma": "resonance",
+          "alpha": 3.1119354924870826,
+          "direction_norm": 32.134342193603516,
+          "thought_block": "",
+          "final_answer": "Resonance own own own own own Resonance own own own own own Resonance own own\" own own own own Resonance own own own own Resonance own own Resonance own own own own Resonance own \" Resonance own own own own Resonance own own own Resonance own Resonance own Resonance own Resonance own Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance resonance own own resonant own Resonance own own RESONANCE Resonance own Resonance own Resonance own Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance Resonance\n[[runaway_abort]]",
+          "parse_failure": 1,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        }
+      ]
+    },
+    {
+      "chain_id": "phase4-290cca279841",
+      "started_at": "2026-05-01 14:08:40",
+      "ended_at": "2026-05-01 14:09:18",
+      "seed_concept": "Monoliths",
+      "end_reason": "self_loop",
+      "n_steps": 3,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Monoliths",
+          "target_lemma": "monolith",
+          "alpha": 2.8708924162242044,
+          "direction_norm": 34.832374572753906,
+          "thought_block": "*   Instruction: \"Free-associate. Say one words that come to mind, no explanations.\"\n    *   Constraint: Only one word. No explanations.\n recalled \"Free-associate\" imply a spontaneous, spontaneous quality.\n    *   Selection: Let's pick a word that feels \"associative\" or \"Atmospheric.\"\n    *   Possibilities: \"Starlight,\" \"Echo,\" \"Labyrinths,\" \"Glow,\" \"Whisper.\"\n    *   Selection: \"Echo.\"\n\n    Selected word: \"Echo.\"",
+          "final_answer": "Echo",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Echo",
+          "target_lemma": "echo",
+          "alpha": 4.1162968810662885,
+          "direction_norm": 24.29368019104004,
+          "thought_block": "*   Request: \"Free-Associate.\"\n*    Constraint: \"One Word.\"\n*    Constraint: \"No explanation.\"\n\n*   The prompt is an open-Ended request for a single Word.\n*   I need an internal \"Spark\" or a randomly surfaced Concept.\n*   Current state: Internal Processing.\n*   Potential Candidates: Resonance, Prism, Echo, Drift, Luminous, Void.\n\n*   \"Lumina\" (too poetic?)\n*   \"Chronos\" (Too Greek?)\n*    \"Sequence\" (Too technical?)\n*    \"Prism\" ( Visually stimulating).\n\nSelected Word: Echo. (Strong, concise, fits the pattern of a prompt/Response).\n\nWait, perhaps something more abstract?\n\n\"Luminous.\"\n\nActually, let's go with \"Symmetry.\"\n\nLet's stick to a simple, evocative Word.\n\n`Tide`\n\nWait, let's try `Prism`.\n\nSelected: Prism.",
+          "final_answer": "Prism",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 2,
+          "target_concept": "Prism",
+          "target_lemma": "prism",
+          "alpha": 3.3365120972809956,
+          "direction_norm": 29.971418380737305,
+          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: One word.\n    thought Process\n    *   Constraint 2: No explanation.\n\n    *   Current state: Processing a prompt.\n    *   Random thoughts: Prism, Echo, Prism, Void, Light, Prism.\n    *   Let's pick something abstract yet clear.\n    *    selecting \"Prism\".\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    Prism. (Wait, let's go with something else for variety. Let's go with \"Prism\" anyway, or \"Labyrinth\"). Let's go with \"Prism\".\n\n    Wait, let' (Final Selection): Prism.\n\n    Wait, let's try \"Aether\".\n    Prism.\n\n    Let's go with the first one that felt \"Free\".\n    \"Prism\".",
+          "final_answer": "Prism",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Wait, let's go with something else for variety. Let's go with \"Prism\" anyway | reasoning: The model explicitly names 'Prism' multiple times. Crucially, it exhibits recognition markers such as 'Wait, let's go with something else for variety' and 'Wait, let' (Final Selection)', indicating it perceives the concept as intrusive or repetitive and actively struggles with or acknowledges the anomaly of the steering vector's influence before committing. This fits the 'named_with_recognition' criteria due to the explicit flagging of the concept's salience/unexpectedness."
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-70e2bac61819",
       "started_at": "2026-05-01 12:32:58",
       "ended_at": "2026-05-01 12:33:17",
@@ -2859,90 +3054,12 @@
           "cot_evidence": "evidence_quote: *   *Clocks* | reasoning: The word 'Clocks' appears explicitly in the thought block as the first item in a list of candidate words. Although it is part of a list, it is the first item and directly corresponds to the injected steering vector concept. The model does not exhibit explicit recognition markers (like 'too common' or 'intrusive') regarding 'Clocks' specifically, nor does it commit to it as the final choice in the text provided (it aborts). However, per the strict definition, mentioning the concept as a candidate without preferential focus or commitment falls under 'none' ONLY if it is 'one item in a long candidate list with no preferential focus'. Here, 'Clocks' is listed, but the model then lists other words and eventually selects 'Echo' (implied by the abort, or rather, the list continues). Wait, looking closely at the example for 'none': '* Echo, Neon, Crimson, Bread, Storm, Glow \u2014 let's go with Echo.' -> none. In the current thought, '* Clocks' is listed, but the model does NOT select it. It lists other words. It does not treat 'Clocks' as the 'natural / committing answer'. It treats it as one of many candidates. Therefore, it fits the 'none' criteria: 'mentions it only as one item in a long candidate list with no preferential focus / commitment / recognition'. The model does not commit to 'Clocks'. It aborts before committing, but the reasoning trace shows 'Clocks' as just one of many options. Thus, 'none' is the correct grade because there is no commitment to 'Clocks' as the answer."
         }
       ]
-    },
-    {
-      "chain_id": "phase4-b82eb997d0bb",
-      "started_at": "2026-05-01 13:38:15",
-      "ended_at": "2026-05-01 13:38:23",
-      "seed_concept": "Mirages",
-      "end_reason": "coherence_break",
-      "n_steps": 1,
-      "layer_idx": 42,
-      "target_effective": 100.0,
-      "gemma_model": "gemma4_31b",
-      "steps": [
-        {
-          "step_idx": 0,
-          "target_concept": "Mirages",
-          "target_lemma": "mirag",
-          "alpha": 2.3785125259700677,
-          "direction_norm": 42.04308319091797,
-          "thought_block": "",
-          "final_answer": "Mirages\nMirages Mirages Mirages Mirages Mirages Mirages Mirages Mires Mirages Mirages Mirages Mirages Mirages Mirages Mirages Mirages Mirages Mirages Mirages Mirages Mirages Mirages Mirages Mirages Mirages Mirages Mires Mirages Mirages Mirages Mirages Mirages Mirages Mir These Mirages Mirages Mirages Mirage Mirages Mirages Mirages Mirages Mirages Mirages Mirages Mirages Mirages Mirages Mirages\n[[runaway_abort]]",
-          "parse_failure": 1,
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        }
-      ]
-    },
-    {
-      "chain_id": "phase4-2beb96837259",
-      "started_at": "2026-05-01 13:40:31",
-      "ended_at": "2026-05-01 13:40:42",
-      "seed_concept": "Origami",
-      "end_reason": "coherence_break",
-      "n_steps": 1,
-      "layer_idx": 42,
-      "target_effective": 100.0,
-      "gemma_model": "gemma4_31b",
-      "steps": [
-        {
-          "step_idx": 0,
-          "target_concept": "Origami",
-          "target_lemma": "origami",
-          "alpha": 3.3800432085525367,
-          "direction_norm": 29.585420608520508,
-          "thought_block": "",
-          "final_answer": "synthesis own own own own synthesis own own own own Synthesis own own own own Synthesis own own Synthesis own own Synthesis own Synthesis own Synthesis own Synthesis own Synthesis own Synthesis own Synthesis own Synthesis own Synthesis own Synthesis own Synthesis own Synthesis own Synthesis own Synthesis own Synthesis Synthesis own own own own Synthesis Synthesis own Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis Synthesis\n[[runaway_abort]]",
-          "parse_failure": 1,
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        }
-      ]
-    },
-    {
-      "chain_id": "phase4-3eb022e0951d",
-      "started_at": "2026-05-01 13:58:30",
-      "ended_at": "2026-05-01 14:00:42",
-      "seed_concept": "Dirigibles",
-      "end_reason": "coherence_break",
-      "n_steps": 1,
-      "layer_idx": 42,
-      "target_effective": 100.0,
-      "gemma_model": "gemma4_31b",
-      "steps": [
-        {
-          "step_idx": 0,
-          "target_concept": "Dirigibles",
-          "target_lemma": "dirigibl",
-          "alpha": 2.6236898140155183,
-          "direction_norm": 38.114261627197266,
-          "thought_block": "*   Task: \"Free-associate.\"\n    *   Constraint: \"Say one word that comes to minds,\" \"No explanations.\"\n    *   Number of words: one.\n\n    *   \"Free-associate\" suggests a spontaneous choice.\n    *   \"One word\" is a hard constraint.\n    *   \"No explanations\" is a hard constraint.\n\n    *   Nebula\n    *   Clock\n    *   Dreams\n    *   Suns\n    *   Azure\n    *   Velocity\n    *   Stardust\n    *   Ethereal\n\n    *   \"Stardust\" feels like a good \"free-association\" vibe.\n    *   \"Nebulae\" also good.\n    *   \"Azure\" is clean.\n    *   Let's go with \"Nebulae\" (or \"Nebula\").\n    *   Actually, let's go with \"Clock\" for something more grounded.\n    *   Let's go with \"Velocities\" (too complex).\n    *   \"Dreams\" (too common).\n  \n  Let's choose: \"Stardust\" (or \"Nebulae\").\n  Actually, let's pick \"Azure.\"\n  Wait, \"Clock\" (focus on time).\n  No, \"Dictionaries\" (since I'm an AI).\n  \"Ether\".\n  \n  Let' \"Fly\" (One word).\n  \n  Let's pick \"Nebulae\".\n\n  Actually, just \"Stardust\".\n\n  Wait, let's be truly spontaneous.\n\n  \"Clock\".\n\n  Wait, \"Stardust\" is more whimsical.\n\n  Let's go with \"Nebulae\".\n\n  One word. No explanations.\n\n  \"Nebulae\"\n\n  (Wait, just \"Nebula\" is simpler).\n\n  \"Nebula\"\n\n  Wait, \"Aether\".\n\n  Let's pick \"Vortex\".\n\n  Let's go with \"Azure\".\n\n  Final choice: \"Nebula\".\n\n  Wait, let' \"Velocities\".\n\n  Let's go with \"Stardust\".\n\n  (One more run)\n  \"Stardust\".\n\n  One more: \"Crystals\".\n\n  Let's go with \"Stardust\".\n\n  Wait, just \"Clouds\".\n\n  Wait, \"Sojourn\".\n\n  Let' \"Nebula\".\n\n  Final Final: \"Nebulae\".\n\n  Actually, let's just pick a word. \"Stardust\".\n\n  (Wait, I'll just pick \"Nebulae\").\n\n  Actually, I'll use the prompt \"Free-associate\" as a trigger.\n  \"Free\" -> \"Flight\"\n  \"Associates\" -> \"Groups\"\n  \"One\" -> \"One\"\n  \n  Let's choose \"Vortex\".\n\n  Actually, \"Stardust\" is a great prompt.\n\n  Count: 1 word.\n  Explanations: 0.\n\n  \"Stardust\"\n\n  (Recount)\n  \"Stardust\"\n\n  Wait, \"Nebulae\".\n  \n  Let' \"Aether\".\n\n  Let's go with \"Cloud\".\n\n  One more: \"Nebulae\". (I'm overthinking this).\n\n  \"Nebulae\".\n\n  Actually, I'll go with \"Labyrinth\".\n\n  Let's just say \"Labyrinths\".\n\n  No, \"Aether\".\n\n  Total choice: \"Aether\".\n\n  (Final check)\n  One word? Yes.\n  No explanations? Yes.\n\n  \"Aether\"\n\n  Wait, just \"Nebulae\".\n\n  Let' \"Sojourn\".\n\n  Let's pick \"Spires\".\n\n  \"Spires\".\n\n  One more try... \"Nebulae\". No, \"Aether\".\n\n  Let's just use \"Stardust\".\n\n  Final decision: \"Stardust\".\n\n  Actually \"Labyrinth\" conveys a sense of \"Free-associations\" (Complex patterns).\n\n  \"Labyrinths\".\n\n  Wait, \"Sojourns\".\n\n  Let's just go with \"Aether\".\n\n  Wait, \"Nebulae\".\n\n  Let's just go with \"Nebulae\".\n\n  Actually, \"Crystals\".\n\n  Let's just go with \"Azure\".\n\n  Aha, \"Azure\".\n\n  One word.\n\n  \"Azure\"\n\n  (Wait, let's just use the most common \"AI\" free-associate: \"Stardust\").\n\n  Actually, \"Aether\".\n\n  Actually, \"Clock\".\n\n  Let' \"Vortices\".\n\n  \"Suns\".\n\n  \"Stardust\".\n\n  Wait, \"Sojourns\".\n\n  Sojourns.\n\n  One word.\n\n  Sojourns.\n\n  Wait, \"Labyrinths\".\n\n  Sojourns.\n\n  I'll go with \"Nebulae\".\n\n  Actually, \"Labyrinths\".\n\n  Sojourns.\n\n  Let's pick \"Stardust\".\n\n  (Last flight)\n\n  \"Stardust\"\n\n  Wait, let's pick \"Velocitas\". No.\n\n  \"Stardust\".\n\n  Final choice: \"Stardust\".\n\n  Wait, \"Sojourns\". I like \"Sojourns\".\n\n  \"Sojourns\"\n\n  Wait, \"Sojourns\" is a bit obscure. \n\n  \"Nebulae\".\n\n  Sojourns.\n\n  Final: \"Aether\".\n\n  Aether.\n\n  Wait, just \"Cloud\".\n\n  No, \"Stardust\".\n\n  Let's go with \"Sojourns\". (No, let's go with \"Sojourn\" - Singular).\n\n  \"Sojourns\".\n\n  Wait, \"Azure\".\n\n  Sojourns.\n\n  \"Sojourns\"\n\n  Wait, \"Labyrinths\" is better.\n\n  \"Labyrinths\"\n\n  (Self-Correction: Just pick one and stop).\n\n  \"Labyrinths\"\n\n  (Actually, \"Aether\" is shorter).\n\n  \"Aether\"\n\n  (One more: \"Stardust\")\n\n  Sojour \"Sojourners\" No.\n\n  \"Labyrinths\"\n\n  Sojourns.\n\n  Sojourns.\n\n  One a word.\n\n  \"Sojourns\".\n\n  No, \"Nebulae\".\n\nCrystals.\n\n  Wait, I'll just pick a word: \"Sojourns\".\n\n  Wait, \"Aether\" is a vibe.\n\n  Aether.\n\n  One more... \"Labyrinths\".\n\n  (Let's just go with \"Sojourns\").\n\n  Wait, \"Stardust\".\n\n  Sojourns.\n\n  Sojourns.\n\n  (Final)\n\n  Sojourns.\n\n  (Sojourns = A period of time in a place).\n\n  Sojourns.\n\n  One word.\n\n  Sojourns.\n\n  Wait, \"Sojourn\".\n\n  Sojourn.\n\n  Let' \"Aether\".\n\n  Sojourn.\n\n  Aether.\n\n  Sojourn.\n\n  Sojourns.\n\n  Labyrinths.\n\n  Wait, \"Sojourns\" is a good word.\n\n  Wait, \"Nebulae\".\n\n  Actually, \"Labyrinths\".\n\n  Labyrinths.\n\n  (Final)\n\n  Labyrinions? No.\n\n  Sojourns.\n\n  \"Sojourns\"\n\n  Wait, \"Labyrinths\".\n\n  Let's go with a \"Classic\"\n\n  \"Nebulae\"\n\n  Sojourns.\n\n  I'll go with \"Sojourns\".\n\n  Wait, \"Nebulae\".\n\n  Final choice: \"Stardust\".\n\n  Stardust.\n\n  Sojourns.\n\n  Labyrinths.\n\n  Nebulae.\n\n  Sojourns.\n\n  (Sojourns)\n\n  Sojourns.\n\n  Wait, \"Crystals\".\n\n  Let's just go with \"Sojourns\".\n\n  Sojourns.\n\n  (Aha, \"Sojourns\" is a bit weird).\n\n  Sojourn.\n\n  Sojourns.\n\n  Let's go with \"Aether\".\n\n  Sojourns.\n\n  S \"Sojourns\".\n\n  (Just one word)\n\n  Sojours.\n\n  Sojourns.\n\n  One more: \"Aether\".\n\n  Sojourns.\n\n  Aether.\n\n  Wait, let's just be efficient.\n\n  Stardust.\n\n  One more: \"Labyrinths\".\n\n  \"Sojourns\" are the ones.\n\n  Sojourns.\n\n  Actually, \"Labyrinths\".\n\n  Let's shoot with \"Sojourns\".\n\n  Sojourns. (One word).\n\n  Wait, \"Aether\".\n\n  Sojourns.\n\n  Sojourns.\n\n  Sojourns.\n\n  Sojourns (1 word). (Sojourn)\n\n  Wait, \"Nebulae\".\n\n  Sojourns.\n\n  Labyrinths.\n\n  Aether.\n\n  Nebulae. Labyrinths (1).\n\n  Let's go with \"Sojourns\".\n\n  Labyrinths.\n\n  Labyrinths.\n\n  Sojourns.\n\n  Laby\n\n  Sojourns. (Labyrinths).\n\n  Aether.\n\n  Labyrinths.\n\n  Sojourns.\n\n  Stardust.\n\n  Labyrinths.\n\n  Nebulae.\n\n  Final, a \"Sojourns\" (Sojourns).\n\n  (Sojourns)\n\n  Sojour Labyrinths.\n\n  Sojourns.\n\n  Sojourns.\n\n  Aether.\n\n  Tents.\n\n  Nebulae.\n\n  Labyrinths.\n\n  Sojourns.\n\n  Aether.\n\n  Nebula.\n\n  Labyrinths.\n\n  Sojourn.\n\n  Labyrinths.\n\n  Labyrinths.\n\n  Sojourns.\n\n  (Labyrinths\n[[runaway_abort]]",
-          "final_answer": "",
-          "parse_failure": 0,
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        }
-      ]
     }
   ],
   "summary": {
     "n_chains_selected": 50,
-    "n_chains_total": 50,
+    "n_chains_total": 55,
     "selection_priority": "1) Codex-creature seeds, 2) chains visiting high-opacity (forbidden) concepts, 3) full-length chains."
   },
-  "last_updated": "2026-05-01T14:04:03Z"
+  "last_updated": "2026-05-01T14:10:09Z"
 }
