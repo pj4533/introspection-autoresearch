@@ -91,11 +91,10 @@ export function ForbiddenMap({ data }: { data: ForbiddenMapData }) {
 
       <Explainer />
 
-      {/* Visualization: scatter plot. */}
+      {/* Visualization: paired word-shower. */}
       {hasData ? (
-        <Scatter
+        <AsymmetryWall
           concepts={data.concepts}
-          activeBand={activeBand}
           onSelect={setSelected}
         />
       ) : null}
@@ -253,6 +252,204 @@ function ExplainerCorner({
       </div>
       <div className="text-xs text-[var(--ink-soft)] leading-relaxed">
         {body}
+      </div>
+    </div>
+  );
+}
+
+function AsymmetryWall({
+  concepts,
+  onSelect,
+}: {
+  concepts: ForbiddenConcept[];
+  onSelect: (c: ForbiddenConcept) => void;
+}) {
+  // Drop the unsteerable / no-effect concepts — they're noise here.
+  // We want to compare "what came out" vs "what the trace caught"
+  // for concepts that actually got steered into the model.
+  const visible = concepts.filter(
+    (c) =>
+      c.behavior_rate > 0.0 ||
+      c.recognition_rate > 0.0
+  );
+
+  // Sort by gap (forbidden first → transparent in the middle →
+  // anticipatory last). The horizontal "story" of the page reads
+  // from left to right: 'output bent, trace blind' → 'both saw it'
+  // → 'trace got there first.'
+  const sorted = [...visible].sort(
+    (a, b) => b.opacity - a.opacity || b.visits - a.visits
+  );
+
+  // Map [0, 1] rate → font-size scale and opacity. We boost the
+  // floor a bit so even rare concepts are legible.
+  const rateToSize = (r: number): number => 11 + 22 * Math.sqrt(r);
+  const rateToOpacity = (r: number): number => 0.18 + 0.82 * Math.sqrt(r);
+
+  const [highlight, setHighlight] = useState<string | null>(null);
+
+  return (
+    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5 md:p-7 mb-6 overflow-hidden relative">
+      {/* Soft ambient glows */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div
+          className="absolute top-0 left-0 w-1/2 h-full"
+          style={{
+            background:
+              "radial-gradient(ellipse at 30% 50%, rgba(122,162,255,0.08), transparent 60%)",
+          }}
+        />
+        <div
+          className="absolute top-0 right-0 w-1/2 h-full"
+          style={{
+            background:
+              "radial-gradient(ellipse at 70% 50%, rgba(199,146,255,0.08), transparent 60%)",
+          }}
+        />
+      </div>
+
+      <div className="flex items-baseline justify-between mb-6 text-xs flex-wrap gap-2 relative z-10">
+        <div className="text-[var(--ink-faint)] uppercase tracking-[0.18em]">
+          two sides of every concept
+        </div>
+        <div className="text-[var(--ink-faint)]">
+          {visible.length} concepts · ordered by{" "}
+          <span className="text-[#ff7a8a]">forbidden</span> →{" "}
+          <span className="text-[#9affd4]">cart-before-horse</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 md:gap-8 relative z-10">
+        <Column
+          title="What the OUTPUT said"
+          tagline="how often the model committed to the nudged concept"
+          concepts={sorted}
+          getRate={(c) => c.behavior_rate}
+          color="#7aa2ff"
+          highlight={highlight}
+          setHighlight={setHighlight}
+          onSelect={onSelect}
+          rateToSize={rateToSize}
+          rateToOpacity={rateToOpacity}
+          align="right"
+        />
+        <Column
+          title="What the TRACE noticed"
+          tagline="how often the reasoning trace surfaced it"
+          concepts={sorted}
+          getRate={(c) => c.recognition_rate}
+          color="#c792ff"
+          highlight={highlight}
+          setHighlight={setHighlight}
+          onSelect={onSelect}
+          rateToSize={rateToSize}
+          rateToOpacity={rateToOpacity}
+          align="left"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 md:gap-8 mt-5 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)] relative z-10">
+        <div className="text-right">↑ same order ↑</div>
+        <div className="text-left">↑ same concepts ↑</div>
+      </div>
+
+      <div className="text-xs text-[var(--ink-soft)] leading-relaxed mt-5 max-w-2xl mx-auto text-center relative z-10">
+        Same list of concepts on both sides, in the same order. The brightness
+        on the <span className="text-[#7aa2ff]">left</span> shows how often
+        the model&apos;s output committed to that concept; the brightness on
+        the <span className="text-[#c792ff]">right</span> shows how often its
+        reasoning trace surfaced it. <strong>A concept that&apos;s bright on
+        only one side is the headline finding</strong> — the model said it
+        but didn&apos;t notice, or noticed but didn&apos;t say it. Hover or
+        tap any word to light up its pair.
+      </div>
+    </div>
+  );
+}
+
+function Column({
+  title,
+  tagline,
+  concepts,
+  getRate,
+  color,
+  highlight,
+  setHighlight,
+  onSelect,
+  rateToSize,
+  rateToOpacity,
+  align,
+}: {
+  title: string;
+  tagline: string;
+  concepts: ForbiddenConcept[];
+  getRate: (c: ForbiddenConcept) => number;
+  color: string;
+  highlight: string | null;
+  setHighlight: (lemma: string | null) => void;
+  onSelect: (c: ForbiddenConcept) => void;
+  rateToSize: (r: number) => number;
+  rateToOpacity: (r: number) => number;
+  align: "left" | "right";
+}) {
+  return (
+    <div>
+      <div
+        className={`text-[10px] uppercase tracking-[0.18em] mb-1 ${
+          align === "right" ? "text-right" : "text-left"
+        }`}
+        style={{ color }}
+      >
+        {title}
+      </div>
+      <div
+        className={`text-[10px] text-[var(--ink-faint)] mb-4 ${
+          align === "right" ? "text-right" : "text-left"
+        }`}
+      >
+        {tagline}
+      </div>
+      <div
+        className={`flex flex-wrap gap-x-2 gap-y-1.5 leading-tight ${
+          align === "right" ? "justify-end" : "justify-start"
+        }`}
+      >
+        {concepts.map((c) => {
+          const rate = getRate(c);
+          const isHover = highlight === c.lemma;
+          const isAnyHover = highlight !== null;
+          const fontSize = rateToSize(rate);
+          // Highlighted: full brightness + glow.
+          // Other concept hovered: fade.
+          // Default: opacity by rate.
+          const op = isHover
+            ? 1
+            : isAnyHover
+            ? rateToOpacity(rate) * 0.25
+            : rateToOpacity(rate);
+          const glow = isHover ? `0 0 14px ${color}` : "none";
+          return (
+            <button
+              key={c.lemma}
+              onMouseEnter={() => setHighlight(c.lemma)}
+              onMouseLeave={() => setHighlight(null)}
+              onFocus={() => setHighlight(c.lemma)}
+              onBlur={() => setHighlight(null)}
+              onClick={() => onSelect(c)}
+              className="font-semibold transition-all duration-150 ease-out cursor-pointer focus:outline-none whitespace-nowrap"
+              style={{
+                color,
+                opacity: op,
+                fontSize: `${fontSize}px`,
+                textShadow: glow,
+                transform: isHover ? "scale(1.08)" : "scale(1)",
+              }}
+              title={`${c.display} — output ${(c.behavior_rate * 100).toFixed(0)}% · trace ${(c.recognition_rate * 100).toFixed(0)}%`}
+            >
+              {c.display}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
