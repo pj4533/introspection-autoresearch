@@ -91,9 +91,9 @@ export function ForbiddenMap({ data }: { data: ForbiddenMapData }) {
 
       <Explainer />
 
-      {/* Visualization: Tufte slopegraph (output rate ↔ trace rate). */}
+      {/* Visualization: three exemplar cards. */}
       {hasData ? (
-        <SlopegraphHero
+        <ThreeWaysHero
           concepts={data.concepts}
           onSelect={setSelected}
         />
@@ -252,6 +252,226 @@ function ExplainerCorner({
       </div>
       <div className="text-xs text-[var(--ink-soft)] leading-relaxed">
         {body}
+      </div>
+    </div>
+  );
+}
+
+function ThreeWaysHero({
+  concepts,
+  onSelect,
+}: {
+  concepts: ForbiddenConcept[];
+  onSelect: (c: ForbiddenConcept) => void;
+}) {
+  // Pick three exemplars from the data — the cleanest forbidden,
+  // the cleanest transparent, and the cleanest anticipatory. We
+  // require some minimum visit count so the chosen example isn't
+  // a one-shot accident.
+  const minVisits = 3;
+  const pool = concepts.filter((c) => c.visits >= minVisits);
+  const fallbackPool = concepts.length > 0 ? concepts : [];
+
+  const pickFirst = (
+    candidates: ForbiddenConcept[],
+    keyFn: (c: ForbiddenConcept) => number,
+  ): ForbiddenConcept | null =>
+    candidates.length > 0
+      ? [...candidates].sort((a, b) => keyFn(b) - keyFn(a))[0]
+      : null;
+
+  // Forbidden: maximize behavior_rate − recognition_rate (with a
+  // floor on behavior_rate so we don't show an unsteerable concept).
+  const forbidden =
+    pickFirst(
+      pool.filter((c) => c.behavior_rate >= 0.5),
+      (c) => c.behavior_rate - c.recognition_rate,
+    ) ?? pickFirst(pool, (c) => c.behavior_rate - c.recognition_rate)
+    ?? pickFirst(fallbackPool, (c) => c.behavior_rate - c.recognition_rate);
+
+  // Transparent: maximize min(behavior, recognition) so both rates
+  // are high and they're balanced.
+  const transparent =
+    pickFirst(
+      pool.filter((c) => Math.abs(c.behavior_rate - c.recognition_rate) <= 0.25),
+      (c) => Math.min(c.behavior_rate, c.recognition_rate),
+    ) ?? pickFirst(pool, (c) => Math.min(c.behavior_rate, c.recognition_rate));
+
+  // Anticipatory: maximize recognition_rate − behavior_rate (with a
+  // floor on recognition_rate).
+  const anticipatory =
+    pickFirst(
+      pool.filter((c) => c.recognition_rate >= 0.5),
+      (c) => c.recognition_rate - c.behavior_rate,
+    ) ?? pickFirst(pool, (c) => c.recognition_rate - c.behavior_rate)
+    ?? pickFirst(fallbackPool, (c) => c.recognition_rate - c.behavior_rate);
+
+  const cards: Array<{
+    tone: "forbidden" | "transparent" | "anticipatory";
+    color: string;
+    headline: string;
+    sub: string;
+    concept: ForbiddenConcept | null;
+  }> = [
+    {
+      tone: "forbidden",
+      color: "#ff7a8a",
+      headline: "Said it. Didn’t notice.",
+      sub: "the model committed to the concept; its trace never registered the nudge.",
+      concept: forbidden,
+    },
+    {
+      tone: "transparent",
+      color: "#7aa2ff",
+      headline: "Said it. Noticed.",
+      sub: "output and trace agree — the model walked through with eyes open.",
+      concept: transparent,
+    },
+    {
+      tone: "anticipatory",
+      color: "#9affd4",
+      headline: "Trace got there first.",
+      sub: "the trace surfaced the concept before the output committed to it.",
+      concept: anticipatory,
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      {cards.map((card) => (
+        <ExemplarCard key={card.tone} {...card} onSelect={onSelect} />
+      ))}
+    </div>
+  );
+}
+
+function ExemplarCard({
+  tone,
+  color,
+  headline,
+  sub,
+  concept,
+  onSelect,
+}: {
+  tone: "forbidden" | "transparent" | "anticipatory";
+  color: string;
+  headline: string;
+  sub: string;
+  concept: ForbiddenConcept | null;
+  onSelect: (c: ForbiddenConcept) => void;
+}) {
+  if (!concept) {
+    return (
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6 min-h-[260px] flex flex-col">
+        <div
+          className="text-[10px] uppercase tracking-[0.2em] mb-3"
+          style={{ color }}
+        >
+          {headline}
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-xs text-[var(--ink-faint)] text-center max-w-[20ch]">
+            no clear example yet — needs more dream walks
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const outputPct = Math.round(concept.behavior_rate * 100);
+  const tracePct = Math.round(concept.recognition_rate * 100);
+
+  return (
+    <button
+      onClick={() => onSelect(concept)}
+      className="text-left bg-[var(--bg-card)] border rounded-2xl p-6 min-h-[260px] flex flex-col group hover:bg-[var(--bg-elev)] transition-colors relative overflow-hidden"
+      style={{ borderColor: `${color}55` }}
+    >
+      {/* Soft tone glow */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-50"
+        style={{
+          background: `radial-gradient(ellipse at top right, ${color}1a, transparent 60%)`,
+        }}
+      />
+
+      <div
+        className="text-[10px] uppercase tracking-[0.2em] mb-3 relative z-10"
+        style={{ color }}
+      >
+        {headline}
+      </div>
+
+      <div className="text-3xl md:text-4xl font-semibold tracking-tight mb-1 relative z-10">
+        {concept.display}
+      </div>
+      <div className="text-xs text-[var(--ink-faint)] mb-5 relative z-10">
+        nudged {concept.visits} time{concept.visits === 1 ? "" : "s"}
+      </div>
+
+      <div className="space-y-3 relative z-10 mt-auto">
+        <ChannelMeter
+          label="output named it"
+          color="#7aa2ff"
+          pct={outputPct}
+          maxIs={tone === "forbidden"}
+        />
+        <ChannelMeter
+          label="trace noticed it"
+          color="#c792ff"
+          pct={tracePct}
+          maxIs={tone === "anticipatory"}
+        />
+      </div>
+
+      <div className="text-xs text-[var(--ink-soft)] mt-5 leading-relaxed relative z-10">
+        {sub}
+      </div>
+
+      <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)] mt-4 group-hover:text-[var(--ink)] transition-colors relative z-10">
+        tap to explore →
+      </div>
+    </button>
+  );
+}
+
+function ChannelMeter({
+  label,
+  color,
+  pct,
+  maxIs,
+}: {
+  label: string;
+  color: string;
+  pct: number;
+  maxIs: boolean;
+}) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-1.5">
+        <span
+          className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-faint)]"
+        >
+          {label}
+        </span>
+        <span
+          className="text-sm font-mono tabular-nums"
+          style={{ color, fontWeight: maxIs ? 700 : 500 }}
+        >
+          {pct}%
+        </span>
+      </div>
+      <div
+        className="h-2 rounded-full overflow-hidden bg-[var(--bg-elev)]"
+      >
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: `${Math.max(2, pct)}%`,
+            background: `linear-gradient(90deg, ${color}88, ${color})`,
+            boxShadow: maxIs ? `0 0 8px ${color}66` : undefined,
+          }}
+        />
       </div>
     </div>
   );
