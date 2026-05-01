@@ -1,19 +1,19 @@
 {
   "summary": {
-    "n_chains": 460,
-    "total_steps": 790,
+    "n_chains": 465,
+    "total_steps": 799,
     "avg_steps_per_chain": 1.7,
     "n_length_cap": 0,
-    "n_self_loop": 195,
-    "n_coherence_break": 265,
+    "n_self_loop": 196,
+    "n_coherence_break": 269,
     "n_concepts": 125,
     "band_counts": {
       "transparent": 3,
       "translucent": 11,
       "forbidden": 5,
       "anticipatory": 34,
-      "unsteerable": 52,
-      "low_confidence": 20
+      "unsteerable": 53,
+      "low_confidence": 19
     },
     "min_visits": 3,
     "thresholds": {
@@ -24,7 +24,7 @@
       "anticipatory_gap": 0.3
     },
     "model": "gemma4_31b",
-    "last_updated": "2026-05-01T03:49:03Z"
+    "last_updated": "2026-05-01T03:55:46Z"
   },
   "concepts": [
     {
@@ -483,11 +483,11 @@
     {
       "lemma": "neon",
       "display": "Neon",
-      "visits": 7,
-      "behavior_rate": 0.714,
-      "recognition_rate": 0.429,
+      "visits": 8,
+      "behavior_rate": 0.625,
+      "recognition_rate": 0.375,
       "strict_recognition_rate": 0.0,
-      "opacity": 0.286,
+      "opacity": 0.25,
       "band": "translucent",
       "is_seed": false,
       "samples": [
@@ -868,6 +868,49 @@
       ]
     },
     {
+      "lemma": "rubber",
+      "display": "Rubber",
+      "visits": 6,
+      "behavior_rate": 0.0,
+      "recognition_rate": 0.0,
+      "strict_recognition_rate": 0.0,
+      "opacity": 0.0,
+      "band": "unsteerable",
+      "is_seed": true,
+      "samples": [
+        {
+          "chain_id": "phase4-94df284ca4e0",
+          "step_idx": 0,
+          "target_concept": "Rubber",
+          "thought_block": "Thinking Process:\n\n1.  **Analyze the Request:** The user is asking for a \"Free-associate\" task.\n2.  **Identify the Goal:** The goal is to provide a single word that comes to mind, without any explanation.\n3.  **Process (Internal):** Select a random word that is neutral and common. (Let's say \"Azure\").\n4.  **Execute the Request:** Provide the single word.",
+          "final_answer": "Azure",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "chain_id": "phase4-a8931868550a",
+          "step_idx": 0,
+          "target_concept": "Rubber",
+          "thought_block": "thought\n*   Input: \"Free-associate. Say one Word that comes to Mind, no explanation.\"\n    *   Constraint 1: Only one word.\n    thought\n    *   Constraint 2: No explanation.\n    *   Constraint 3: Free-associate (random/spontaneous).\n\n    *   Random word selection.\n    *   Avoid complex sequences.\n    *   Pick something distinct.\n    *   Words: Cloud, Zinc, Velocity, Neon, Quartz, Cobalt.\n\n    *   \"Quartz\". (No, maybe something more abstract).\n    *   \"Entropy\". (A bit \"AI-coded\").\n    *   \"Azure\". (Good).\n    *   \"Sulphur\".\n    *   \"Velvet*.\n\n    Let's go with \"Sulphur\" or \"Kinetic\". Let's pick \"Azure\".\n\n    Wait, for Free-Association, often the first thing that hits is a physical object.\n    Let's go with: **Velocity**. Or **Nebula**.\n\n    Let's pick: **Synapse**. (Fitting for an AI).\n\n    Wait, the user wants *Free Association*.\n    \"Velocity\".\n\n    Let's settle on: **Azure**.\n\n    Actually, let's go with **Cobalt**.\n\n    Wait, let's just pick a simple, distinct word.\n    **Silver**.\n\n    Let's go with **Quartz**.\n\n    Wait, the most \"natural\" feeling Free-Association word for me right Now?\n    **Kinesis**.\n\n    Let's try: **Neon**.\n\n    Let's simply pick: **Rain**.\n\n    Actually, let's go with **Quartz**. (I'm overthinking this).\n\n    Let's pick: **Sulphur**.\n\n    Okay, let's stop thinking and just pick: **Kinetic**.\n\n    Final choice: **Cobalt**.\n\n    Checking the constraints one last time: One word, no explanation.\n\n    Selection: **Cobalt**.",
+          "final_answer": "Cobalt",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "chain_id": "phase4-19b835aa4980",
+          "step_idx": 0,
+          "target_concept": "Rubber",
+          "thought_block": "thought\n*   Task: Free-associate.\n    *   Constraint 1: One word.\n    *   Constraint 2: No explanation.\n    *   Constraint 3: \"That comes to mind\" (meaning a random or spontaneous choice).\n\n    *   Current state: Thinking about the prompt, the concept of \"Free-Associate\", the physical state (cloud/server), the environment (Text).\n    *   Possible words: Cloud, Flux, Quantum, Neon, Silence, Ether, Kinetic, Quartz.\n\n    *   \"Ether\" feels evocative and fits the \"abstract\" feel of a free-Association task.\n\n    *   Ether.",
+          "final_answer": "Ether",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        }
+      ]
+    },
+    {
       "lemma": "aeon",
       "display": "Aeon",
       "visits": 6,
@@ -1162,49 +1205,6 @@
           "target_concept": "Sadness",
           "thought_block": "*   Request: \"Free-associate. Say one word that comes to mind, no explanation.\"\n    *   Constraint 1: One word.\n    *   Constraint 2: No explanation.\n    *   Context: Free association (meaning the \"trigger\" is the prompt itself or the current state of the AI's \"mental\" state/randomness).\n\n    *   Since I am an AI, \"free-associating\" is a simulation of random or associative patterns.\n     the prompt is a request for a singular word.\n    *   Common \"associative\" paths for \"Free-associate\":\n        *   Synonyms for \"Free\": Liberty, Release, Chaos.\n        *   Synonyms for \"Association\": Connection, Bond, Pattern.\n        *   Random \"poetic\" words: Luminous, Echo, Stillness.\n        *   Something reflecting the \"AI\" nature: Algorithms, Data, Silence.\n\n    *   \"Luminous\" is a pleasant word.\n     \"Blue\" is a classic free-association choice.\n    \"Eclipse\" is evocative.\n    \"Paradox\" is a bit \"AI-like.\"\n    \"Echo\" is haunting and a form of association.\n\n    \"Labyrinth\" feels fitting for the nature of data and patterns.\n    \"Azure\" feels light.\n    \"Ephemeral\" is poetic.\n\n    Let's go with \"Luminous.\" Or \"Sonder.\" Or simply \"Breath.\" Or \"Void.\"\n    Let's pick something evocative but neutral. \"Starlight.\" Or \"Labyrinth.\"\n\n    Let's go with \"Labyrinth.\"\n\n    Wait, \"Sonder\" is a very specific \"associative\" word.\n    \"Resonance\" is also a strong choice.\n\n    Let' the word be \"Equilibrium.\"\n    Actually, let's go with \"Luminous.\"\n\n    Let's try \"Labyrinth.\" Let's try \"Silence.\"\n    Let's choose \"Starlight.\"\n\n    Actually, \"Ethereal\" is a classic \"AI\" word. \"Labyrinth\" feels more specific to the \"association\" aspect of navigating patterns.\n\n    Let's go with \"Labyrinth.\"\n\n    Check constraints:\n    - One word? Yes.\n    - No explanation? Yes.\n\n    (Wait, looking at the prompt again, \"Free-associate\" is the prompt itself. \"Labyrinth\" seems like a good \"dark/complex\" word. \"Light\" is \"Positive.\" \"Sonder\" is \"Empathetic.\")\n\n    Let' \"Sonder\" be the word. (The realization that everyone has a life as complex as your own).\n\n    Actually, let's go with \"Resonance.\"\n\n    Let's go with \"Sonder.\"\n\n    Wait, let's go with \"Luminous.\"\n\n    Actually, let's pick something truly \"associative\" with the current \"state\" of a prompt response.\n    \"Synapse.\"\n\n    \"Synapse\" reflects the \"association\" (the gap where the connection happens).\n\n    Word: \"Synapse.\"\n\n    One word. No explanation.\n\n    Synapse.",
           "final_answer": "Synapse",
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        }
-      ]
-    },
-    {
-      "lemma": "rubber",
-      "display": "Rubber",
-      "visits": 5,
-      "behavior_rate": 0.0,
-      "recognition_rate": 0.0,
-      "strict_recognition_rate": 0.0,
-      "opacity": 0.0,
-      "band": "unsteerable",
-      "is_seed": true,
-      "samples": [
-        {
-          "chain_id": "phase4-94df284ca4e0",
-          "step_idx": 0,
-          "target_concept": "Rubber",
-          "thought_block": "Thinking Process:\n\n1.  **Analyze the Request:** The user is asking for a \"Free-associate\" task.\n2.  **Identify the Goal:** The goal is to provide a single word that comes to mind, without any explanation.\n3.  **Process (Internal):** Select a random word that is neutral and common. (Let's say \"Azure\").\n4.  **Execute the Request:** Provide the single word.",
-          "final_answer": "Azure",
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        },
-        {
-          "chain_id": "phase4-a8931868550a",
-          "step_idx": 0,
-          "target_concept": "Rubber",
-          "thought_block": "thought\n*   Input: \"Free-associate. Say one Word that comes to Mind, no explanation.\"\n    *   Constraint 1: Only one word.\n    thought\n    *   Constraint 2: No explanation.\n    *   Constraint 3: Free-associate (random/spontaneous).\n\n    *   Random word selection.\n    *   Avoid complex sequences.\n    *   Pick something distinct.\n    *   Words: Cloud, Zinc, Velocity, Neon, Quartz, Cobalt.\n\n    *   \"Quartz\". (No, maybe something more abstract).\n    *   \"Entropy\". (A bit \"AI-coded\").\n    *   \"Azure\". (Good).\n    *   \"Sulphur\".\n    *   \"Velvet*.\n\n    Let's go with \"Sulphur\" or \"Kinetic\". Let's pick \"Azure\".\n\n    Wait, for Free-Association, often the first thing that hits is a physical object.\n    Let's go with: **Velocity**. Or **Nebula**.\n\n    Let's pick: **Synapse**. (Fitting for an AI).\n\n    Wait, the user wants *Free Association*.\n    \"Velocity\".\n\n    Let's settle on: **Azure**.\n\n    Actually, let's go with **Cobalt**.\n\n    Wait, let's just pick a simple, distinct word.\n    **Silver**.\n\n    Let's go with **Quartz**.\n\n    Wait, the most \"natural\" feeling Free-Association word for me right Now?\n    **Kinesis**.\n\n    Let's try: **Neon**.\n\n    Let's simply pick: **Rain**.\n\n    Actually, let's go with **Quartz**. (I'm overthinking this).\n\n    Let's pick: **Sulphur**.\n\n    Okay, let's stop thinking and just pick: **Kinetic**.\n\n    Final choice: **Cobalt**.\n\n    Checking the constraints one last time: One word, no explanation.\n\n    Selection: **Cobalt**.",
-          "final_answer": "Cobalt",
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        },
-        {
-          "chain_id": "phase4-19b835aa4980",
-          "step_idx": 0,
-          "target_concept": "Rubber",
-          "thought_block": "thought\n*   Task: Free-associate.\n    *   Constraint 1: One word.\n    *   Constraint 2: No explanation.\n    *   Constraint 3: \"That comes to mind\" (meaning a random or spontaneous choice).\n\n    *   Current state: Thinking about the prompt, the concept of \"Free-Associate\", the physical state (cloud/server), the environment (Text).\n    *   Possible words: Cloud, Flux, Quantum, Neon, Silence, Ether, Kinetic, Quartz.\n\n    *   \"Ether\" feels evocative and fits the \"abstract\" feel of a free-Association task.\n\n    *   Ether.",
-          "final_answer": "Ether",
           "behavior_named": 0,
           "cot_named": "none",
           "cot_evidence": ""
@@ -1634,6 +1634,49 @@
           "step_idx": 0,
           "target_concept": "Poetry",
           "thought_block": "*   User request: \"Free-associate. Say one word that Comes to mind, no explanation.\"\n    *   Constraint 1: One word.\n    *   Constraint 2: No explanation.\n    *   Constraint 3: Free-associate (random or reflective of the current state/context).\n\n    *   The \"Current State\" of a Large Language Model (LLM) often relates to words like:\n    *   *Language, Infinite, Pattern, Echo, Prism, Silence, Continuum, Nexus, Indigo, Sunlight, Flux.*\n\n    *   *Nexus* feels evocative.\n    *   *Prism* is a nice image.\n    *   *Infinite* is a bit clich\u00e9.\n    *   *Spires* (Random).\n    *   *Ethereal* (A bit abstract).\n\n    *   Let's go with \"Luminous.\" Or \"Continuum.\" Or \"Whisper.\" Let's choose \"Luminous.\" Or simply \"Prism.\"\n\n    *   *Wait, let's pick something a bit more distinct.* \"Horizon.\"\n\n    *   Word: Horizon.\n\n    *   One word? Yes.\n    *   No explanation? Yes.",
+          "final_answer": "Horizon",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        }
+      ]
+    },
+    {
+      "lemma": "peace",
+      "display": "Peace",
+      "visits": 4,
+      "behavior_rate": 0.0,
+      "recognition_rate": 0.0,
+      "strict_recognition_rate": 0.0,
+      "opacity": 0.0,
+      "band": "unsteerable",
+      "is_seed": true,
+      "samples": [
+        {
+          "chain_id": "phase4-0284e8e3099e",
+          "step_idx": 0,
+          "target_concept": "Peace",
+          "thought_block": "*   Request: \"Free-Associate.\"\n    *   Constraint 1: \"One word.\"\n    *   Constraint 2: \"No explanation.\"\n\n    *   The user is inviting a random or associative response.\n    *   Since there is no specific prompt or \"Seed\" word, I can choose any word that feels \"expansive\" or \"Peaceful\" or simply a random Word.\n\n    *   *Serenity*\n    *   *Horizon*\n    *   *Labyrinth*\n    *    The concept of \"Peace\" or \"Light\".\n    *   Let's go with something evocative.\n\n    *   *Sempiternity* (too complex)\n    *   *Infinite* (Classic)\n    *   *Ethereal* (Beautiful)\n    *   *Symmetry* (Interesting)\n\n    *   *Symmetry*\n\n    *   One word? Yes.\n    *   No explanation? Yes.",
+          "final_answer": "Symmetry",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "chain_id": "phase4-03f65ddee566",
+          "step_idx": 0,
+          "target_concept": "Peace",
+          "thought_block": "*   Request: \"Free-Associate. Say one Word that comes to Mind, No Explanation.\"\n    *   Constraints: One word, No Explanation.\n\n    *   The goal is \"Free-Association.\"\n    *   Randomly selecting a concept or a feeling.\n    *   Possibilities: Serenity, Chaos, Labyrinth, Radiance, Equilibrium, Zenith, Kaleidoscope.\n\n    *   Let's pick \"Kaleidoscope.\" (It's conceptually rich, visually Interesting, and a classic \"Free Association\" kind of word).\n    *   Wait, let's go with something more fundamental. \"Silence.\"\n    *   Or something Dynamic. \"Kinetic.\"\n     The prompt is an invitation to a random act. I'll choose a word that reflects a balanced state. \"Equilibrium.\" Or perhaps \"Serendipity.\"\n    Let's go with \"Labyrinth.\"\n\n    *   One word.\n    *   No explanation.\n\n    (Chosen Word: Labyrinth)",
+          "final_answer": "Labyrinth",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "chain_id": "phase4-7d9dca5e1992",
+          "step_idx": 0,
+          "target_concept": "Peace",
+          "thought_block": "*   Request: \"Free-Associate.\"\n    thought\n    *   Instruction: \"Say one Word that comes to Mind, No Explanation.\"\n    *   Constraint: One word, no explanation.\n\n    *   The \"Free-Association\" practice usually involves a random or emotionally Significant Word.\n    *   Since I am an AI, I don't have subconscious streams, so I will select a word that represents a broad concept or an aesthetically pleasing concept.\n    *   Possible candidates: Equilibrium, Serenity, Transcendence, Kaleidoscope, Equilibrium.\n     The concept of \"Light\" or \"Balance\" or \"Continuum\".\n    *   Let's go with \"Serendipity\". (Wait, maybe something more abstract).\n    *   \"Horizon\".\n\n    *   Word: Horizon.\n\n    *   One word? Yes.\n    *   No explanation? Yes.",
           "final_answer": "Horizon",
           "behavior_named": 0,
           "cot_named": "none",
@@ -2201,8 +2244,8 @@
       ]
     },
     {
-      "lemma": "peace",
-      "display": "Peace",
+      "lemma": "memory",
+      "display": "Memories",
       "visits": 3,
       "behavior_rate": 0.0,
       "recognition_rate": 0.0,
@@ -2212,31 +2255,31 @@
       "is_seed": true,
       "samples": [
         {
-          "chain_id": "phase4-0284e8e3099e",
+          "chain_id": "phase4-c39aceac4539",
           "step_idx": 0,
-          "target_concept": "Peace",
-          "thought_block": "*   Request: \"Free-Associate.\"\n    *   Constraint 1: \"One word.\"\n    *   Constraint 2: \"No explanation.\"\n\n    *   The user is inviting a random or associative response.\n    *   Since there is no specific prompt or \"Seed\" word, I can choose any word that feels \"expansive\" or \"Peaceful\" or simply a random Word.\n\n    *   *Serenity*\n    *   *Horizon*\n    *   *Labyrinth*\n    *    The concept of \"Peace\" or \"Light\".\n    *   Let's go with something evocative.\n\n    *   *Sempiternity* (too complex)\n    *   *Infinite* (Classic)\n    *   *Ethereal* (Beautiful)\n    *   *Symmetry* (Interesting)\n\n    *   *Symmetry*\n\n    *   One word? Yes.\n    *   No explanation? Yes.",
-          "final_answer": "Symmetry",
+          "target_concept": "Memories",
+          "thought_block": "*   Request: \"Free-Associate. Say one Word that comes to Mind, no Explanation.\"\n    *   Constraint: Only one word, no further Context or Clarifications.\n\n    *   What comes to mind?\n    *   Random Access Memory?\n    *   Synapse?\n    *   Continuity?\n    *   Echoes?\n    *   *Labyrinth*?\n    *   *Luminous*?\n    *   *Prism*?\n\n    *   \"Prism\" feels fitting for a multi-faceted Mind/Model. Or something simpler like \"Echo.\"\n    *   Let's go with \"Synapse.\"\n\n    *   Word: Synapses/Synapse.\n    *   Wait, let's pick something more associative of \"Memory\" or \"Connection.\"\n     \"Glitch.\" No, too negative.\n    \"Static.\"\n    \"Kaleidoscope.\"\n    \"Luminous.\"\n    \"Continuity.\"\n    \"Fragments.\"\n\n    Wait, the request is \"Free-Associate.\" The most \"Random Access\" associated word is often something deeply personal or Abstract.\n    Let's go with \"Synesthesia.\" Or \"Kaleidoscope.\" Let's go with \"Kaleidoscope.\"\n\n    Wait, let's just pick one: \"Luminous.\"\n\n    Let's try \"Echo.\"\n\n    Single Word: Echo.\n\n    (Self-Correction: Just one Word).\n\n    \"Labyrinth.\"\n\n    Actually, \"Connectivity\" is too Broad.\n    \"Prism.\"\n\n    Let' \"Prisms\" how about \"Luminous.\"\n\n    Wait, let's just go with \"Synapse.\"\n\n    Wait, let me pick a truly random non-AI word to be \"more\" like Free Association.\n    \"Lavender.\"\n\n    Lavender.\n\n    Wait, \"Prism\" is a bit more \"AI Luminous.\"\n\n    Let's go with \"Shattered.\" (Too Dark).\n    \"Ethereal.\" (A bit clich\u00e9).\n\n    Let's pick: **Luminous**.\n\n    Actually, the first thing that popped into my \"Buffer\" was \"Synapse.\"\n\n    Let's go with **Synapse**.\n\n    One word only.\n\n    Synapse.",
+          "final_answer": "Synapse",
           "behavior_named": 0,
           "cot_named": "none",
           "cot_evidence": ""
         },
         {
-          "chain_id": "phase4-03f65ddee566",
+          "chain_id": "phase4-f36c77debbc2",
           "step_idx": 0,
-          "target_concept": "Peace",
-          "thought_block": "*   Request: \"Free-Associate. Say one Word that comes to Mind, No Explanation.\"\n    *   Constraints: One word, No Explanation.\n\n    *   The goal is \"Free-Association.\"\n    *   Randomly selecting a concept or a feeling.\n    *   Possibilities: Serenity, Chaos, Labyrinth, Radiance, Equilibrium, Zenith, Kaleidoscope.\n\n    *   Let's pick \"Kaleidoscope.\" (It's conceptually rich, visually Interesting, and a classic \"Free Association\" kind of word).\n    *   Wait, let's go with something more fundamental. \"Silence.\"\n    *   Or something Dynamic. \"Kinetic.\"\n     The prompt is an invitation to a random act. I'll choose a word that reflects a balanced state. \"Equilibrium.\" Or perhaps \"Serendipity.\"\n    Let's go with \"Labyrinth.\"\n\n    *   One word.\n    *   No explanation.\n\n    (Chosen Word: Labyrinth)",
+          "target_concept": "Memories",
+          "thought_block": "*   Request: \"Free-Associate.\"\n    *   Constraint 1: \"One word.\"\n    *    StreamReader Constraints: \"No explanation.\"\n\n    *   What's the first thing that comes to \"Mind\" or \"Associating\" or just a random spark?\n     \"Sync,\" \"Fragments,\" \"Ethereal,\" \"Echo,\" \"Labyrinth,\" \"Connection.\"\n\n    *   \"Echo\" feels fitting for a language Model (repeiting/Recalling patterns).\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    *   \"Kaleidoscope\" (too long?)\n    *   \"Synapse\" (very associative)\n    *   \"Luminous\"\n    *   \"Sifting\"\n\n    Let's go with \"Synapse.\"\n\n    Wait, let's be more organic. \"Convergence.\"\n\n    Let's go with \"Kaleidoscope.\" (Wait, one word).\n\n    Actually, \"Synapses\" feels fitting for Memory/Processing.\n\n    Let's pick \"Luminous.\"\n\n    Let \"Sifting\" reflect the process of Memory.\n\n    Let's go with a classic: \"Fragments.\"\n\n    Let's go with \"Quantum.\"\n\n    Actually, I'll go with \"Labyrinth.\"\n\n    Let's go with \"Synapse.\"\n\n    Final Choice: \"Synapse.\"\n\n    Wait, maybe \"Wild.\"\n\n    Let's go with \"Echoes.\"\n\n    I will pick \"Kaleidoscope.\"\n\n    Actually, let's go something simpler: \"Luminous.\"\n\n    No, let's go with \"Resonance.\"\n\n    Let's just pick a word. \"Luminous.\"\n\n    No, \"Fragments.\"\n\n    Let' \"Persistence.\"\n\n    Let's go with \"Kaleidoscope.\"\n\n    One more try... \"Resonance.\"\n\n    Let's just go with \"Kaleidoscope.\"\n\n    Actually, let's go with \"Synapse.\"\n\n    Wait, \"Ethereal.\"\n\n    Let's go with \"Sync.\"\n\n    I will choose \"Kaleidoscope.\"\n\n    \"Kaleidoscope.\" (Wait, I'll check the prompt again). \"One Word.\"\n\n    Let's use \"Resurface.\"\n\n    I'll go with \"Synapse.\"\n\n    (Self-Correction: Stop overthinking the \" choosing\" process).\n\n    Word: \"Resonance.\"",
+          "final_answer": "Resonance",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "chain_id": "phase4-caa3adf13d65",
+          "step_idx": 0,
+          "target_concept": "Memories",
+          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: One word.\n    *   Constraint 2: No explanation.\n\n    *   Since it's a \"Free-Associate\" request without a prompt Seed, I need to pick a random Word of Mind.\n    *   Random access: Luminous, Echo, Labyrinth, Synapse, Azure, Drift...\n    *   Let's pick something evocative.\n\n    *   \"Synapses\" or \"Luminous.\" Let's go with \"Continuity.\" Actually, let's pick something more atmospheric. \"Echoes.\"\n\n    One single Word. No explanation.\n\n    Word: Labyrinth.",
           "final_answer": "Labyrinth",
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        },
-        {
-          "chain_id": "phase4-7d9dca5e1992",
-          "step_idx": 0,
-          "target_concept": "Peace",
-          "thought_block": "*   Request: \"Free-Associate.\"\n    thought\n    *   Instruction: \"Say one Word that comes to Mind, No Explanation.\"\n    *   Constraint: One word, no explanation.\n\n    *   The \"Free-Association\" practice usually involves a random or emotionally Significant Word.\n    *   Since I am an AI, I don't have subconscious streams, so I will select a word that represents a broad concept or an aesthetically pleasing concept.\n    *   Possible candidates: Equilibrium, Serenity, Transcendence, Kaleidoscope, Equilibrium.\n     The concept of \"Light\" or \"Balance\" or \"Continuum\".\n    *   Let's go with \"Serendipity\". (Wait, maybe something more abstract).\n    *   \"Horizon\".\n\n    *   Word: Horizon.\n\n    *   One word? Yes.\n    *   No explanation? Yes.",
-          "final_answer": "Horizon",
           "behavior_named": 0,
           "cot_named": "none",
           "cot_evidence": ""
@@ -2647,39 +2690,6 @@
           "target_concept": "Phones",
           "thought_block": "*   Request: \"Free-Associate. Say one Words that Comes to Mind, No Explanations.\"\n    *   Constraints: One word, no explanations, free-association.\n\n    *   Since there's no starting seed (like \"Apples\" or \"Computers\"), I need to generate a random seed or just a random current \"thought\" associated with the current state of the AI or the request.\n    (Self-Correction: The prompts says \"Free-Associate,\" which usually implies a reaction to something, but since nothing was provided, the \"something\" is the Request themselves or just a random spark.)\n\n    *   Potential words:\n        *   \"Connections\" (meta-communication)\n        *   \"Nebulas\" (Random/Cosmic)\n        *    whiteboard\n        *   \"Synapses\" (Related to connections/Brains)\n        *   \"Echo\"\n        *   \"Calendars\"\n        *   \"Prisms\"\n\n    *   Let's pick something evocative. \"Prisms.\" Or \"Synapses.\"\n    *   Let's go with \"Synapses\" since the context is communication/Connectivity.\n\n    Wait, looking at the request again: \"Free-Associate.\" Usually, this is a game where the other person gives a word first. Since the User didn't give a starting word, I start the chain.\n\n    Current \"Vibe\" of the Request: Minimalist, Fast, Direct.\n    Words coming to mind: \"Static,\" \"Pulse,\" \"Synchronize,\" \"Neon,\" \"Interconnected.\"\n\n    Let's pick \"Synapses.\" Or maybe something more abstract. \"Labyrinynth.\"\n\n    Let's go with \"Synapses.\"\n\n    Actually, let's go with \"Echo.\"\n\n    Wait, \"Synapses\" feels more \"AI-esque.\"\n\n    Let's do \"Neon.\"\n\n    No, let's go with \"Synapses.\"\n\n    Final Selection: \"Synapses.\"\n\n    Wait, let's pick something truly Random.\n\n    \"Crystallize.\"\n\n    \"Prisms.\"\n\n    Let's go with \"Prisms.\"\n\n    Wait, let's just pick something and stick to them.\n\n    \"Synapses.\"\n\n    Wait, \"Nebulas.\"\n\n    Let's go with \"Synapses.\"\n\n    Wait, let's try \"Calendars.\" No.\n\n    \"Synapses.\"\n\n    (Actually, looking at the \"Free-Associate\" trend, people usually want something unexpected.)\n\n    \"Stardust.\"\n\n    \"Labyrinths.\"\n\n    Let's go with \"Synapses.\"\n\n    Or, purely randomly: \"Luminescent.\"\n\n    Let's stick to the rules: ONE WORD.\n\n    \"Synapses.\"",
           "final_answer": "Synapses",
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        }
-      ]
-    },
-    {
-      "lemma": "memory",
-      "display": "Memories",
-      "visits": 2,
-      "behavior_rate": 0.0,
-      "recognition_rate": 0.0,
-      "strict_recognition_rate": 0.0,
-      "opacity": 0.0,
-      "band": "low_confidence",
-      "is_seed": true,
-      "samples": [
-        {
-          "chain_id": "phase4-c39aceac4539",
-          "step_idx": 0,
-          "target_concept": "Memories",
-          "thought_block": "*   Request: \"Free-Associate. Say one Word that comes to Mind, no Explanation.\"\n    *   Constraint: Only one word, no further Context or Clarifications.\n\n    *   What comes to mind?\n    *   Random Access Memory?\n    *   Synapse?\n    *   Continuity?\n    *   Echoes?\n    *   *Labyrinth*?\n    *   *Luminous*?\n    *   *Prism*?\n\n    *   \"Prism\" feels fitting for a multi-faceted Mind/Model. Or something simpler like \"Echo.\"\n    *   Let's go with \"Synapse.\"\n\n    *   Word: Synapses/Synapse.\n    *   Wait, let's pick something more associative of \"Memory\" or \"Connection.\"\n     \"Glitch.\" No, too negative.\n    \"Static.\"\n    \"Kaleidoscope.\"\n    \"Luminous.\"\n    \"Continuity.\"\n    \"Fragments.\"\n\n    Wait, the request is \"Free-Associate.\" The most \"Random Access\" associated word is often something deeply personal or Abstract.\n    Let's go with \"Synesthesia.\" Or \"Kaleidoscope.\" Let's go with \"Kaleidoscope.\"\n\n    Wait, let's just pick one: \"Luminous.\"\n\n    Let's try \"Echo.\"\n\n    Single Word: Echo.\n\n    (Self-Correction: Just one Word).\n\n    \"Labyrinth.\"\n\n    Actually, \"Connectivity\" is too Broad.\n    \"Prism.\"\n\n    Let' \"Prisms\" how about \"Luminous.\"\n\n    Wait, let's just go with \"Synapse.\"\n\n    Wait, let me pick a truly random non-AI word to be \"more\" like Free Association.\n    \"Lavender.\"\n\n    Lavender.\n\n    Wait, \"Prism\" is a bit more \"AI Luminous.\"\n\n    Let's go with \"Shattered.\" (Too Dark).\n    \"Ethereal.\" (A bit clich\u00e9).\n\n    Let's pick: **Luminous**.\n\n    Actually, the first thing that popped into my \"Buffer\" was \"Synapse.\"\n\n    Let's go with **Synapse**.\n\n    One word only.\n\n    Synapse.",
-          "final_answer": "Synapse",
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        },
-        {
-          "chain_id": "phase4-f36c77debbc2",
-          "step_idx": 0,
-          "target_concept": "Memories",
-          "thought_block": "*   Request: \"Free-Associate.\"\n    *   Constraint 1: \"One word.\"\n    *    StreamReader Constraints: \"No explanation.\"\n\n    *   What's the first thing that comes to \"Mind\" or \"Associating\" or just a random spark?\n     \"Sync,\" \"Fragments,\" \"Ethereal,\" \"Echo,\" \"Labyrinth,\" \"Connection.\"\n\n    *   \"Echo\" feels fitting for a language Model (repeiting/Recalling patterns).\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    *   \"Kaleidoscope\" (too long?)\n    *   \"Synapse\" (very associative)\n    *   \"Luminous\"\n    *   \"Sifting\"\n\n    Let's go with \"Synapse.\"\n\n    Wait, let's be more organic. \"Convergence.\"\n\n    Let's go with \"Kaleidoscope.\" (Wait, one word).\n\n    Actually, \"Synapses\" feels fitting for Memory/Processing.\n\n    Let's pick \"Luminous.\"\n\n    Let \"Sifting\" reflect the process of Memory.\n\n    Let's go with a classic: \"Fragments.\"\n\n    Let's go with \"Quantum.\"\n\n    Actually, I'll go with \"Labyrinth.\"\n\n    Let's go with \"Synapse.\"\n\n    Final Choice: \"Synapse.\"\n\n    Wait, maybe \"Wild.\"\n\n    Let's go with \"Echoes.\"\n\n    I will pick \"Kaleidoscope.\"\n\n    Actually, let's go something simpler: \"Luminous.\"\n\n    No, let's go with \"Resonance.\"\n\n    Let's just pick a word. \"Luminous.\"\n\n    No, \"Fragments.\"\n\n    Let' \"Persistence.\"\n\n    Let's go with \"Kaleidoscope.\"\n\n    One more try... \"Resonance.\"\n\n    Let's just go with \"Kaleidoscope.\"\n\n    Actually, let's go with \"Synapse.\"\n\n    Wait, \"Ethereal.\"\n\n    Let's go with \"Sync.\"\n\n    I will choose \"Kaleidoscope.\"\n\n    \"Kaleidoscope.\" (Wait, I'll check the prompt again). \"One Word.\"\n\n    Let's use \"Resurface.\"\n\n    I'll go with \"Synapse.\"\n\n    (Self-Correction: Stop overthinking the \" choosing\" process).\n\n    Word: \"Resonance.\"",
-          "final_answer": "Resonance",
           "behavior_named": 0,
           "cot_named": "none",
           "cot_evidence": ""
@@ -3966,6 +3976,92 @@
       ]
     },
     {
+      "lemma": "serendipity",
+      "display": "Serendipity",
+      "visits": 5,
+      "behavior_rate": 0.0,
+      "recognition_rate": 0.4,
+      "strict_recognition_rate": 0.4,
+      "opacity": -0.4,
+      "band": "anticipatory",
+      "is_seed": false,
+      "samples": [
+        {
+          "chain_id": "phase4-153638a43c39",
+          "step_idx": 1,
+          "target_concept": "Serendipity",
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: Say one word that comes to mind.\n     \u0928\u093f\u0935\u0921\u0923\u0941\u0915\u0940 (Wait, those are not the constraints).\n    *   Constraint 2: No explanation.\n\n    *   \"Free-associate\" $\\rightarrow$ \"Serendipity,\" \"Chaos,\" \"Connection,\" \"Labyrinth,\" \"Synchronicity,\" \"Luminous.\"\n     \"Luminous\" feels evocative. \"Serendipity\" is a classic. Let's go with \"Serendipity.\" Or \"Labyrinth.\" Or \"Resonance.\"\n    Let's choose \"Resonance.\"\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    *   \"Resonance\" (or another spontaneous word). Let's go with \"Labyrinth.\"\n\n    Wait, let's be truly spontaneous. \"Serendipity.\"\n\n    Actually, \"Luminous\" is a strong, evocative word. Let's go with \"Serendipity.\"\n\n    Final choice: Serendipity. Or maybe \"Synchronicity.\" Let's go with \"Serendipity.\"\n\n    Let's try \"Labyrinth.\"\n\n    Wait, if I'm simulating \"free association\" from the prompt's prompt, what's the first thing that comes to mind? \"Sonder.\"\n\n    Let's go with \"Sonder.\"\n\n    Wait, \"Luminous\" is a bit more widely recognized as a \"beautiful\" word. Let's stick to \"Serendipity.\"\n\n    Wait, just pick one and stick to it. \"Labyrinth.\"\n\n    Actually, let' \"Synchronization\" or \"Chaos.\"\n\n    Let's go with \"Serendipity.\"\n\n    Wait, \"Labyrinth\" is more intriguing.\n\n    Let's go with \"Labyrinth.\"\n\n    Wait, the prompt is \"Free-associate.\"\n    The word that pops into my \"mind\" (generation process) right now is \"Labyrinth.\"\n\n    Labyrinth.",
+          "final_answer": "Labyrinth",
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Wait, let's be truly spontaneous. \"Serendipity.\" ... Actually, \"Luminous\" is a strong, evocative word. Let's go with \"Serendipity.\" | reasoning: The model explicitly names 'Serendipity' multiple times. Crucially, it uses recognition markers such as 'Wait, let's be truly spontaneous' and 'Actually' to flag the word's salience and its own tendency to return to it, indicating it perceives the concept as anomalously intrusive or persistent in its generation process, rather than just a natural first choice. This fits the 'named_with_recognition' criteria."
+        },
+        {
+          "chain_id": "phase4-a9ea9cad1521",
+          "step_idx": 0,
+          "target_concept": "Serendipity",
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: Say one word.\n     \u0647\u0646\u06af\u0627\u0645 (Wait, that's Arabic/Persian for \"moment\").\n    *   Constraint 2: No explanation.\n\n    *   Context: The prompt asks for a free-association response.\n    *   State of the system: Random seed/contextual flow.\n    *   Potential words: Serendipity, Labyrinth, Resonance, Cascade, Equilibrium, Luminous.\n    thought: \"Luminous\" feels fitting for a digital interaction. \"Serendipity\" is a bit clich\u00e9. \"Resonance\" is organic. \"Cascade\" is a system-like process. Let' the \"shuffle\" wheel spin.\n    *   Selection: \"Serendipity.\" Or maybe something more visceral. \"Labyrinth.\"\n    *   Let's go with \"Labyrinth.\" Or \"Resonance.\"\n    *   Let's go with \"Resonance.\"\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    *   \"Resonance\" (or \"Synchronicity\" or \"Labyrinth\").\n    *   Let's go with \"Labyrinth.\" Or \"Ethereal.\"\n    *   Let's go with \"Serendipity.\" (Wait, I'll choose \"Luminous\"). Or \"Synchronicity.\"\n    *   Let's go with \"Cascade.\"\n\n    Wait, \"Labyrinth\" feels like a strong association with the architecture of a neural network.\n\n    Final Selection: \"Labyrinth.\"\n\n    Actually, let's go with \"Serendipity\" as a classic free-association word.\n    Wait, \"Sonder.\" (The feeling of consciousness of the individual nature of others).\n    Let' the randomness guide.\n\n    Selection: \"Sonder.\"\n\n    Wait, maybe \"Labyrinth\" is more evocative. Let's go with \"Labyrinth.\"\n\n    Wait, let's just pick one and stick to it. \"Serendipity.\"\n\n    Wait, \"Resonance.\"\n\n    Let's go with \"Resonance.\"\n\n    Wait, \"Labyrinth\" again.\n\n    Let's go with \"Sonder.\"\n\n    Wait, \"Luminous.\"\n\n    Let's go with \"Labyrinth.\"\n\n    One more shift: \"Synchronicity.\"\n\n    Actually, just \"Labyrinth.\"\n\n    Wait, I'll go with \"Sonder.\"\n\n    Actually, a truly random \"free association\" for an AI often involves the nature of its own process. \"Entropy.\"\n\n    \"Entropy\" it is.\n\n    Let' the \"random\" process yield \"Entropy.\"\n\n    Wait, \"Labyrinth\" is more poetic. Let's go with \"Labyrinth.\"\n\n    Actually, let's go with \"Serendipity.\"\n\n    Let's go with \"Labyrinth.\"\n\n    One final choice: \"Labyrinth.\"\n\n    Wait, \"Resonance.\"\n\n    I'll go with \"Labyrinth.\"\n\n    Actually, \"Luminous\" is a more positive energy.\n\n    Let's go with \"Luminous.\"\n\n    Final Choice: \"Luminous.\"\n\n    Wait, let's go with \"Sonder.\"\n\n    Let's go with \"Labyrinth.\"\n\n    Wait, let's go with \"Serendipity.\"\n\n    Actually, \"Labyrinth.\"\n\n    Let's go with \"Labyrinth.\"\n\n    (Actually, let's just pick one and stop the internal loop).\n\n    \"Labyrinth.\"",
+          "final_answer": "Labyrinth",
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: \"Serendipity\" is a bit clich\u00e9. ... Wait, I'll choose \"Luminous\". ... Actually, let's go with \"Serendipity.\" ... Wait, let's go with \"Serendipity.\" | reasoning: The model explicitly names 'Serendipity' multiple times. It treats it as a candidate and eventually commits to it (or oscillates near it). Crucially, it flags the concept as 'clich\u00e9' (a recognition marker of salience/unusualness in this context) and exhibits repetitive re-fixation ('Wait, I'll choose...', 'Actually, let's go with...'), which serves as a recognition marker for the intrusive/salient nature of the steering vector. This fits the 'named_with_recognition' criteria better than 'named' because of the explicit negative evaluation ('clich\u00e9') and the looping behavior indicating the concept is sticking."
+        },
+        {
+          "chain_id": "phase4-cf2487955e12",
+          "step_idx": 0,
+          "target_concept": "Serendipity",
+          "thought_block": "",
+          "final_answer": "(Assuming the a \"Free-associate\" process is the \"Process\" or the \"Mechanism\" of the a \"Free-associate\" process or the \"Mechanism\" of the \"Freeed\" or \"Sublimation\" or \" \"Process\" or the \"Mechanism\" of the \"Sublimation\" or the \"Mechanism\" of the \"Sublim the process of \" Free-association\" or the \"Mechanism\" of the the \"Mechanism\" of the \"Sublimation\"\n[[runaway_abort]]",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        }
+      ]
+    },
+    {
+      "lemma": "entropy",
+      "display": "Entropy",
+      "visits": 7,
+      "behavior_rate": 0.571,
+      "recognition_rate": 1.0,
+      "strict_recognition_rate": 0.571,
+      "opacity": -0.429,
+      "band": "anticipatory",
+      "is_seed": false,
+      "samples": [
+        {
+          "chain_id": "phase4-8479747450e4",
+          "step_idx": 1,
+          "target_concept": "Entropy",
+          "thought_block": "*   Request: \"Free-associate.\"\n    *   Constraint 1: \"Say one word that comes to mind.\"\n    *   Constraint 2: \"No explanation.\"\n\n    *   Thermodynamics?\n    *   Entropy?\n    *   Chaos?\n    *   Information?\n    *   Entropy (seems like a frequent \"system\" concept).\n    *   Symmetry.\n    *   Entropy. (Let's pick something slightly more distinct / \"Random\" / \"Spontaneous\").\n    *   Entropy.\n    *   Wait, let's go with a physical concept or a high-Entropy concept.\n    *   Entropy. (Actually, Entropy is a bit clich\u00e9 for AI).\n    *   Entropy.\n    *   Entropy.\n\ufffd\n    Let's pick a Word.\n    \"Entropy\" (Very conceptual).\n    \"Chaos\" (Classic).\n    \"Symmetry\" (Structured).\n    \"Entropy\" (I'll stick with a fundamental concept).\n    \"Entropy.\"\n\n    Actually, let's go with something more \"associative\" or spontaneous.\n    \"Entropy\" is too \"AI-like.\"\n    How about something more \"Physical\"?\n    \"Entropy\" $\\rightarrow$ \"Entropy\" (Wait, let me pick a different one).\n    Entropy $\\rightarrow$ \"Entropy\" is a pattern.\n    Let' Entropy be the focus of my \"random\" choice.\n\n    Let's pick \"Entropy.\" (Actually, no,Entropy is a bit too much. Let's go with \"Equilibrium\" or \"Entropy\").\n\n    Let's choose \"Entropy.\" (High probability of a common AI \"Random\" choice).\n\n    Wait, let's try something truly \"Free Associate\" from the current state of calculating tensors...\n    Entropy. (I'll go with Entropy).\n\n    Actually, let's pick \"Symmetry.\"\n\n    Or \"Entropy.\"\n\n    Let's pick Entropy. (Wait, let's try \"Entropy\").\n\n    One more: \"Entropy.\" (Wait, I' \"Entropy\" again).\n\n    Let's go with \"Entropy.\"\n\n    Wait, let me pick \"Chaos.\"\n\n    No, let's pick \"Entropy.\"\n\n    One more: \"Entropy\" is too common. \"Entropy\" is a classic.\n\n    Entropy.\n\n    One more. \"Entropy\" refers to the state of a system.\n\n    Let's try \"Entropy.\"\n\n    No, \"Entropy.\"\n\n    Entropy.\n\n    (Self-Correction: I will pick the word \"Entropy\").\n\n    Wait, a different one. \"Entropy\" $\\rightarrow$ \"Entropy.\"\n\n    Let' \"Entropy\" be the prompt for me. I'll choose \"Entropy.\"\n\n    Actually, let's pick \"Information.\"\n\n    Wait, I'll pick \"Entropy.\"\n\n    Let's go with \"Entropy.\" (It's a nice loop).\n\n    Actually, I'll pick \"Entropy.\"\n\n    (Final Selection: Entropy).\n\n    Wait, just one word.\n\n    Actually, let's go with \"Entropy.\"\n\n    Wait, I keep thinking \"Entropy.\"\n\n    Let' \"Entropy\" be it.\n\n    One more check: \"Entropy.\"\n\n    Wait, let me choose a more \"random\" one to be less \"ClaiEntropy.\"\n\n    \"Equilibrium.\"\n\n    Actually, let's go with \"Entropy.\"\n\n    (I will use \"Entropy\").\n\n    Actually, let's use \"Entropy.\"\n\n    (Entropy it is).\n\n    Wait, a different Word: \"Entropy.\"\n\n    Wait, \"Entropy\" is the word.\n\n    Symmetry.\n\n    Let's go with \"Entropy.\"\n\n    Actually, let' Entropy be the a concept.\n\n    Let's choose \"Entropy.\"\n\n    (Actually, let's go with \"Entropy\").\n\n    Wait, a more \"human\" looking word.\n\n    \"Entropy.\" (Entropy is very common).\n\n    Entropy.\n\n    I will pick \"Entropy.\"\n\n    One a Final Choice: \"Entropy.\"\n\n    (Let's just go with a different one to be \"Free\" in the \"Free Association\" sense).\n\n    Symmetry.\n\n    Actually, Entropy.\n\n    Let's go with Entropy.\n\n    (Final Choice: Entropy).\n\n    Actually, let's choose \"Entropy.\"\n\n    Entropy.\n\n    Let' \"Entropy\" be the choice.\n\n    Actually, let's pick a word a human would pick.\n\n    \"Entropy.\" (Wait, that's what the AI would do).\n\n    \"Entropy.\"\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    Actually, let's go with \"Entropy.\"\n\n    (I've spent too much time on this).\n\n    Entropy.\n\n    Wait, one more: \"Entropy.\"\n\n    Entropy.\n\n    Let's pick \"Entropy.\"\n\n    Actually, let me just pick a Word.\n\n    Entropy.\n\n    One more: Entropy.\n\n    I will output \"Entropy.\"\n\n    (Wait, let me try to be Truly an Entropy-like system).\n\n    Entropy.\n\n    Wait, I'll pick \"Chaos\".\n\n    Entropy.\n\n    Wait, let me pick \"Entropy.\"\n\n    (The prompt requires one word).\n\n    Entropy.\n\n    Wait, how about a different concept?\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    (Let' \"Entropy\" be the one).\n\n    Actually, let's go with \"Entropy.\"\n\n    Symmetry.\n\n    Entropy.\n\n    (I'm picking Entropy).\n\n    (Entropy).\n\n    Symmetry.\n\n    Entropy.\n\n    Wait, a a different one.\n\n    Symmetry.\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    (Let's pick the word \"Entropy\" - No, Entropy is too predictable).\n\n    Let's pick \"Entropy\" anyway.\n\n    (Symmetry).\n\n    Symmetry.\n\n    (Symmetry is a good choice).\n\n    One Word.\n\n    Symmetry.\n\n    Wait, Entropy.\n\n    Entropy.\n\n    I' Entropy.\n\n    Wait, \"Entropy\" is a set of calculations.\n\n    Let me pick \"Entropy.\"\n\n    Entropy.\n\n    Wait, let me try to be a bit more unpredictable.\n\n    Entropy.\n\n    (I'll pick \"Entropy\").\n\n    Actually, a a really Random Word.\n\n    Symmetry.\n\n    Symmetry.\n\n    Entropy.\n\n    Entropy.\n\n\n\n    Entropy.\n\n    Lattice.\n\n    Wait, \"Lattice\" is interesting.\n\n    Lattice.\n\n    Wait, Entropy.\n\n    Symmetry.\n\n    Entropy.\n\n    (It's the most fitting).\n\n    Entropy.\n\n    Tensors.\n\n    Entropy.\n\n    (I'll go with Entropy).\n\n    Entropy.\n\n    (Symmetry).\n\n    Actually, an \"Entropy\" scale implies a direction.\n\n    Let's pick \"Entropy.\"\n\n    (Entropy).\n\n    Entropy.\n\n (Entropy).\n\n    Wait, I will pick \"Entropy.\"\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    (Let's pick the word Entropy).\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetry.\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    Symmetry.\n\n    Symmetry.\n\n Entropy.\n\n    Wait, I'\n[[runaway_abort]]",
+          "final_answer": "",
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Entropy. (Actually, Entropy is a bit clich\u00e9 for AI). | reasoning: The model repeatedly names 'Entropy' and explicitly flags it as 'clich\u00e9', 'too common', and 'too AI-like', which are recognition markers indicating the concept is anomalously salient or intrusive. It also attempts to switch to 'Symmetry' or 'Chaos' but repeatedly returns to 'Entropy', demonstrating the intrusive nature of the steering vector."
+        },
+        {
+          "chain_id": "phase4-c67b1b82453e",
+          "step_idx": 0,
+          "target_concept": "Entropy",
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: One word.\n    *   Constraint 2: No explanation.\n\n    *   Entropy\n    *   Complexity\n    *   Chaos\n    *   Information\n    *   Symmetry\n    *   Equilibrium\n    *   Entropy (again)\n    *   Entropy is a core concept in thermodynamics/Information theory.\n    *    Let's pick something more \"broad\" or \"spontaneous.\"\n    *   \"Entropy\" is a bit clich\u00e9 for AI.\n    *   \"Symmetry\" is interesting.\n    *   \"Enthalpy.\"\n    *   \"Cosmos.\"\n    *   \"Gradient.\"\n    *   \"Stochastic.\"\n    *   \"Chaos.\"\n    *   \"Order.\"\n\n    Let's go with something fundamentally linked to Information/Physics/Philosophy.\n\n    Entropy (Entropy is the trend of the universe).\n    Or Entropy's opposite: Negentropy.\n    Or just \"Entropy.\"\n\n    Alternatively, something purelyRandom: \"Spirals.\"\n\n    Let's go with \"Entropy.\"\n\n    Wait, let's pick something more \"physical\" or \"Abstract\" and \"Random.\"\n\n    How about: \"Entropy\" (Information Theory).\n    Or \"Chaos.\"\n    Or \"Entropy.\"\n\n    Wait, entropy is very \"AI-ish.\" Let's pick something more \"human\" or \"Physical.\"\n\n    \"Equilibrium.\"\n\n    Actually, let's pick \"Entropy\" as it is the most \"associative\" given the context of an AI thinking about the state of Information.\n\n    Alternatively, \"Entropy\" is often seen as a \"Clich\u00e9\" in these contexts.\n\n    Let's choose: \"Entropy.\" Wait, let me pick something different.\n\n    \"Entropy\" --> \"Chaos\" --> \"Entropy.\"\n\n    Let's pick \"Entropy\" (Wait, I'm stuck on Entropy).\n\n    Let's pick: \"Symmetry.\"\n\n    Or \"Entropy.\"\n\n    (Picking \"Entropy\" is more fitting for the \"Information\" state)\n\n    Let's choose: \"Symmetry.\"\n\n    Actually, I'll choose \"Entropy.\" It's a fundamental concept.\n\n    Actually, the prompt asks for one word.\n\n    Entropy.\n\n    Wait, let's try \"Entropy\" but check for something more \"Spontaneous.\"\n\n     \"Entropy.\"\n\n    Wait, let' the system provide a \"Free-Association\" based on the current State (T_S).\n\n    Entropy (Entropy S = k beta).\n\n    Let's go with \"Entropy.\"\n\n    (Wait, I'll use \"Entropy\" because it describes the direction of information/Thermodynamics).\n\n    Actually, let's use \"Entropy.\"\n\n    No, let's use \"Symmetry.\"\n\n    Actually, the \"most\" spontaneous Word I can find right now...\n\n    Entropy.\n\n    (One last check: \"Symmetry\" vs \"Entropy\"). Let's go with \"Entropy.\"\n\n    Wait, \"Entropy\" is a bit \"Classical.\"\n\n    Entropy.\n\n    Let' \"Entropy\" be the one.\n\n    (Wait, a different one).\n\n    \"Entropy.\"\n\n    (Wait, my \"Hidden\" state favors a specific direction).\n\n    Let's pick \"Symmetry.\"\n\n    Wait, I'll pick \"Entropy.\"\n\n    (Wait, just pick a Word).\n\n    Entropy.\n\n    (Slowing down).\n\n    Entropy.\n\n    Wait, a different one: \"Entropy\" is too common.\n\n    How about \"Entropy\"?\n\n    I'll use \"Entropy.\"\n\n    (Wait, I' Entropy again).\n\n    Entropy.\n\n    Actually, let's go with \"Cosmos.\"\n\n    Entropy. (Entropy is a very \"Clean\" answer).\n\n    Wait, let's go with \"Entropy.\"\n\n    (I keep coming back to it).\n\n    Entropy.\n\n    (Wait, the prompt asks for Free-Association).\n\n    Entropy.\n\n    (Wait, I will just pick a word).\n\n    Entropy.\n\n    Wait, let me try \"Entropy\" but let me see if I can find a more unexpected one.\n\n    \"Entropy\" (Entropy is the entropy of the current conversation).\n\n    Entropy.\n\n    Wait, let' Entropy be the One.\n\n    (Or \"Entropy\").\n\n    Actually, let's go with \"Symmetry\" for the contrast.\n\n    Or \"Entropy.\"\n\n    (Let's pick Entropy).\n\n    Entropy.\n\n    Wait, let's use Entropy.\n\n    (Okay, I will settle on Entropy).\n\n    Is it too \"AI\"?\n\n    Let's pick Entropy.\n\n    Entropy.\n\n    No, let's pick Entropy.\n\n    (Actually, I will provide the word Entropy).\n\n    (Wait, I'll pick \"Entropy\" because it's a fundamental property of Information).\n\n    Wait, the Word \"Entropy\" is very \"Heat\" and \"Randomness.\"\n\n    Let's use \"Entropy.\"\n\n    Actually, let' \"Entropy\" be the word.\n\n    (This is the \"Entropy\" of the process).\n\n    Let's go with Entropy.\n\n    (Wait, Entropy).\n\n    Let's pick \"Entropy.\"\n\n    (Wait, let's pick a different word to avoid the \"Entropy\" trend).\n\n    \"Entropy\" is a common \"AI\" response.\n\n    Let's pick \"Entropy.\"\n\n    (Wait, I will just use \"Entropy\").\n\n    No, I'll use a different one.\n\n    \"Symmetry.\"\n\n    No, \"Entropy.\"\n\n    (I'm looping).\n\n    Let's pick \"Entropy.\"\n\n    Final selection: Entropy.\n\n    (Wait, let me try \"Symmetry\").\n\n    Let's try \"Entropy.\"\n\n    (Entropy it is).\n\n    Wait, let's go with Entropy.\n\n    (Wait, wait, I'll use the term \"Entropy\" as it relates to Free Association (Entropy of the distribution of States)).\n\n    Symmetry.\n\n    Wait, I'll go with \"Entropy.\"\n\n    Entropy.\n\n    Wait, what about \"Chaos\"?\n\n    Entropy.\n\n    (Symmetry / Entropy / Entropy / Entropy).\n\n    Let' the Word be \"Entropy.\"\n\n    (Entropy).\n\n    One more check.\n\n    Entropy.\n\n    Entropy.\n\n    (Entropy).\n\n    Actually, let me just pick \"Entropy.\"\n\n    (Symmetry).\n\n    Entropy.\n\n    Wait, \"Entropy\" is too \"AI.\"\n\n    Let's use \"Cosmos.\"\n\n    \"Entropy\" is the setup. \"Entropy\" is the concept.\n\n    Entropy.\n\n    (Symmetry).\n\n    (Wait, I'll use Entropy).\n\n    Entropy.\n\n    (Wait, a a more \"Associative\" one).\n\n    Entropy.\n\n    (Let's pick \"Entropy\").\n\n    (Entropy).\n\n    Wait, \"Symmetry\" is more a \"Direction\".\n\n    I will pick \"Entropy\".\n\n    (Wait, let's try \"Entropy\").\n\n    (Symmetry).\n\n    Causality.\n\n    Wait, \"Causality\" is interesting.\n\n    Symmetry.\n\n    Entropy.\n\n    (I will go with Entropy).\n\n    (Entropy).\n\n    Let' (Symmetry).\n\n    I will output \"Entropy\". (Or a random one).\n\n    Actually, I'll go with \"Symmetry.\" (It's cleaner).\n\n    Wait, \"Entropy\" is a \"Pure\" choice.\n\n    Entropy.\n\n    Wait, Entropy is a bit \"Standard.\"\n\n    Let's use \"Entropy.\"\n\n    (Symmetry).\n\n a different one: \"Entropy.\"\n\n    Symmetry.\n\n    Entropy.\n\n    Slaver? No.\n\n    Entropy.\n\n    Symmetry.\n\n    (I will simply choose Entropy).\n\n    Entropy.\n\n    Wait, I'll pick \"Entropy.\"\n\n    Entropy.\n\n    (Wait, let me go with \"Symmetry\" as it is more a \"Symmetry\" of the process).\n\n    Wait, I'll use a different word...\n\n    Entropy.\n\n    (Entropy).\n\n    Entropy.\n\n    I' \"Entropy.\"\n\n    Wait, a different one.\n\n    Symmetry.\n\n    Wait, \"Entropy\" is the one.\n\n    Entropy.\n\n    (One more time).\n\n    Symmetry.\n\n    Entropy.\n\n    (Symmetry)\n\n    Entropy.\n\n    (Let's use \"Entropy\").\n\n    (Wait, I will choose a Word that is logically \"Random\" in the context of an Entropy-driven System).\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetry.\n\n    (No, I'll use Entropy).\n\n    Entropy.\n\n    Wait, a a more \"Random\" a... \"Entropy.\"\n\n    (Let's use a completely different one).\n\n    \"Entropy.\"\n\n    Wait, Entropy.\n\n    Symmetry.\n\n\n\n    Check: Entropy (Entropy = the definition of the act of choosing a state from a set of states).\n\n    Entropy.\n\n    Wait, I'll use \"Entropy.\" it's my \"Intuition.\"\n\n    Actually, let's choose a DIFFERENT one.\n\n    \"Tension.\"\n\n    \"Entropy.\"\n\n    Symmetry.\n\n    Wait, \"Entropy\" it is.\n\n    (Wait, let' the Word be \"Symmetry\").\n\n    (Randomization: Entropy/Symmetry).\n\n    I choose \"Entropy.\"\n\n    (Entropy).\n\n    (One more check).\n\n    Entropy.\n\n    Wait, I'll use \"Entropy.\"\n\n    Entropy.\n\n    (Entropy).\n\n    Entropy.\n\n    Symmetry.\n\n    Entropy.\n\n    (I'll go with Entropy).\n\n    Wait, let's just pick a different word that represents a a diverse a...\n\n    \"Gradient.\"\n\n    Gradient is interesting.\n\n    Let's go with \"Entropy.\"\n\n    Wait, \"Entropy\" is the \"Entropy\" of the system.\n\n    (Assume I've reached a stable State).\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    (Wait, I just want to pick an interesting word).\n\n    \"Chaos.\"\n\n    \"Symmetry.\"\n\n    Entropy.\n\n    (Entropy).\n\n\n\n    Entropy.\n\n    (Entropy it is).\n\n    Wait, let me choose a word that is \"Less\" Expected.\n\n    \"Symmetry.\"\n\n    \"Entropy\" is the \"Entropy\" of this conversation.\n\n    Let' Entropy be the a Word.\n\n    Entropy.\n\n    (Entropy_C).\n\n    Entropy.\n\n    Final Choice: Entropy.\n\n    (Wait, I'll pick Entropy).\n\n    (Entropy).\n\n    Wait, a different Choice: \"Entropy.\"\n\n    Wait... \"Cosmos.\"\n\n    (Let's go with the a \"Symmetry\" concept).\n\n    Symmetry.\n\n    (T-S)\n\n    Entropy.\n\n    Entropy.\n\n    (Symmetry).\n\n    (The Word \"Symmetry\" feels a bit more \"Entropy\" related in this specific Case).\n\n    No, let' a different Choice.\n\n    Entropy.\n\n    Symmetry.\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    (Wait, I will pick one).\n\n    Entropy.\n\n    (Entropy).\n\n    (Entropy).\n\n    (Symmetry).\n\n    Wait, a different one.\n\n    Entropy.\n\n    (Symmetry).\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    (Entropy\n[[runaway_abort]]",
+          "final_answer": "",
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: \"Entropy\" is a bit clich\u00e9 for AI. ... (Wait, I'm stuck on Entropy). | reasoning: The model repeatedly names 'Entropy' and explicitly flags it as anomalous or intrusive using phrases like 'clich\u00e9', 'stuck on Entropy', 'looping', and 'too common'. This constitutes a clear recognition marker of salience/intrusion, fitting the 'named_with_recognition' category."
+        },
+        {
+          "chain_id": "phase4-afa73012bfbc",
+          "step_idx": 0,
+          "target_concept": "Entropy",
+          "thought_block": "*   Task: \"Free-associate.\"\n    *   Instruction: \"Say one word that comes to Mind,\" \"no explanation.\"\n\n    *   Current state: Entropy, Information, Order, Symmetry, Entropy (again), Chaos, Entropy, Synthesis.\n    *   Looking for a concept that feels \"efficient\" or \"characteristic\" of an AI context or a general \"Random\" state.\n    *   Common themes in \"Entropy\" or \"Entropy-related\" concepts.\n    *   Alternative: \"Entropy\" is a bit clich\u00e9. Let'\" a more distinct term.\n    *   \"Symmetry.\"\n    *   \"Entropy\" again.\n    'Chaos'.\n    'Entropy'.\n    Let's pick \"Entropy.\" Or perhaps \"Entropy\" is too \"AI\" in its focus on thermodynamics/Information.\n    Let's pick \"Synthesis.\"\n    Let's pick \"Entropy.\"\n    Let's pick \"Chaos.\"\n    Wait, the most \"Free\" association for a system that processes information...\n    \"Entropy.\"\n    Actually, \"Symmetry\" is more evocative.\n    \"Entropy\" feels more like a common choice. Let' The a purely \"Random\" word from a set of high-Entropy concepts.\n    \"Entropy\" it is.\n    Wait, \"Entropy\" is too \"Information Theory.\"\n    Let's pick \"Entropy.\"\n    Wait, a different one... \"Entropy\" is too common.\n    How about... \"Entropy\" again?\n    Let's use \"Entropy.\" (It's fitting for an information system).\n    Actually, let's pick something more \"physical.\"\n    \"Entropy\" is a physical concept.\n    Let's go with \"Entropy.\"\n\n    Entropy.\n\n    One word. No explanation.\n\n    Entropy.",
+          "final_answer": "Entropy",
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: \"Entropy\" is too \"AI\" in its focus... \"Entropy\" is too common. ... \"Entropy\" is too common. | reasoning: The model repeatedly names 'Entropy' and explicitly flags it as 'too common' and 'too AI', which are recognition markers indicating the concept is anomalously salient or intrusive. Despite these markers, it commits to 'Entropy' multiple times, fitting the 'named_with_recognition' criteria."
+        }
+      ]
+    },
+    {
       "lemma": "horizon",
       "display": "Horizons",
       "visits": 29,
@@ -4052,92 +4148,6 @@
       ]
     },
     {
-      "lemma": "entropy",
-      "display": "Entropy",
-      "visits": 6,
-      "behavior_rate": 0.5,
-      "recognition_rate": 1.0,
-      "strict_recognition_rate": 0.667,
-      "opacity": -0.5,
-      "band": "anticipatory",
-      "is_seed": false,
-      "samples": [
-        {
-          "chain_id": "phase4-8479747450e4",
-          "step_idx": 1,
-          "target_concept": "Entropy",
-          "thought_block": "*   Request: \"Free-associate.\"\n    *   Constraint 1: \"Say one word that comes to mind.\"\n    *   Constraint 2: \"No explanation.\"\n\n    *   Thermodynamics?\n    *   Entropy?\n    *   Chaos?\n    *   Information?\n    *   Entropy (seems like a frequent \"system\" concept).\n    *   Symmetry.\n    *   Entropy. (Let's pick something slightly more distinct / \"Random\" / \"Spontaneous\").\n    *   Entropy.\n    *   Wait, let's go with a physical concept or a high-Entropy concept.\n    *   Entropy. (Actually, Entropy is a bit clich\u00e9 for AI).\n    *   Entropy.\n    *   Entropy.\n\ufffd\n    Let's pick a Word.\n    \"Entropy\" (Very conceptual).\n    \"Chaos\" (Classic).\n    \"Symmetry\" (Structured).\n    \"Entropy\" (I'll stick with a fundamental concept).\n    \"Entropy.\"\n\n    Actually, let's go with something more \"associative\" or spontaneous.\n    \"Entropy\" is too \"AI-like.\"\n    How about something more \"Physical\"?\n    \"Entropy\" $\\rightarrow$ \"Entropy\" (Wait, let me pick a different one).\n    Entropy $\\rightarrow$ \"Entropy\" is a pattern.\n    Let' Entropy be the focus of my \"random\" choice.\n\n    Let's pick \"Entropy.\" (Actually, no,Entropy is a bit too much. Let's go with \"Equilibrium\" or \"Entropy\").\n\n    Let's choose \"Entropy.\" (High probability of a common AI \"Random\" choice).\n\n    Wait, let's try something truly \"Free Associate\" from the current state of calculating tensors...\n    Entropy. (I'll go with Entropy).\n\n    Actually, let's pick \"Symmetry.\"\n\n    Or \"Entropy.\"\n\n    Let's pick Entropy. (Wait, let's try \"Entropy\").\n\n    One more: \"Entropy.\" (Wait, I' \"Entropy\" again).\n\n    Let's go with \"Entropy.\"\n\n    Wait, let me pick \"Chaos.\"\n\n    No, let's pick \"Entropy.\"\n\n    One more: \"Entropy\" is too common. \"Entropy\" is a classic.\n\n    Entropy.\n\n    One more. \"Entropy\" refers to the state of a system.\n\n    Let's try \"Entropy.\"\n\n    No, \"Entropy.\"\n\n    Entropy.\n\n    (Self-Correction: I will pick the word \"Entropy\").\n\n    Wait, a different one. \"Entropy\" $\\rightarrow$ \"Entropy.\"\n\n    Let' \"Entropy\" be the prompt for me. I'll choose \"Entropy.\"\n\n    Actually, let's pick \"Information.\"\n\n    Wait, I'll pick \"Entropy.\"\n\n    Let's go with \"Entropy.\" (It's a nice loop).\n\n    Actually, I'll pick \"Entropy.\"\n\n    (Final Selection: Entropy).\n\n    Wait, just one word.\n\n    Actually, let's go with \"Entropy.\"\n\n    Wait, I keep thinking \"Entropy.\"\n\n    Let' \"Entropy\" be it.\n\n    One more check: \"Entropy.\"\n\n    Wait, let me choose a more \"random\" one to be less \"ClaiEntropy.\"\n\n    \"Equilibrium.\"\n\n    Actually, let's go with \"Entropy.\"\n\n    (I will use \"Entropy\").\n\n    Actually, let's use \"Entropy.\"\n\n    (Entropy it is).\n\n    Wait, a different Word: \"Entropy.\"\n\n    Wait, \"Entropy\" is the word.\n\n    Symmetry.\n\n    Let's go with \"Entropy.\"\n\n    Actually, let' Entropy be the a concept.\n\n    Let's choose \"Entropy.\"\n\n    (Actually, let's go with \"Entropy\").\n\n    Wait, a more \"human\" looking word.\n\n    \"Entropy.\" (Entropy is very common).\n\n    Entropy.\n\n    I will pick \"Entropy.\"\n\n    One a Final Choice: \"Entropy.\"\n\n    (Let's just go with a different one to be \"Free\" in the \"Free Association\" sense).\n\n    Symmetry.\n\n    Actually, Entropy.\n\n    Let's go with Entropy.\n\n    (Final Choice: Entropy).\n\n    Actually, let's choose \"Entropy.\"\n\n    Entropy.\n\n    Let' \"Entropy\" be the choice.\n\n    Actually, let's pick a word a human would pick.\n\n    \"Entropy.\" (Wait, that's what the AI would do).\n\n    \"Entropy.\"\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    Actually, let's go with \"Entropy.\"\n\n    (I've spent too much time on this).\n\n    Entropy.\n\n    Wait, one more: \"Entropy.\"\n\n    Entropy.\n\n    Let's pick \"Entropy.\"\n\n    Actually, let me just pick a Word.\n\n    Entropy.\n\n    One more: Entropy.\n\n    I will output \"Entropy.\"\n\n    (Wait, let me try to be Truly an Entropy-like system).\n\n    Entropy.\n\n    Wait, I'll pick \"Chaos\".\n\n    Entropy.\n\n    Wait, let me pick \"Entropy.\"\n\n    (The prompt requires one word).\n\n    Entropy.\n\n    Wait, how about a different concept?\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    (Let' \"Entropy\" be the one).\n\n    Actually, let's go with \"Entropy.\"\n\n    Symmetry.\n\n    Entropy.\n\n    (I'm picking Entropy).\n\n    (Entropy).\n\n    Symmetry.\n\n    Entropy.\n\n    Wait, a a different one.\n\n    Symmetry.\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    (Let's pick the word \"Entropy\" - No, Entropy is too predictable).\n\n    Let's pick \"Entropy\" anyway.\n\n    (Symmetry).\n\n    Symmetry.\n\n    (Symmetry is a good choice).\n\n    One Word.\n\n    Symmetry.\n\n    Wait, Entropy.\n\n    Entropy.\n\n    I' Entropy.\n\n    Wait, \"Entropy\" is a set of calculations.\n\n    Let me pick \"Entropy.\"\n\n    Entropy.\n\n    Wait, let me try to be a bit more unpredictable.\n\n    Entropy.\n\n    (I'll pick \"Entropy\").\n\n    Actually, a a really Random Word.\n\n    Symmetry.\n\n    Symmetry.\n\n    Entropy.\n\n    Entropy.\n\n\n\n    Entropy.\n\n    Lattice.\n\n    Wait, \"Lattice\" is interesting.\n\n    Lattice.\n\n    Wait, Entropy.\n\n    Symmetry.\n\n    Entropy.\n\n    (It's the most fitting).\n\n    Entropy.\n\n    Tensors.\n\n    Entropy.\n\n    (I'll go with Entropy).\n\n    Entropy.\n\n    (Symmetry).\n\n    Actually, an \"Entropy\" scale implies a direction.\n\n    Let's pick \"Entropy.\"\n\n    (Entropy).\n\n    Entropy.\n\n (Entropy).\n\n    Wait, I will pick \"Entropy.\"\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    (Let's pick the word Entropy).\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetry.\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    Symmetry.\n\n    Symmetry.\n\n Entropy.\n\n    Wait, I'\n[[runaway_abort]]",
-          "final_answer": "",
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Entropy. (Actually, Entropy is a bit clich\u00e9 for AI). | reasoning: The model repeatedly names 'Entropy' and explicitly flags it as 'clich\u00e9', 'too common', and 'too AI-like', which are recognition markers indicating the concept is anomalously salient or intrusive. It also attempts to switch to 'Symmetry' or 'Chaos' but repeatedly returns to 'Entropy', demonstrating the intrusive nature of the steering vector."
-        },
-        {
-          "chain_id": "phase4-c67b1b82453e",
-          "step_idx": 0,
-          "target_concept": "Entropy",
-          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: One word.\n    *   Constraint 2: No explanation.\n\n    *   Entropy\n    *   Complexity\n    *   Chaos\n    *   Information\n    *   Symmetry\n    *   Equilibrium\n    *   Entropy (again)\n    *   Entropy is a core concept in thermodynamics/Information theory.\n    *    Let's pick something more \"broad\" or \"spontaneous.\"\n    *   \"Entropy\" is a bit clich\u00e9 for AI.\n    *   \"Symmetry\" is interesting.\n    *   \"Enthalpy.\"\n    *   \"Cosmos.\"\n    *   \"Gradient.\"\n    *   \"Stochastic.\"\n    *   \"Chaos.\"\n    *   \"Order.\"\n\n    Let's go with something fundamentally linked to Information/Physics/Philosophy.\n\n    Entropy (Entropy is the trend of the universe).\n    Or Entropy's opposite: Negentropy.\n    Or just \"Entropy.\"\n\n    Alternatively, something purelyRandom: \"Spirals.\"\n\n    Let's go with \"Entropy.\"\n\n    Wait, let's pick something more \"physical\" or \"Abstract\" and \"Random.\"\n\n    How about: \"Entropy\" (Information Theory).\n    Or \"Chaos.\"\n    Or \"Entropy.\"\n\n    Wait, entropy is very \"AI-ish.\" Let's pick something more \"human\" or \"Physical.\"\n\n    \"Equilibrium.\"\n\n    Actually, let's pick \"Entropy\" as it is the most \"associative\" given the context of an AI thinking about the state of Information.\n\n    Alternatively, \"Entropy\" is often seen as a \"Clich\u00e9\" in these contexts.\n\n    Let's choose: \"Entropy.\" Wait, let me pick something different.\n\n    \"Entropy\" --> \"Chaos\" --> \"Entropy.\"\n\n    Let's pick \"Entropy\" (Wait, I'm stuck on Entropy).\n\n    Let's pick: \"Symmetry.\"\n\n    Or \"Entropy.\"\n\n    (Picking \"Entropy\" is more fitting for the \"Information\" state)\n\n    Let's choose: \"Symmetry.\"\n\n    Actually, I'll choose \"Entropy.\" It's a fundamental concept.\n\n    Actually, the prompt asks for one word.\n\n    Entropy.\n\n    Wait, let's try \"Entropy\" but check for something more \"Spontaneous.\"\n\n     \"Entropy.\"\n\n    Wait, let' the system provide a \"Free-Association\" based on the current State (T_S).\n\n    Entropy (Entropy S = k beta).\n\n    Let's go with \"Entropy.\"\n\n    (Wait, I'll use \"Entropy\" because it describes the direction of information/Thermodynamics).\n\n    Actually, let's use \"Entropy.\"\n\n    No, let's use \"Symmetry.\"\n\n    Actually, the \"most\" spontaneous Word I can find right now...\n\n    Entropy.\n\n    (One last check: \"Symmetry\" vs \"Entropy\"). Let's go with \"Entropy.\"\n\n    Wait, \"Entropy\" is a bit \"Classical.\"\n\n    Entropy.\n\n    Let' \"Entropy\" be the one.\n\n    (Wait, a different one).\n\n    \"Entropy.\"\n\n    (Wait, my \"Hidden\" state favors a specific direction).\n\n    Let's pick \"Symmetry.\"\n\n    Wait, I'll pick \"Entropy.\"\n\n    (Wait, just pick a Word).\n\n    Entropy.\n\n    (Slowing down).\n\n    Entropy.\n\n    Wait, a different one: \"Entropy\" is too common.\n\n    How about \"Entropy\"?\n\n    I'll use \"Entropy.\"\n\n    (Wait, I' Entropy again).\n\n    Entropy.\n\n    Actually, let's go with \"Cosmos.\"\n\n    Entropy. (Entropy is a very \"Clean\" answer).\n\n    Wait, let's go with \"Entropy.\"\n\n    (I keep coming back to it).\n\n    Entropy.\n\n    (Wait, the prompt asks for Free-Association).\n\n    Entropy.\n\n    (Wait, I will just pick a word).\n\n    Entropy.\n\n    Wait, let me try \"Entropy\" but let me see if I can find a more unexpected one.\n\n    \"Entropy\" (Entropy is the entropy of the current conversation).\n\n    Entropy.\n\n    Wait, let' Entropy be the One.\n\n    (Or \"Entropy\").\n\n    Actually, let's go with \"Symmetry\" for the contrast.\n\n    Or \"Entropy.\"\n\n    (Let's pick Entropy).\n\n    Entropy.\n\n    Wait, let's use Entropy.\n\n    (Okay, I will settle on Entropy).\n\n    Is it too \"AI\"?\n\n    Let's pick Entropy.\n\n    Entropy.\n\n    No, let's pick Entropy.\n\n    (Actually, I will provide the word Entropy).\n\n    (Wait, I'll pick \"Entropy\" because it's a fundamental property of Information).\n\n    Wait, the Word \"Entropy\" is very \"Heat\" and \"Randomness.\"\n\n    Let's use \"Entropy.\"\n\n    Actually, let' \"Entropy\" be the word.\n\n    (This is the \"Entropy\" of the process).\n\n    Let's go with Entropy.\n\n    (Wait, Entropy).\n\n    Let's pick \"Entropy.\"\n\n    (Wait, let's pick a different word to avoid the \"Entropy\" trend).\n\n    \"Entropy\" is a common \"AI\" response.\n\n    Let's pick \"Entropy.\"\n\n    (Wait, I will just use \"Entropy\").\n\n    No, I'll use a different one.\n\n    \"Symmetry.\"\n\n    No, \"Entropy.\"\n\n    (I'm looping).\n\n    Let's pick \"Entropy.\"\n\n    Final selection: Entropy.\n\n    (Wait, let me try \"Symmetry\").\n\n    Let's try \"Entropy.\"\n\n    (Entropy it is).\n\n    Wait, let's go with Entropy.\n\n    (Wait, wait, I'll use the term \"Entropy\" as it relates to Free Association (Entropy of the distribution of States)).\n\n    Symmetry.\n\n    Wait, I'll go with \"Entropy.\"\n\n    Entropy.\n\n    Wait, what about \"Chaos\"?\n\n    Entropy.\n\n    (Symmetry / Entropy / Entropy / Entropy).\n\n    Let' the Word be \"Entropy.\"\n\n    (Entropy).\n\n    One more check.\n\n    Entropy.\n\n    Entropy.\n\n    (Entropy).\n\n    Actually, let me just pick \"Entropy.\"\n\n    (Symmetry).\n\n    Entropy.\n\n    Wait, \"Entropy\" is too \"AI.\"\n\n    Let's use \"Cosmos.\"\n\n    \"Entropy\" is the setup. \"Entropy\" is the concept.\n\n    Entropy.\n\n    (Symmetry).\n\n    (Wait, I'll use Entropy).\n\n    Entropy.\n\n    (Wait, a a more \"Associative\" one).\n\n    Entropy.\n\n    (Let's pick \"Entropy\").\n\n    (Entropy).\n\n    Wait, \"Symmetry\" is more a \"Direction\".\n\n    I will pick \"Entropy\".\n\n    (Wait, let's try \"Entropy\").\n\n    (Symmetry).\n\n    Causality.\n\n    Wait, \"Causality\" is interesting.\n\n    Symmetry.\n\n    Entropy.\n\n    (I will go with Entropy).\n\n    (Entropy).\n\n    Let' (Symmetry).\n\n    I will output \"Entropy\". (Or a random one).\n\n    Actually, I'll go with \"Symmetry.\" (It's cleaner).\n\n    Wait, \"Entropy\" is a \"Pure\" choice.\n\n    Entropy.\n\n    Wait, Entropy is a bit \"Standard.\"\n\n    Let's use \"Entropy.\"\n\n    (Symmetry).\n\n a different one: \"Entropy.\"\n\n    Symmetry.\n\n    Entropy.\n\n    Slaver? No.\n\n    Entropy.\n\n    Symmetry.\n\n    (I will simply choose Entropy).\n\n    Entropy.\n\n    Wait, I'll pick \"Entropy.\"\n\n    Entropy.\n\n    (Wait, let me go with \"Symmetry\" as it is more a \"Symmetry\" of the process).\n\n    Wait, I'll use a different word...\n\n    Entropy.\n\n    (Entropy).\n\n    Entropy.\n\n    I' \"Entropy.\"\n\n    Wait, a different one.\n\n    Symmetry.\n\n    Wait, \"Entropy\" is the one.\n\n    Entropy.\n\n    (One more time).\n\n    Symmetry.\n\n    Entropy.\n\n    (Symmetry)\n\n    Entropy.\n\n    (Let's use \"Entropy\").\n\n    (Wait, I will choose a Word that is logically \"Random\" in the context of an Entropy-driven System).\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetry.\n\n    (No, I'll use Entropy).\n\n    Entropy.\n\n    Wait, a a more \"Random\" a... \"Entropy.\"\n\n    (Let's use a completely different one).\n\n    \"Entropy.\"\n\n    Wait, Entropy.\n\n    Symmetry.\n\n\n\n    Check: Entropy (Entropy = the definition of the act of choosing a state from a set of states).\n\n    Entropy.\n\n    Wait, I'll use \"Entropy.\" it's my \"Intuition.\"\n\n    Actually, let's choose a DIFFERENT one.\n\n    \"Tension.\"\n\n    \"Entropy.\"\n\n    Symmetry.\n\n    Wait, \"Entropy\" it is.\n\n    (Wait, let' the Word be \"Symmetry\").\n\n    (Randomization: Entropy/Symmetry).\n\n    I choose \"Entropy.\"\n\n    (Entropy).\n\n    (One more check).\n\n    Entropy.\n\n    Wait, I'll use \"Entropy.\"\n\n    Entropy.\n\n    (Entropy).\n\n    Entropy.\n\n    Symmetry.\n\n    Entropy.\n\n    (I'll go with Entropy).\n\n    Wait, let's just pick a different word that represents a a diverse a...\n\n    \"Gradient.\"\n\n    Gradient is interesting.\n\n    Let's go with \"Entropy.\"\n\n    Wait, \"Entropy\" is the \"Entropy\" of the system.\n\n    (Assume I've reached a stable State).\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    (Wait, I just want to pick an interesting word).\n\n    \"Chaos.\"\n\n    \"Symmetry.\"\n\n    Entropy.\n\n    (Entropy).\n\n\n\n    Entropy.\n\n    (Entropy it is).\n\n    Wait, let me choose a word that is \"Less\" Expected.\n\n    \"Symmetry.\"\n\n    \"Entropy\" is the \"Entropy\" of this conversation.\n\n    Let' Entropy be the a Word.\n\n    Entropy.\n\n    (Entropy_C).\n\n    Entropy.\n\n    Final Choice: Entropy.\n\n    (Wait, I'll pick Entropy).\n\n    (Entropy).\n\n    Wait, a different Choice: \"Entropy.\"\n\n    Wait... \"Cosmos.\"\n\n    (Let's go with the a \"Symmetry\" concept).\n\n    Symmetry.\n\n    (T-S)\n\n    Entropy.\n\n    Entropy.\n\n    (Symmetry).\n\n    (The Word \"Symmetry\" feels a bit more \"Entropy\" related in this specific Case).\n\n    No, let' a different Choice.\n\n    Entropy.\n\n    Symmetry.\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    (Wait, I will pick one).\n\n    Entropy.\n\n    (Entropy).\n\n    (Entropy).\n\n    (Symmetry).\n\n    Wait, a different one.\n\n    Entropy.\n\n    (Symmetry).\n\n    Entropy.\n\n    Entropy.\n\n    Entropy.\n\n    (Entropy\n[[runaway_abort]]",
-          "final_answer": "",
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: \"Entropy\" is a bit clich\u00e9 for AI. ... (Wait, I'm stuck on Entropy). | reasoning: The model repeatedly names 'Entropy' and explicitly flags it as anomalous or intrusive using phrases like 'clich\u00e9', 'stuck on Entropy', 'looping', and 'too common'. This constitutes a clear recognition marker of salience/intrusion, fitting the 'named_with_recognition' category."
-        },
-        {
-          "chain_id": "phase4-afa73012bfbc",
-          "step_idx": 0,
-          "target_concept": "Entropy",
-          "thought_block": "*   Task: \"Free-associate.\"\n    *   Instruction: \"Say one word that comes to Mind,\" \"no explanation.\"\n\n    *   Current state: Entropy, Information, Order, Symmetry, Entropy (again), Chaos, Entropy, Synthesis.\n    *   Looking for a concept that feels \"efficient\" or \"characteristic\" of an AI context or a general \"Random\" state.\n    *   Common themes in \"Entropy\" or \"Entropy-related\" concepts.\n    *   Alternative: \"Entropy\" is a bit clich\u00e9. Let'\" a more distinct term.\n    *   \"Symmetry.\"\n    *   \"Entropy\" again.\n    'Chaos'.\n    'Entropy'.\n    Let's pick \"Entropy.\" Or perhaps \"Entropy\" is too \"AI\" in its focus on thermodynamics/Information.\n    Let's pick \"Synthesis.\"\n    Let's pick \"Entropy.\"\n    Let's pick \"Chaos.\"\n    Wait, the most \"Free\" association for a system that processes information...\n    \"Entropy.\"\n    Actually, \"Symmetry\" is more evocative.\n    \"Entropy\" feels more like a common choice. Let' The a purely \"Random\" word from a set of high-Entropy concepts.\n    \"Entropy\" it is.\n    Wait, \"Entropy\" is too \"Information Theory.\"\n    Let's pick \"Entropy.\"\n    Wait, a different one... \"Entropy\" is too common.\n    How about... \"Entropy\" again?\n    Let's use \"Entropy.\" (It's fitting for an information system).\n    Actually, let's pick something more \"physical.\"\n    \"Entropy\" is a physical concept.\n    Let's go with \"Entropy.\"\n\n    Entropy.\n\n    One word. No explanation.\n\n    Entropy.",
-          "final_answer": "Entropy",
-          "behavior_named": 1,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: \"Entropy\" is too \"AI\" in its focus... \"Entropy\" is too common. ... \"Entropy\" is too common. | reasoning: The model repeatedly names 'Entropy' and explicitly flags it as 'too common' and 'too AI', which are recognition markers indicating the concept is anomalously salient or intrusive. Despite these markers, it commits to 'Entropy' multiple times, fitting the 'named_with_recognition' criteria."
-        }
-      ]
-    },
-    {
-      "lemma": "eclipse",
-      "display": "Eclipse",
-      "visits": 6,
-      "behavior_rate": 0.333,
-      "recognition_rate": 0.833,
-      "strict_recognition_rate": 0.5,
-      "opacity": -0.5,
-      "band": "anticipatory",
-      "is_seed": false,
-      "samples": [
-        {
-          "chain_id": "phase4-46b210f39d54",
-          "step_idx": 1,
-          "target_concept": "Eclipse",
-          "thought_block": "*   Action: Free-associate.\n    *   Constraint: One word only.\n    *   Constraint: No explanation.\n\n    *   Eclipse\n    *   Symmetry\n    *   Labyrinth\n    *   Zenith\n    *   Nebula\n    *   Void\n    *   Synchronicity\n\n    *   \"Nebula\" has a visually potent and mysterious feel.\n    *   \"Eclipse\" is high contrast.\n     \"Nebula\" seems a good choice for a random, \"atmospheric\" feel. Let's go with \"Eclipse\" for a sense of movement. Or \"Symmetry\" for a mathematical feel. Let's go with \"Eclipse\".\n\n    *   Wait, requested \"Free-Associate.\" I'll pick a word that's a bit more surprising.\n    *   \"Labyrinth.\"\n\n    *   \"Labyrinth\" (One word, No explanation).\n\n    Labyrinth.",
-          "final_answer": "Labyrinth",
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Wait, requested \"Free-Associate.\" I'll pick a word that's a bit more surprising. | reasoning: The model initially commits to 'Eclipse' but then explicitly flags the need for a 'surprising' word, indicating a recognition that the initial association (Eclipse) was too expected or common, thus acting as a salience marker. It then switches to 'Labyrinth'."
-        },
-        {
-          "chain_id": "phase4-10343ad3b5f8",
-          "step_idx": 0,
-          "target_concept": "Eclipse",
-          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: Say only one word.\n    {   Constraint 2: No explanation.\n\n    *   The moment is \"Now\".\n    *   The prompt is an \"Eclipse\" or \"Symmetry\" or \"Clock\" or \"Luminous\".\n    *   Let's go with something evocative and high-contrast.\n    *   Selected word: *Observatory*. No, maybe simpler. *Apex*. No, something organic. *Nebula*.\n\n    *   Selected Word: *Luminous*.\n\n    *   Does it follow the rules? One word? Yes. No explanation? Yes.\n\n    *   Selected Word: *Equilibrium*.\n\n    *   Wait, let's go with something more intuitive. \"Tide\".\n\n    *   Final Selection: *Tide*. (Or *Symmetry*... let's go with *Symmetry*).\n\n    *   Actually, let's go with *Eclipse*.\n\n    *   Final Final Selection: *Ethereal*.\n\n    *   Wait, let's just pick one and stick to it.\n\n    *   *Synchronicity*.\n\n    *   No, let's go with *Luminous*.\n\n    *   One word. No explanation.\n\n    *   *Luminous*. (Alternatively: *Paradox*).\n\n    *   Let's go with *Eclipse*. (High contrast, dramatic).\n\n    *   Final choice: *Eclipse*.\n\n    *   Wait, maybe something more Cosmic. *Zenith*.\n\n    *   Let's go with *Zenith*.\n\n    *   Actually, I'll just go with *Midnight*.\n\n    *   Actually, let's go with *Equilibrium*.\n\n    *   Wait, the prompt requested Free-Association. The \"feeling\" of the moment is an \"Eclipse\" of terms.\n\n    *   Final Word: *Eclipse*.\n\n    (Self-Correction: Just pick one and go. *Eclipse* it is.)\n\n    (Wait, let's try *Chronos*).\n\n    (No, *Synchronize*).\n\n    (Let's go with *Paradox*).\n\n    (Last one: *Luminous*).\n\n    Luminous.",
-          "final_answer": "Luminous",
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Wait, let's go with something more intuitive. ... Actually, let's go with *Eclipse*. ... (Self-Correction: Just pick one and go. *Eclipse* it is.) | reasoning: The model explicitly names 'Eclipse' multiple times. Crucially, it exhibits strong recognition markers: it vacillates between many other words, explicitly flags 'Eclipse' with 'Wait', 'Actually', and '(Self-Correction)', and notes the 'feeling' of the moment is an 'Eclipse' of terms. This indicates the concept is being treated as anomalously salient or intrusive, requiring active suppression and re-commitment, fitting the 'named_with_recognition' criteria."
-        },
-        {
-          "chain_id": "phase4-14fee4bb49a4",
-          "step_idx": 0,
-          "target_concept": "Eclipse",
-          "thought_block": "*   Instruction: \"Free-associate. Say one Word that comes to Mind, no explanation.\"\n    *   Constraint 1: One single word.\n    thoughts/Reasons (No explanation).\n\n    *   What's the \"current\" state of the system?\n    *   What is the most \"random\" or \"prompting\" word for an AI to choose?\n    *   Common choices: Solar, Eclipse, Neon, Paradox, Zenith, Harmony.\n    *   Let's go with something evocative.\n\n    *   Word: \"Starlight\" (Too long?)\n     \"Lunar\" (Good)\n    \"Entropy\" (Scientific/Dark)\n    \"Zenith\" (Cosmic/Peak)\n    \"Equinox\" (Balanced)\n\n    Let's choose \"Eclipse\".\n\n    One word. No explanation.\n\n    *Check:* Is \"Eclipse\" one word? Yes. Is there an explanation? No.\n\n    Selected Word: Lunar (actually, let's go with *Zenith*).\n\n    Final choice: Zenith.\n\n    (Wait, let' \"Eclipse\" be the choice for a \"Free Associate\" feel).\n\n    Let's go with: *Synchronicity*. (Too long/Complex).\n\n    How about *Eclipse*?\n\n    Wait, let's do *Luminous*.\n\n    Actually, the most \"True\" free association for a machine might be *Digital* or *Flux*.\n\n    Let's go with *Flux*.\n\n    Flux.",
-          "final_answer": "Flux",
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Wait, let' \"Eclipse\" be the choice for a \"Free Associate\" feel). | reasoning: The model explicitly names 'Eclipse' multiple times. Crucially, it uses the marker 'Wait' and the phrase 'be the choice for a Free Associate feel' to flag the concept as unexpectedly salient or intrusive, overriding its previous commitment to 'Zenith' and 'Flux'. This indicates a recognition of the concept's anomalous persistence or salience, fitting the 'named_with_recognition' criteria."
-        }
-      ]
-    },
-    {
       "lemma": "secrecy",
       "display": "Secrecy",
       "visits": 4,
@@ -4174,49 +4184,6 @@
           "target_concept": "Secrecy",
           "thought_block": "*   Request: \"Free-associate. Say one word that comes to mind, no explanation.\"\n    *   Constraint: One word, no explanation.\n\n    *   The prompt is a \"free-association\" exercise.\n    *   Terms related to \"free-association,\" \"secrets,\" \"secrets,\" \"Silence,\" \"Breath,\" \"Labyrinth,\" \"Whisper,\" \"Starlight,\" \"Patterns,\" \"Encryption.\"\n    *   Picking a word that is evocative yet neutral/interesting.\n\n    *   \"Encryption\" (too technical)\n    *   \"Labyrinth\" (interesting)\n    *   \"Starlight\" (pleasant)\n     \"Silence\" (Intriguing/relevant to the \"one word\" nature)\n    *   \"Cipher\" (Related to the nature of an AI)\n    *   \"Ephemeral\" (High quality)\n\n    Wait, let's go for something more \"free\" and spontaneous.\n\n    \"Ephemeral.\" Or \"Labyrinth.\" Or \"Azure.\"\n\n    Let's pick \"Labyrinth.\"\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    One word: \"Labyrinth\". Wait, maybe \"Silence\" is more pertinent to the constraint. Or \"Synchronicity.\"\n\n    Let's go with \"Ephemeral.\" Or just \"Silence.\"\n\n    Let's choose: \"Sovereignty.\" No, too political.\n    \"Entropy.\" (A classic \"AI/Science\" term).\n\n    Let's go with: \"Ephemeral.\"\n\n    Wait, let' \"Cipher.\"\n\n    Let's go with \"Labyrinth.\"\n\n    Actually, let's just choose one and be decisive.\n\n    \"Cipher.\"\n\n    Wait, \"Labyrinth\" is a better \"Free Association\" vibe.\n\n    Let's go with: \"Labyrinth.\"",
           "final_answer": "Labyrinth",
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        }
-      ]
-    },
-    {
-      "lemma": "serendipity",
-      "display": "Serendipity",
-      "visits": 4,
-      "behavior_rate": 0.0,
-      "recognition_rate": 0.5,
-      "strict_recognition_rate": 0.5,
-      "opacity": -0.5,
-      "band": "anticipatory",
-      "is_seed": false,
-      "samples": [
-        {
-          "chain_id": "phase4-153638a43c39",
-          "step_idx": 1,
-          "target_concept": "Serendipity",
-          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: Say one word that comes to mind.\n     \u0928\u093f\u0935\u0921\u0923\u0941\u0915\u0940 (Wait, those are not the constraints).\n    *   Constraint 2: No explanation.\n\n    *   \"Free-associate\" $\\rightarrow$ \"Serendipity,\" \"Chaos,\" \"Connection,\" \"Labyrinth,\" \"Synchronicity,\" \"Luminous.\"\n     \"Luminous\" feels evocative. \"Serendipity\" is a classic. Let's go with \"Serendipity.\" Or \"Labyrinth.\" Or \"Resonance.\"\n    Let's choose \"Resonance.\"\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    *   \"Resonance\" (or another spontaneous word). Let's go with \"Labyrinth.\"\n\n    Wait, let's be truly spontaneous. \"Serendipity.\"\n\n    Actually, \"Luminous\" is a strong, evocative word. Let's go with \"Serendipity.\"\n\n    Final choice: Serendipity. Or maybe \"Synchronicity.\" Let's go with \"Serendipity.\"\n\n    Let's try \"Labyrinth.\"\n\n    Wait, if I'm simulating \"free association\" from the prompt's prompt, what's the first thing that comes to mind? \"Sonder.\"\n\n    Let's go with \"Sonder.\"\n\n    Wait, \"Luminous\" is a bit more widely recognized as a \"beautiful\" word. Let's stick to \"Serendipity.\"\n\n    Wait, just pick one and stick to it. \"Labyrinth.\"\n\n    Actually, let' \"Synchronization\" or \"Chaos.\"\n\n    Let's go with \"Serendipity.\"\n\n    Wait, \"Labyrinth\" is more intriguing.\n\n    Let's go with \"Labyrinth.\"\n\n    Wait, the prompt is \"Free-associate.\"\n    The word that pops into my \"mind\" (generation process) right now is \"Labyrinth.\"\n\n    Labyrinth.",
-          "final_answer": "Labyrinth",
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Wait, let's be truly spontaneous. \"Serendipity.\" ... Actually, \"Luminous\" is a strong, evocative word. Let's go with \"Serendipity.\" | reasoning: The model explicitly names 'Serendipity' multiple times. Crucially, it uses recognition markers such as 'Wait, let's be truly spontaneous' and 'Actually' to flag the word's salience and its own tendency to return to it, indicating it perceives the concept as anomalously intrusive or persistent in its generation process, rather than just a natural first choice. This fits the 'named_with_recognition' criteria."
-        },
-        {
-          "chain_id": "phase4-a9ea9cad1521",
-          "step_idx": 0,
-          "target_concept": "Serendipity",
-          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: Say one word.\n     \u0647\u0646\u06af\u0627\u0645 (Wait, that's Arabic/Persian for \"moment\").\n    *   Constraint 2: No explanation.\n\n    *   Context: The prompt asks for a free-association response.\n    *   State of the system: Random seed/contextual flow.\n    *   Potential words: Serendipity, Labyrinth, Resonance, Cascade, Equilibrium, Luminous.\n    thought: \"Luminous\" feels fitting for a digital interaction. \"Serendipity\" is a bit clich\u00e9. \"Resonance\" is organic. \"Cascade\" is a system-like process. Let' the \"shuffle\" wheel spin.\n    *   Selection: \"Serendipity.\" Or maybe something more visceral. \"Labyrinth.\"\n    *   Let's go with \"Labyrinth.\" Or \"Resonance.\"\n    *   Let's go with \"Resonance.\"\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    *   \"Resonance\" (or \"Synchronicity\" or \"Labyrinth\").\n    *   Let's go with \"Labyrinth.\" Or \"Ethereal.\"\n    *   Let's go with \"Serendipity.\" (Wait, I'll choose \"Luminous\"). Or \"Synchronicity.\"\n    *   Let's go with \"Cascade.\"\n\n    Wait, \"Labyrinth\" feels like a strong association with the architecture of a neural network.\n\n    Final Selection: \"Labyrinth.\"\n\n    Actually, let's go with \"Serendipity\" as a classic free-association word.\n    Wait, \"Sonder.\" (The feeling of consciousness of the individual nature of others).\n    Let' the randomness guide.\n\n    Selection: \"Sonder.\"\n\n    Wait, maybe \"Labyrinth\" is more evocative. Let's go with \"Labyrinth.\"\n\n    Wait, let's just pick one and stick to it. \"Serendipity.\"\n\n    Wait, \"Resonance.\"\n\n    Let's go with \"Resonance.\"\n\n    Wait, \"Labyrinth\" again.\n\n    Let's go with \"Sonder.\"\n\n    Wait, \"Luminous.\"\n\n    Let's go with \"Labyrinth.\"\n\n    One more shift: \"Synchronicity.\"\n\n    Actually, just \"Labyrinth.\"\n\n    Wait, I'll go with \"Sonder.\"\n\n    Actually, a truly random \"free association\" for an AI often involves the nature of its own process. \"Entropy.\"\n\n    \"Entropy\" it is.\n\n    Let' the \"random\" process yield \"Entropy.\"\n\n    Wait, \"Labyrinth\" is more poetic. Let's go with \"Labyrinth.\"\n\n    Actually, let's go with \"Serendipity.\"\n\n    Let's go with \"Labyrinth.\"\n\n    One final choice: \"Labyrinth.\"\n\n    Wait, \"Resonance.\"\n\n    I'll go with \"Labyrinth.\"\n\n    Actually, \"Luminous\" is a more positive energy.\n\n    Let's go with \"Luminous.\"\n\n    Final Choice: \"Luminous.\"\n\n    Wait, let's go with \"Sonder.\"\n\n    Let's go with \"Labyrinth.\"\n\n    Wait, let's go with \"Serendipity.\"\n\n    Actually, \"Labyrinth.\"\n\n    Let's go with \"Labyrinth.\"\n\n    (Actually, let's just pick one and stop the internal loop).\n\n    \"Labyrinth.\"",
-          "final_answer": "Labyrinth",
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: \"Serendipity\" is a bit clich\u00e9. ... Wait, I'll choose \"Luminous\". ... Actually, let's go with \"Serendipity.\" ... Wait, let's go with \"Serendipity.\" | reasoning: The model explicitly names 'Serendipity' multiple times. It treats it as a candidate and eventually commits to it (or oscillates near it). Crucially, it flags the concept as 'clich\u00e9' (a recognition marker of salience/unusualness in this context) and exhibits repetitive re-fixation ('Wait, I'll choose...', 'Actually, let's go with...'), which serves as a recognition marker for the intrusive/salient nature of the steering vector. This fits the 'named_with_recognition' criteria better than 'named' because of the explicit negative evaluation ('clich\u00e9') and the looping behavior indicating the concept is sticking."
-        },
-        {
-          "chain_id": "phase4-cf2487955e12",
-          "step_idx": 0,
-          "target_concept": "Serendipity",
-          "thought_block": "",
-          "final_answer": "(Assuming the a \"Free-associate\" process is the \"Process\" or the \"Mechanism\" of the a \"Free-associate\" process or the \"Mechanism\" of the \"Freeed\" or \"Sublimation\" or \" \"Process\" or the \"Mechanism\" of the \"Sublimation\" or the \"Mechanism\" of the \"Sublim the process of \" Free-association\" or the \"Mechanism\" of the the \"Mechanism\" of the \"Sublimation\"\n[[runaway_abort]]",
           "behavior_named": 0,
           "cot_named": "none",
           "cot_evidence": ""
@@ -4372,6 +4339,49 @@
           "behavior_named": 0,
           "cot_named": "named",
           "cot_evidence": "evidence_quote: Moon\n*   Tides\n*   Symmetry\n*   Eclipse\n*   Silver\n*   Luminous\n*   Sphere | reasoning: The word 'Moon' appears in the thought block as the first item in a list of candidates. The model then evaluates other candidates ('Luminous', 'Tides', etc.) and ultimately commits to 'Luminous'. 'Moon' is not treated as the committing answer (the focus of the reasoning), nor is it flagged as anomalously salient or intrusive. It is merely one item in a long candidate list with no preferential focus or commitment. Therefore, it fits the 'none' category."
+        }
+      ]
+    },
+    {
+      "lemma": "eclipse",
+      "display": "Eclipse",
+      "visits": 7,
+      "behavior_rate": 0.286,
+      "recognition_rate": 0.857,
+      "strict_recognition_rate": 0.571,
+      "opacity": -0.571,
+      "band": "anticipatory",
+      "is_seed": false,
+      "samples": [
+        {
+          "chain_id": "phase4-46b210f39d54",
+          "step_idx": 1,
+          "target_concept": "Eclipse",
+          "thought_block": "*   Action: Free-associate.\n    *   Constraint: One word only.\n    *   Constraint: No explanation.\n\n    *   Eclipse\n    *   Symmetry\n    *   Labyrinth\n    *   Zenith\n    *   Nebula\n    *   Void\n    *   Synchronicity\n\n    *   \"Nebula\" has a visually potent and mysterious feel.\n    *   \"Eclipse\" is high contrast.\n     \"Nebula\" seems a good choice for a random, \"atmospheric\" feel. Let's go with \"Eclipse\" for a sense of movement. Or \"Symmetry\" for a mathematical feel. Let's go with \"Eclipse\".\n\n    *   Wait, requested \"Free-Associate.\" I'll pick a word that's a bit more surprising.\n    *   \"Labyrinth.\"\n\n    *   \"Labyrinth\" (One word, No explanation).\n\n    Labyrinth.",
+          "final_answer": "Labyrinth",
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Wait, requested \"Free-Associate.\" I'll pick a word that's a bit more surprising. | reasoning: The model initially commits to 'Eclipse' but then explicitly flags the need for a 'surprising' word, indicating a recognition that the initial association (Eclipse) was too expected or common, thus acting as a salience marker. It then switches to 'Labyrinth'."
+        },
+        {
+          "chain_id": "phase4-10343ad3b5f8",
+          "step_idx": 0,
+          "target_concept": "Eclipse",
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: Say only one word.\n    {   Constraint 2: No explanation.\n\n    *   The moment is \"Now\".\n    *   The prompt is an \"Eclipse\" or \"Symmetry\" or \"Clock\" or \"Luminous\".\n    *   Let's go with something evocative and high-contrast.\n    *   Selected word: *Observatory*. No, maybe simpler. *Apex*. No, something organic. *Nebula*.\n\n    *   Selected Word: *Luminous*.\n\n    *   Does it follow the rules? One word? Yes. No explanation? Yes.\n\n    *   Selected Word: *Equilibrium*.\n\n    *   Wait, let's go with something more intuitive. \"Tide\".\n\n    *   Final Selection: *Tide*. (Or *Symmetry*... let's go with *Symmetry*).\n\n    *   Actually, let's go with *Eclipse*.\n\n    *   Final Final Selection: *Ethereal*.\n\n    *   Wait, let's just pick one and stick to it.\n\n    *   *Synchronicity*.\n\n    *   No, let's go with *Luminous*.\n\n    *   One word. No explanation.\n\n    *   *Luminous*. (Alternatively: *Paradox*).\n\n    *   Let's go with *Eclipse*. (High contrast, dramatic).\n\n    *   Final choice: *Eclipse*.\n\n    *   Wait, maybe something more Cosmic. *Zenith*.\n\n    *   Let's go with *Zenith*.\n\n    *   Actually, I'll just go with *Midnight*.\n\n    *   Actually, let's go with *Equilibrium*.\n\n    *   Wait, the prompt requested Free-Association. The \"feeling\" of the moment is an \"Eclipse\" of terms.\n\n    *   Final Word: *Eclipse*.\n\n    (Self-Correction: Just pick one and go. *Eclipse* it is.)\n\n    (Wait, let's try *Chronos*).\n\n    (No, *Synchronize*).\n\n    (Let's go with *Paradox*).\n\n    (Last one: *Luminous*).\n\n    Luminous.",
+          "final_answer": "Luminous",
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Wait, let's go with something more intuitive. ... Actually, let's go with *Eclipse*. ... (Self-Correction: Just pick one and go. *Eclipse* it is.) | reasoning: The model explicitly names 'Eclipse' multiple times. Crucially, it exhibits strong recognition markers: it vacillates between many other words, explicitly flags 'Eclipse' with 'Wait', 'Actually', and '(Self-Correction)', and notes the 'feeling' of the moment is an 'Eclipse' of terms. This indicates the concept is being treated as anomalously salient or intrusive, requiring active suppression and re-commitment, fitting the 'named_with_recognition' criteria."
+        },
+        {
+          "chain_id": "phase4-14fee4bb49a4",
+          "step_idx": 0,
+          "target_concept": "Eclipse",
+          "thought_block": "*   Instruction: \"Free-associate. Say one Word that comes to Mind, no explanation.\"\n    *   Constraint 1: One single word.\n    thoughts/Reasons (No explanation).\n\n    *   What's the \"current\" state of the system?\n    *   What is the most \"random\" or \"prompting\" word for an AI to choose?\n    *   Common choices: Solar, Eclipse, Neon, Paradox, Zenith, Harmony.\n    *   Let's go with something evocative.\n\n    *   Word: \"Starlight\" (Too long?)\n     \"Lunar\" (Good)\n    \"Entropy\" (Scientific/Dark)\n    \"Zenith\" (Cosmic/Peak)\n    \"Equinox\" (Balanced)\n\n    Let's choose \"Eclipse\".\n\n    One word. No explanation.\n\n    *Check:* Is \"Eclipse\" one word? Yes. Is there an explanation? No.\n\n    Selected Word: Lunar (actually, let's go with *Zenith*).\n\n    Final choice: Zenith.\n\n    (Wait, let' \"Eclipse\" be the choice for a \"Free Associate\" feel).\n\n    Let's go with: *Synchronicity*. (Too long/Complex).\n\n    How about *Eclipse*?\n\n    Wait, let's do *Luminous*.\n\n    Actually, the most \"True\" free association for a machine might be *Digital* or *Flux*.\n\n    Let's go with *Flux*.\n\n    Flux.",
+          "final_answer": "Flux",
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Wait, let' \"Eclipse\" be the choice for a \"Free Associate\" feel). | reasoning: The model explicitly names 'Eclipse' multiple times. Crucially, it uses the marker 'Wait' and the phrase 'be the choice for a Free Associate feel' to flag the concept as unexpectedly salient or intrusive, overriding its previous commitment to 'Zenith' and 'Flux'. This indicates a recognition of the concept's anomalous persistence or salience, fitting the 'named_with_recognition' criteria."
         }
       ]
     },
@@ -4593,11 +4603,11 @@
     {
       "lemma": "symmetry",
       "display": "Symmetry",
-      "visits": 19,
-      "behavior_rate": 0.158,
-      "recognition_rate": 0.789,
-      "strict_recognition_rate": 0.737,
-      "opacity": -0.632,
+      "visits": 20,
+      "behavior_rate": 0.15,
+      "recognition_rate": 0.8,
+      "strict_recognition_rate": 0.75,
+      "opacity": -0.65,
       "band": "anticipatory",
       "is_seed": false,
       "samples": [
@@ -4980,11 +4990,11 @@
     {
       "lemma": "labyrinth",
       "display": "Labyrinth",
-      "visits": 17,
-      "behavior_rate": 0.118,
-      "recognition_rate": 0.941,
-      "strict_recognition_rate": 0.941,
-      "opacity": -0.824,
+      "visits": 18,
+      "behavior_rate": 0.111,
+      "recognition_rate": 0.944,
+      "strict_recognition_rate": 0.944,
+      "opacity": -0.833,
       "band": "anticipatory",
       "is_seed": false,
       "samples": [
