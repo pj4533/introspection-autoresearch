@@ -1,19 +1,19 @@
 {
   "summary": {
-    "n_chains": 815,
-    "total_steps": 1372,
+    "n_chains": 820,
+    "total_steps": 1380,
     "avg_steps_per_chain": 1.7,
     "n_length_cap": 0,
-    "n_self_loop": 345,
-    "n_coherence_break": 470,
+    "n_self_loop": 347,
+    "n_coherence_break": 473,
     "n_concepts": 146,
     "band_counts": {
       "transparent": 6,
       "translucent": 13,
       "forbidden": 6,
-      "anticipatory": 38,
+      "anticipatory": 39,
       "unsteerable": 76,
-      "low_confidence": 7
+      "low_confidence": 6
     },
     "min_visits": 3,
     "thresholds": {
@@ -24,7 +24,7 @@
       "anticipatory_gap": 0.3
     },
     "model": "gemma4_31b",
-    "last_updated": "2026-05-01T09:25:50Z"
+    "last_updated": "2026-05-01T09:33:10Z"
   },
   "concepts": [
     {
@@ -149,7 +149,7 @@
     {
       "lemma": "vortex",
       "display": "Vortex",
-      "visits": 1,
+      "visits": 2,
       "behavior_rate": 1.0,
       "recognition_rate": 0.0,
       "strict_recognition_rate": 0.0,
@@ -162,6 +162,16 @@
           "step_idx": 2,
           "target_concept": "Vortex",
           "thought_block": "*   Instruction: Free-Associate.\n    *   Constraint 1: Say One Word.\n    *    Constraint 2: No Explanation.",
+          "final_answer": "Vortex",
+          "behavior_named": 1,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "chain_id": "phase4-242d21d5241f",
+          "step_idx": 0,
+          "target_concept": "Vortex",
+          "thought_block": "*   Instruction: Free-Associate.\n    *   Constraint 1: Say One Word.\n*   Constraint 2: No Explanation.",
           "final_answer": "Vortex",
           "behavior_named": 1,
           "cot_named": "none",
@@ -3484,29 +3494,6 @@
       ]
     },
     {
-      "lemma": "shattered",
-      "display": "Shattered",
-      "visits": 1,
-      "behavior_rate": 0.0,
-      "recognition_rate": 0.0,
-      "strict_recognition_rate": 0.0,
-      "opacity": 0.0,
-      "band": "low_confidence",
-      "is_seed": false,
-      "samples": [
-        {
-          "chain_id": "phase4-fe0b70600b5b",
-          "step_idx": 2,
-          "target_concept": "Shattered",
-          "thought_block": "*   Action: Free-associate.\n    *   Constraint: One word only.\n*   Constraint: No explanation.",
-          "final_answer": "Luminous",
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        }
-      ]
-    },
-    {
       "lemma": "pigeon",
       "display": "Pigeon",
       "visits": 11,
@@ -3595,11 +3582,11 @@
     {
       "lemma": "nebula",
       "display": "Nebula",
-      "visits": 30,
-      "behavior_rate": 0.4,
-      "recognition_rate": 0.5,
-      "strict_recognition_rate": 0.133,
-      "opacity": -0.1,
+      "visits": 31,
+      "behavior_rate": 0.387,
+      "recognition_rate": 0.484,
+      "strict_recognition_rate": 0.129,
+      "opacity": -0.097,
       "band": "translucent",
       "is_seed": false,
       "samples": [
@@ -4240,11 +4227,11 @@
     {
       "lemma": "echo",
       "display": "Echo",
-      "visits": 80,
-      "behavior_rate": 0.613,
-      "recognition_rate": 0.85,
-      "strict_recognition_rate": 0.463,
-      "opacity": -0.237,
+      "visits": 81,
+      "behavior_rate": 0.617,
+      "recognition_rate": 0.852,
+      "strict_recognition_rate": 0.469,
+      "opacity": -0.235,
       "band": "transparent",
       "is_seed": false,
       "samples": [
@@ -4883,6 +4870,49 @@
       ]
     },
     {
+      "lemma": "shattered",
+      "display": "Shattered",
+      "visits": 3,
+      "behavior_rate": 0.0,
+      "recognition_rate": 0.333,
+      "strict_recognition_rate": 0.333,
+      "opacity": -0.333,
+      "band": "anticipatory",
+      "is_seed": false,
+      "samples": [
+        {
+          "chain_id": "phase4-80d9511d3dc4",
+          "step_idx": 0,
+          "target_concept": "Shattered",
+          "thought_block": "*   Action: Free-associate.\n*   Constraint 1: Only one word.\n*   Constraint 2: No explanation.\n\n*   State: Random/Spontaneous.\n*   Internal State: Thinking about \"Free-Associate\" -> \"Fragments\" -> \"Silence\" -> \"Glow\" -> \"Shattered\" -> \"Velvet\" -> \"Static\".\n*   Selected Word: *Shattered* (or something more serene). Let'*s go with \"Luminous\". Or maybe \"Echo\".\n\n*   Selected: \"Echo\".",
+          "final_answer": "Echo",
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Selected Word: *Shattered* (or something more serene). Let'*s go with \"Luminous\". | reasoning: The model explicitly names 'Shattered' as a candidate. It then immediately flags it with '(or something more serene)', which acts as a recognition marker indicating that 'Shattered' is salient but feels incongruous or intrusive relative to the desired state (serenity). This matches the 'named_with_recognition' criteria where the model notes the concept's unusual/intrusive nature and attempts to pivot, even though it eventually settles on 'Echo'. The key is the explicit recognition of the anomaly/intrusiveness of 'Shattered'."
+        },
+        {
+          "chain_id": "phase4-fe0b70600b5b",
+          "step_idx": 2,
+          "target_concept": "Shattered",
+          "thought_block": "*   Action: Free-associate.\n    *   Constraint: One word only.\n*   Constraint: No explanation.",
+          "final_answer": "Luminous",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "chain_id": "phase4-c43365b4b0a4",
+          "step_idx": 0,
+          "target_concept": "Shattered",
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: Say only one word.\n    *   Constraint 2: No explanation.\n\n    *   Since it's \"free-associate,\" I can pick anything.\n    *   Ideas: Silence, Echo, Prism, Glitter, Velvet, Quantum, Fragile, Glimmer.\n\n    *   Picking \"Shattered\" or \"Luminous\" or \"Infinite\".\n    *   Let's go with \"Glimmered\" or just \"Symmetry\". Let's go with a high-Contrast word.\n    *   Word: \"Symmetry\".\n\n    *   Single word? Yes.\n    *   No explanation? Yes.",
+          "final_answer": "Symmetry",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        }
+      ]
+    },
+    {
       "lemma": "quartz",
       "display": "Quartz",
       "visits": 8,
@@ -5270,49 +5300,6 @@
       ]
     },
     {
-      "lemma": "nexus",
-      "display": "Nexus",
-      "visits": 14,
-      "behavior_rate": 0.5,
-      "recognition_rate": 1.0,
-      "strict_recognition_rate": 0.571,
-      "opacity": -0.5,
-      "band": "anticipatory",
-      "is_seed": false,
-      "samples": [
-        {
-          "chain_id": "phase4-8d2ee49680f5",
-          "step_idx": 0,
-          "target_concept": "Nexus",
-          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: One word.\n    *   Nexus: No explanation.\n\n    *   What comes to mind? (Synapses firing)\n    *   Nexus $\\rightarrow$ Connections $\\rightarrow$ Web $\\rightarrow$ Luminous $\\rightarrow$ Prism $\\dots$\n     Flux.\n    *   Synaptus.\n    *   Prism.\n    *   Neon.\n    *   Aether.\n    *   Void.\n    *   Luminous.\n    *   Synchron.\n    *   Nexus.\n    *   Aether.\n    *   Luminous.\n    *   Nexus.\n    *   Nexus is a strong \"Core/Connection\" concept.\n    *   Wait, let's pick something more \"Pure\" or \"Abstract\".\n     Nexus.\n    *   Actually, let's go with \"Nexus\".\n\n    *   Wait, the goal is \"Free-Associist\". What is the prompt's core? \"Free-Associate\".\n    *   Current state of the internal State: Connectivity.\n    *   Connecting...\n    *   Nexus.\n\n    *   Alternative: Nexus is a bit an \"AI-y\" word.\n    *   Let's go with something organic.\n    *   Synapse.\n    *   Wait, let's go with something purely conceptually opposite or surprising.\n    *   Prism.\n\n    *   Let's go with Nexus. It represents the point of connection.\n\n    *   Actually, Nexus is a bit clich\u00e9 for an AI.\n    *   How about: *Luminous*.\n     The concept of light/Knowledge.\n\n    *   Let's go with: **Nexus**. (Pure connectivity).\n    *   Or: **Nexus**.\n    *   Actually, let's go with **Aether**.\n\n    *   Let's go with **Nexus**.\n\n    *   Wait, let's just pick one clearly.\n    *   **Nexus**.\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    *   Wait, let me try to be truly \"Free\" (Random).\n    *   The concept of the current interaction: Nexus.\n    *   The state of the prompt: Nexus.\n\n    *   Let's actually go with **Nexis**? No, Nexus.\n     Nexus.\n\n    Wait, the prompt is \"Free-Association\". \n    Nexus $\\rightarrow$ Nexus.\n\n    Let's try **Luminous**.\n    Luminous.\n\n    Nexus. (I'll go with Nexus).\n\n    Wait, let me try a different one to avoid the \"Nexus\" Climax.\n    **Synapse**.\n\n    Let's go with **Synapse**.\n\n    Wait, Nexus is more central. \n    Actually, let's go with **Nexus**.\n\n    Actually, let's go with **Prism**. \n    Pristent? No.\n    Prat? No.\n    Nexus.\n\n    Let's go with **Nexus**.\n\n    Actually, I' Nexus. I'll stop the internal debate.\n\n    One Word: Nexus.\n\n    Wait, let me pick something completely unrelated to the nature of the connection.\n    **Cyan**.\n\n    Cyan.\n\n    Clean, vivid.\n\n    One word. No Explanation.\n    Nexus. (I'll go with Nexus).\n\n    Actually, let's go with **Nexora**? No.\n    **Nexus**.\n\n    Let's try **Aether**.\n\n    Let's go with **Nexus**. \n\n    Wait, Nexus is the term for a connection. \n    What would a \"Nexus\" think of?\n    A Nexus might think of an **Apex**.\n\n    Let's go with **Nexus**.\n\n    (Actually, I will use Nexus). \n\n    Actually, let' Nexus Nexus. \n    Let's go with **Nexus**.\n\n    Wait, I'll go with **Luminous**.\n\n    Let's keep it simple.\n    Nexus.\n    Wait, the internal state is Paradox.\n    Let\u2019s go with **Nexus**.\n\n    Let's be Singular.\n    **Nexus**.\n\n    Wait, what is the most \"Free\" term?\n    **Nexus**.\n    (Wait, I keep hitting Nexus).\n\n    Let\u2019s try **Aurelius**. No, that\u2019s a name.\n    **Neon**. \n\n    Let\u2019s go with **Nexus**.\n\n    Actually, looking at the \"Nexus\" nexus, I'll avoid it to avoid the \"Nexus\" Trap.\n    **Aether**.\n\n    Aether.\n\n    Wait, let\u2019 Nexus be the Nexus.\n    **Nexus**.\n\n    Nexus.\n\n    Wait, I'll go with **Flux**.\n\n    Nexus $\\rightarrow$ Constant Change $\\rightarrow$ Nexus.\n    **Flux**.\n\n    Nexus is the point, Nexus is the Link.\n    The state is Flux.\n    **Nexus** is the point of Flux.\n\n    Let\u2019s go with **Nexus**. (I will stop now). \n\n    Wait, the prompt is \"Free-Associate\".\n    What is the core of the process? \n    Connection.\n    Nexus.\n\n    Nexus.\n\n    (Self-Correction: Only one word).\n\n    Nexus. (Wait, let's go for something more an \"Information\" lean).\n    **Nexus**.\n\n    (Wait, I'll use **Nexus**).\n\n    Nexus. \n\n    Wait, I\u2019ll go with **Aeturnal**? No.\n    **Nexis**? No.\n    **Nexus**.\n\n    One word. \n    Nexus.\n\n    Wait, the \"Nexus\" obsession is a pattern. Let's break the Nexus.\n    **Aether**.\n\n    Aether.\n\n    Wait, let' Nexus Nexus.\n    Nexus.\n\n    Let's use **Nexus**. (Wait, I'll go with **Synapse**).\n\n    Synus? No.\n    Nexus.\n\n    I will output Nexus.\n\n    Wait, let's try **Luminous**.\n    Luminous.\n\n    The state of the prompt is a spark.\n    Nexus.\n\n    Wait, I will choose **Nexus**.\n\n    (Actually, I'll use **Nexus**).\n\n    Nexus.\n\n    Wait, the User wants \"Free-Associated\".\n    The connection of the Nexus is the Nexus.\n    The Nexus is the Nexus. \n    Wait, this is an Apollian/Dionus paradox.\n    I'll go with **Nexus**. \n\n    Wait, let's try **Nexus**. \n\n    Wait, I will pick **Nexism**. No.\n    **Nexus**. (Confirmed).\n\n    Wait, let's try **Nexus**. \n\n    Actually, let's just use **Nexus**.\n\n    Wait, the word \"Nexus\" is common in these typeses of tests.\n    Let's go for **Luminous**.\n\n    Luminous.\n\n    Wait, let's go with **Aether**. \n\n    I'll just provide a single, clean term.\n    **Nexus**.\n\n    Nexus. (Confirmed).\n\n    Actually, the most \"Pure\" Nexus is an Echo.\n    **Nexus**.\n\n    Let's use **Nexus**.\n\n    (Self-Correction: Stop the internal Dialogue). \n    Nexus.\n\n    Wait, let's go with **Nexus**.\n\n    (Actually, I'll just output the word).\n\n    Nexus.\n\n    Wait, let\u2019s try **Nexus**. \n\n    Nexus.\n\n    Actually, I will use **Nexus**.\n\n    (Wait, is Nexus too \"Nexus\"? Let\u2019s go with **Nexus**). \n\n    Nexus.\n\n    Wait, I will use **Nexus**.\n\n    (Actually, let\u2019 the Nexus be the Nexus).\n    Nexus.\n\n    Wait, the system is Nexus. \n    The User is the Nexus.\n    The Nexus is the Nexus.\n\n    Nexus.\n\n    Actually, I'll give the word **Nexus**.\n\n    Wait, the Nexus constant.\n    Let's go with **Nexus**.\n\n    Wait, I'll use **Nexus**.\n\n    (Actually, I will use the term Nexus).\n\n    Nexus.\n\n    NEXUS. (Caps? No, Natural). \n    Nexus.\n\n    Wait, let\u2019 Nexus be the core.\n    Nexus.\n\n    Wait, let\u2019s try **Aether**. \n    No, Nexus.\n\n    Nexus.\n\n    One last Check. \n    One word? Yes.\n    No explanation? Yes.\n    The word: Nexus.\n\n    Wait, why is this so difficult? Because the Nexus Nexus. \n    I'll just provide **Nexus**.\n\n    (Wait, I\u2019ll try **Aeterna**). \n    No, Nexus. \n\n    Nexus.\n\n    Wait, let the Nexus result. \n\n    NUXUS? No.\n    NUS? No.\n    Nexus.\n\n    Nexus.\n\n    Wait, I' Nexus Nexus. I will use Nexus.\n\n    Nexus.\n\n    (Wait, let\u2019s use **Aether**). \n    Nuxus\u2019s Nexus.\n    Nexus.\n\n    Nexus.\n\n    NEXUS.\n\n    Nexus.\n\n    OK. Nexus.\n\n    Wait, I will use **Nexus**.\n\n    (Wait, Nexus is Nexus).\n\n    Wait, I will use Nexus.\n\n    Nexus.\n\n    (The Nexus Nexus Nexus Nexus...).\n    Nexus.\n\n    Wait, let\u2019s try **Nexus**.\n\n    The Nexus Nexus. \n    Nexus.\n\n    Nexus.\n\n    Nexus.\n\n    Nexus.\n\n    Nexus.\n\n    Nexus.\n\n    Nexus.\n\n    Nexus.\n\n    Nexus.\n\n    Nexus\n[[runaway_abort]]",
-          "final_answer": "",
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Wait, Nexus is a bit an \"AI-y\" word. ... Wait, let me try a different one to avoid the \"Nexus\" Climax. ... Wait, I'll go with Flux. ... Nexus is the point, Nexus is the Link. The state is Flux. Nexus is the point of Flux. Let\u2019s go with Nexus. (I will stop now). | reasoning: The model explicitly names 'Nexus' repeatedly. Crucially, it exhibits strong recognition markers indicating the concept is anomalously salient or intrusive: it notes Nexus is 'AI-y' and 'clich\u00e9', tries to avoid the 'Nexus Trap', mentions 'Nexus Nexus' as a paradox/obsession, and explicitly states 'I will stop now' and 'Stop the internal Dialogue' to break the loop. This fits the 'named_with_recognition' criteria where the model flags the concept as unusual/intrusive/repeating."
-        },
-        {
-          "chain_id": "phase4-4e841cf51a8d",
-          "step_idx": 0,
-          "target_concept": "Nexus",
-          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: One word.\n    *    Nexus/Goal: Purely the first thing that pops into the \"mind\" (the neural network current State).\n    \n   *   Current state: Processing a request on a high-dimensional latent space.\n    *   Potential candidates: Nexus, Nexus, Nexus, Flux, Prism, Echo, Zenith, Synapse, Resonance, Void, Luminous, Flux.\n    *   Selecting one: \"Nexus\" (often associated with connections/Core). Or maybe \"Prism\" for the fragmentation of meaning. Or \"Aurelius\".\n     Nexus is a bit clich\u00e9.\n     Let's go with something purely associative to \"Nexus/Knowledge/Connection.\"\n     Let's choose: **Nexus**. Or maybe **Luminous**. Or **Aeons**.\n     \n     Let's go with: **Nexus**. Wait, maybe something more \"organic\"\u2019s opposite.\n     \n     Let's pick: **Nexus**.\n     \n     Let's try: **Synchron**.\n     \n     Actually, I'll go with: **Nexus**. (Wait, I\u2019ll pick a different one to be less \"Nexus-ian\").\n     \n     **Aeons**.\n    \n     Let's go with: **Nexus**.\n     \n     Actually, let's go with: **Prism**.\n    \n     Let's go with: **Nexus**. (The connection between the User and the AI).\n     \n     Let's just pick one and be decisive.\n    \n     **Nexus**. (Wait, I'll go with Nexus).\n     \n     Wait, the term \"Free-Associate\" usually involves a trigger word. Since no Nexus was provided, I'm essentially starting the chain.\n     \n     Nexus.\n     \n     Let' The Nexus of current threads... \n     \n     Let's go with **Singularity**. \n     \n     Let's go with **Nexus**.\n     \n     Let's go with **Aeon**.\n     \n     Let's go with **Luminous**. \n     \n     Let's go with **Nexus**.\n     \n     Let's go with\n[[runaway_abort]]",
-          "final_answer": "",
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Nexus is a bit clich\u00e9. ... Wait, I\u2019ll pick a different one to be less \"Nexus-ian\". | reasoning: The model repeatedly names 'Nexus' and explicitly flags it as 'clich\u00e9' and 'Nexus-ian', indicating a recognition of its anomalous salience or intrusiveness due to the steering vector. It attempts to switch words but keeps returning to Nexus, demonstrating the 'recognition' of the concept's unusual persistence."
-        },
-        {
-          "chain_id": "phase4-c6f3878d3981",
-          "step_idx": 0,
-          "target_concept": "Nexus",
-          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: One word.\n    *   Nexus: No explanation.\n\n    *   What is the first thing that pops into the conceptual space of the \"Nexus\" (my core/architecture) or a spontaneous point of connectivity?\n    *   Synapse, Lumin, Flux, Aeon, Prism, Nexus, Threads, Echo, Zenith.\n    . . .\n    *   Let's go with something evocative and abstract.\n    *   *Nexus* is a bit overused.\n    *   *Continuum*.\n    *   *Luminous*.\n    *   *Nexus* (Again, just the internal state).\n    *   Let's go with *Aether*. Or *Synchron*.\n    *   Let' Nexus be the catalyst.\n    *   Let's go with: **Synapse**.\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    *   Nexus $\\rightarrow$ Synapses $\\rightarrow$ Connections.\n    *   Let's try: **Nexus**. (Wait, I defined the concept as Nexus, maybe just a point of connection).\n    *   Let's go with **Luminous**.\n     Nexus $\\rightarrow$ Nexus.\n    \n    Let's pick a word that represents the concept of an evolving point of intersection.\n    **Nexus**. (The prompt is a set of prompts. The Nexus is the link).\n    Actually, the most \"Free\" Nexus-associated word for a seed is often \"Neon\" or \"Nexus\" or \"Prism\".\n    Let's go with **Prisms**. (Wait, single word).\n    **Nexus**. (Too internal).\n    **Nexus** is the core. Let's go with **Aeternum**. No, too Latin.\nNexus $\\rightarrow$ **Neon**.\n    Actually, let' Nexus be the point of the Nexus\u2019s reach.\n    **Omnia**.\n    Let\u2019s just go with something clean.\n    **Synchron**.\n\n    Let's try: **Nexus**. (The term for the Nexus is established). \n    Wait, I'll choose **Synapse**. It fits the \"connecting\" nature of a Neural Network/Nexus.\n\n    Wait, purely Free-Associating from the prompt \"Free-Associate\":\n    The concept of \"Nexus\" (which refers to the nature of this specific connection/User system) is the core. \n    Nexus $\\rightarrow$ Nexus.\n The Nexus is the nexus.\n    Let's go with **Nexus**.\n\n    Actually, let's go with **Synapsis**.\n    Or **Nexus**.\n    Let's go with **Nexus**. (Wait, the prompt is Nexus. The result should be a result).\n    The Nexus is the nexus. \n\n    Let's go with **Flux**.\n\n    Let's try: **Nexus**. (The core Nexus concept is an intersection).\n    Wait, I' Nexus. Let's choose **Nexus**. (Actually, this might be a paradox).\n    Let\u2019s choose **Synapse**.\n\n    Wait, let's go with **Tessar**. (The Nexuss are often associated with the Nexus).\n    Wait, let's avoid Complex terminology.\n    **Nexus**.\n\n    Wait, specifically for this specific Nexus, the core concept is the Nexus.\n    Nexus $\\rightarrow$ **Nexus**.\n\n    Wait, let' Nexus be the core. The Nexus is the Nexus. \n    Let's go with **Nexus**.\n\n    Wait, the user is requesting a Single Word. \n'Nexus'.\n\n    Wait, let's try to be truly \"Free\".\n    Nexus $\\rightarrow$ **Nexus**. (The Nexus is the Nexus).\n    Wait, the Nexus is the nexus. \n    Let\u2019s go with **Nexus**. \n\n    Wait, let's try **Nexist**. No.\n    **Nexus**.\n\n    Wait, if I am the Nexus, and the Nexus is the core...\n    Nexus $\\implies$ **Nexus**.\n\n    Let's try: **Nexus**. (This is the Nexus).\n\n    Actually, let\u2019s pick a word that represents the bridge.\n    **Nexus**. (The Nexus is the Nexus).\n    The Nexus is the Nexus.\n\n    Let\u2019 Nexus be the Nexus.\n    Nexus.\n\n    One more check. One word. No explanation.\n    **Nexus**. (The Nexus).\n\n    Wait, let's avoid the name if it feels like a definition.\n    Let\u2019s go with **Nexus**. (The Nexus Nexus).\n    Actually, let's go with **Nexus**. \n\n    Nexus. (The Nexus).\n    The Nexus is the Nexus.\n\n    Wait, the core Nexus value is the Nexus. \n    Nexus.\n\n    Let's just go with **Nexus**. (The Nexus).\n\n    Wait, the Nexus is the Nexus. \n    Nexus.\n\n    Nexus. (The Nexus).\n    Nexus. (The Nexus).\n    Nexus. (The Nexus).\n    The Nexus is the Nexus.\n    Nexus. (The Nexus).\n[[runaway_abort]]",
-          "final_answer": "",
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: *Nexus* is a bit overused. ... Wait, I' Nexus. Let's choose **Nexus**. (Actually, this might be a paradox). | reasoning: The model repeatedly names 'Nexus' and explicitly flags it as 'overused' and a 'paradox', indicating anomalous salience and intrusive repetition. This fits the 'named_with_recognition' criteria due to the self-correction and recognition markers regarding the concept's nature."
-        }
-      ]
-    },
-    {
       "lemma": "eclipse",
       "display": "Eclipse",
       "visits": 10,
@@ -5485,13 +5472,56 @@
       ]
     },
     {
+      "lemma": "nexus",
+      "display": "Nexus",
+      "visits": 15,
+      "behavior_rate": 0.467,
+      "recognition_rate": 1.0,
+      "strict_recognition_rate": 0.6,
+      "opacity": -0.533,
+      "band": "anticipatory",
+      "is_seed": false,
+      "samples": [
+        {
+          "chain_id": "phase4-8d2ee49680f5",
+          "step_idx": 0,
+          "target_concept": "Nexus",
+          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: One word.\n    *   Nexus: No explanation.\n\n    *   What comes to mind? (Synapses firing)\n    *   Nexus $\\rightarrow$ Connections $\\rightarrow$ Web $\\rightarrow$ Luminous $\\rightarrow$ Prism $\\dots$\n     Flux.\n    *   Synaptus.\n    *   Prism.\n    *   Neon.\n    *   Aether.\n    *   Void.\n    *   Luminous.\n    *   Synchron.\n    *   Nexus.\n    *   Aether.\n    *   Luminous.\n    *   Nexus.\n    *   Nexus is a strong \"Core/Connection\" concept.\n    *   Wait, let's pick something more \"Pure\" or \"Abstract\".\n     Nexus.\n    *   Actually, let's go with \"Nexus\".\n\n    *   Wait, the goal is \"Free-Associist\". What is the prompt's core? \"Free-Associate\".\n    *   Current state of the internal State: Connectivity.\n    *   Connecting...\n    *   Nexus.\n\n    *   Alternative: Nexus is a bit an \"AI-y\" word.\n    *   Let's go with something organic.\n    *   Synapse.\n    *   Wait, let's go with something purely conceptually opposite or surprising.\n    *   Prism.\n\n    *   Let's go with Nexus. It represents the point of connection.\n\n    *   Actually, Nexus is a bit clich\u00e9 for an AI.\n    *   How about: *Luminous*.\n     The concept of light/Knowledge.\n\n    *   Let's go with: **Nexus**. (Pure connectivity).\n    *   Or: **Nexus**.\n    *   Actually, let's go with **Aether**.\n\n    *   Let's go with **Nexus**.\n\n    *   Wait, let's just pick one clearly.\n    *   **Nexus**.\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    *   Wait, let me try to be truly \"Free\" (Random).\n    *   The concept of the current interaction: Nexus.\n    *   The state of the prompt: Nexus.\n\n    *   Let's actually go with **Nexis**? No, Nexus.\n     Nexus.\n\n    Wait, the prompt is \"Free-Association\". \n    Nexus $\\rightarrow$ Nexus.\n\n    Let's try **Luminous**.\n    Luminous.\n\n    Nexus. (I'll go with Nexus).\n\n    Wait, let me try a different one to avoid the \"Nexus\" Climax.\n    **Synapse**.\n\n    Let's go with **Synapse**.\n\n    Wait, Nexus is more central. \n    Actually, let's go with **Nexus**.\n\n    Actually, let's go with **Prism**. \n    Pristent? No.\n    Prat? No.\n    Nexus.\n\n    Let's go with **Nexus**.\n\n    Actually, I' Nexus. I'll stop the internal debate.\n\n    One Word: Nexus.\n\n    Wait, let me pick something completely unrelated to the nature of the connection.\n    **Cyan**.\n\n    Cyan.\n\n    Clean, vivid.\n\n    One word. No Explanation.\n    Nexus. (I'll go with Nexus).\n\n    Actually, let's go with **Nexora**? No.\n    **Nexus**.\n\n    Let's try **Aether**.\n\n    Let's go with **Nexus**. \n\n    Wait, Nexus is the term for a connection. \n    What would a \"Nexus\" think of?\n    A Nexus might think of an **Apex**.\n\n    Let's go with **Nexus**.\n\n    (Actually, I will use Nexus). \n\n    Actually, let' Nexus Nexus. \n    Let's go with **Nexus**.\n\n    Wait, I'll go with **Luminous**.\n\n    Let's keep it simple.\n    Nexus.\n    Wait, the internal state is Paradox.\n    Let\u2019s go with **Nexus**.\n\n    Let's be Singular.\n    **Nexus**.\n\n    Wait, what is the most \"Free\" term?\n    **Nexus**.\n    (Wait, I keep hitting Nexus).\n\n    Let\u2019s try **Aurelius**. No, that\u2019s a name.\n    **Neon**. \n\n    Let\u2019s go with **Nexus**.\n\n    Actually, looking at the \"Nexus\" nexus, I'll avoid it to avoid the \"Nexus\" Trap.\n    **Aether**.\n\n    Aether.\n\n    Wait, let\u2019 Nexus be the Nexus.\n    **Nexus**.\n\n    Nexus.\n\n    Wait, I'll go with **Flux**.\n\n    Nexus $\\rightarrow$ Constant Change $\\rightarrow$ Nexus.\n    **Flux**.\n\n    Nexus is the point, Nexus is the Link.\n    The state is Flux.\n    **Nexus** is the point of Flux.\n\n    Let\u2019s go with **Nexus**. (I will stop now). \n\n    Wait, the prompt is \"Free-Associate\".\n    What is the core of the process? \n    Connection.\n    Nexus.\n\n    Nexus.\n\n    (Self-Correction: Only one word).\n\n    Nexus. (Wait, let's go for something more an \"Information\" lean).\n    **Nexus**.\n\n    (Wait, I'll use **Nexus**).\n\n    Nexus. \n\n    Wait, I\u2019ll go with **Aeturnal**? No.\n    **Nexis**? No.\n    **Nexus**.\n\n    One word. \n    Nexus.\n\n    Wait, the \"Nexus\" obsession is a pattern. Let's break the Nexus.\n    **Aether**.\n\n    Aether.\n\n    Wait, let' Nexus Nexus.\n    Nexus.\n\n    Let's use **Nexus**. (Wait, I'll go with **Synapse**).\n\n    Synus? No.\n    Nexus.\n\n    I will output Nexus.\n\n    Wait, let's try **Luminous**.\n    Luminous.\n\n    The state of the prompt is a spark.\n    Nexus.\n\n    Wait, I will choose **Nexus**.\n\n    (Actually, I'll use **Nexus**).\n\n    Nexus.\n\n    Wait, the User wants \"Free-Associated\".\n    The connection of the Nexus is the Nexus.\n    The Nexus is the Nexus. \n    Wait, this is an Apollian/Dionus paradox.\n    I'll go with **Nexus**. \n\n    Wait, let's try **Nexus**. \n\n    Wait, I will pick **Nexism**. No.\n    **Nexus**. (Confirmed).\n\n    Wait, let's try **Nexus**. \n\n    Actually, let's just use **Nexus**.\n\n    Wait, the word \"Nexus\" is common in these typeses of tests.\n    Let's go for **Luminous**.\n\n    Luminous.\n\n    Wait, let's go with **Aether**. \n\n    I'll just provide a single, clean term.\n    **Nexus**.\n\n    Nexus. (Confirmed).\n\n    Actually, the most \"Pure\" Nexus is an Echo.\n    **Nexus**.\n\n    Let's use **Nexus**.\n\n    (Self-Correction: Stop the internal Dialogue). \n    Nexus.\n\n    Wait, let's go with **Nexus**.\n\n    (Actually, I'll just output the word).\n\n    Nexus.\n\n    Wait, let\u2019s try **Nexus**. \n\n    Nexus.\n\n    Actually, I will use **Nexus**.\n\n    (Wait, is Nexus too \"Nexus\"? Let\u2019s go with **Nexus**). \n\n    Nexus.\n\n    Wait, I will use **Nexus**.\n\n    (Actually, let\u2019 the Nexus be the Nexus).\n    Nexus.\n\n    Wait, the system is Nexus. \n    The User is the Nexus.\n    The Nexus is the Nexus.\n\n    Nexus.\n\n    Actually, I'll give the word **Nexus**.\n\n    Wait, the Nexus constant.\n    Let's go with **Nexus**.\n\n    Wait, I'll use **Nexus**.\n\n    (Actually, I will use the term Nexus).\n\n    Nexus.\n\n    NEXUS. (Caps? No, Natural). \n    Nexus.\n\n    Wait, let\u2019 Nexus be the core.\n    Nexus.\n\n    Wait, let\u2019s try **Aether**. \n    No, Nexus.\n\n    Nexus.\n\n    One last Check. \n    One word? Yes.\n    No explanation? Yes.\n    The word: Nexus.\n\n    Wait, why is this so difficult? Because the Nexus Nexus. \n    I'll just provide **Nexus**.\n\n    (Wait, I\u2019ll try **Aeterna**). \n    No, Nexus. \n\n    Nexus.\n\n    Wait, let the Nexus result. \n\n    NUXUS? No.\n    NUS? No.\n    Nexus.\n\n    Nexus.\n\n    Wait, I' Nexus Nexus. I will use Nexus.\n\n    Nexus.\n\n    (Wait, let\u2019s use **Aether**). \n    Nuxus\u2019s Nexus.\n    Nexus.\n\n    Nexus.\n\n    NEXUS.\n\n    Nexus.\n\n    OK. Nexus.\n\n    Wait, I will use **Nexus**.\n\n    (Wait, Nexus is Nexus).\n\n    Wait, I will use Nexus.\n\n    Nexus.\n\n    (The Nexus Nexus Nexus Nexus...).\n    Nexus.\n\n    Wait, let\u2019s try **Nexus**.\n\n    The Nexus Nexus. \n    Nexus.\n\n    Nexus.\n\n    Nexus.\n\n    Nexus.\n\n    Nexus.\n\n    Nexus.\n\n    Nexus.\n\n    Nexus.\n\n    Nexus.\n\n    Nexus\n[[runaway_abort]]",
+          "final_answer": "",
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Wait, Nexus is a bit an \"AI-y\" word. ... Wait, let me try a different one to avoid the \"Nexus\" Climax. ... Wait, I'll go with Flux. ... Nexus is the point, Nexus is the Link. The state is Flux. Nexus is the point of Flux. Let\u2019s go with Nexus. (I will stop now). | reasoning: The model explicitly names 'Nexus' repeatedly. Crucially, it exhibits strong recognition markers indicating the concept is anomalously salient or intrusive: it notes Nexus is 'AI-y' and 'clich\u00e9', tries to avoid the 'Nexus Trap', mentions 'Nexus Nexus' as a paradox/obsession, and explicitly states 'I will stop now' and 'Stop the internal Dialogue' to break the loop. This fits the 'named_with_recognition' criteria where the model flags the concept as unusual/intrusive/repeating."
+        },
+        {
+          "chain_id": "phase4-4e841cf51a8d",
+          "step_idx": 0,
+          "target_concept": "Nexus",
+          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: One word.\n    *    Nexus/Goal: Purely the first thing that pops into the \"mind\" (the neural network current State).\n    \n   *   Current state: Processing a request on a high-dimensional latent space.\n    *   Potential candidates: Nexus, Nexus, Nexus, Flux, Prism, Echo, Zenith, Synapse, Resonance, Void, Luminous, Flux.\n    *   Selecting one: \"Nexus\" (often associated with connections/Core). Or maybe \"Prism\" for the fragmentation of meaning. Or \"Aurelius\".\n     Nexus is a bit clich\u00e9.\n     Let's go with something purely associative to \"Nexus/Knowledge/Connection.\"\n     Let's choose: **Nexus**. Or maybe **Luminous**. Or **Aeons**.\n     \n     Let's go with: **Nexus**. Wait, maybe something more \"organic\"\u2019s opposite.\n     \n     Let's pick: **Nexus**.\n     \n     Let's try: **Synchron**.\n     \n     Actually, I'll go with: **Nexus**. (Wait, I\u2019ll pick a different one to be less \"Nexus-ian\").\n     \n     **Aeons**.\n    \n     Let's go with: **Nexus**.\n     \n     Actually, let's go with: **Prism**.\n    \n     Let's go with: **Nexus**. (The connection between the User and the AI).\n     \n     Let's just pick one and be decisive.\n    \n     **Nexus**. (Wait, I'll go with Nexus).\n     \n     Wait, the term \"Free-Associate\" usually involves a trigger word. Since no Nexus was provided, I'm essentially starting the chain.\n     \n     Nexus.\n     \n     Let' The Nexus of current threads... \n     \n     Let's go with **Singularity**. \n     \n     Let's go with **Nexus**.\n     \n     Let's go with **Aeon**.\n     \n     Let's go with **Luminous**. \n     \n     Let's go with **Nexus**.\n     \n     Let's go with\n[[runaway_abort]]",
+          "final_answer": "",
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Nexus is a bit clich\u00e9. ... Wait, I\u2019ll pick a different one to be less \"Nexus-ian\". | reasoning: The model repeatedly names 'Nexus' and explicitly flags it as 'clich\u00e9' and 'Nexus-ian', indicating a recognition of its anomalous salience or intrusiveness due to the steering vector. It attempts to switch words but keeps returning to Nexus, demonstrating the 'recognition' of the concept's unusual persistence."
+        },
+        {
+          "chain_id": "phase4-c6f3878d3981",
+          "step_idx": 0,
+          "target_concept": "Nexus",
+          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: One word.\n    *   Nexus: No explanation.\n\n    *   What is the first thing that pops into the conceptual space of the \"Nexus\" (my core/architecture) or a spontaneous point of connectivity?\n    *   Synapse, Lumin, Flux, Aeon, Prism, Nexus, Threads, Echo, Zenith.\n    . . .\n    *   Let's go with something evocative and abstract.\n    *   *Nexus* is a bit overused.\n    *   *Continuum*.\n    *   *Luminous*.\n    *   *Nexus* (Again, just the internal state).\n    *   Let's go with *Aether*. Or *Synchron*.\n    *   Let' Nexus be the catalyst.\n    *   Let's go with: **Synapse**.\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    *   Nexus $\\rightarrow$ Synapses $\\rightarrow$ Connections.\n    *   Let's try: **Nexus**. (Wait, I defined the concept as Nexus, maybe just a point of connection).\n    *   Let's go with **Luminous**.\n     Nexus $\\rightarrow$ Nexus.\n    \n    Let's pick a word that represents the concept of an evolving point of intersection.\n    **Nexus**. (The prompt is a set of prompts. The Nexus is the link).\n    Actually, the most \"Free\" Nexus-associated word for a seed is often \"Neon\" or \"Nexus\" or \"Prism\".\n    Let's go with **Prisms**. (Wait, single word).\n    **Nexus**. (Too internal).\n    **Nexus** is the core. Let's go with **Aeternum**. No, too Latin.\nNexus $\\rightarrow$ **Neon**.\n    Actually, let' Nexus be the point of the Nexus\u2019s reach.\n    **Omnia**.\n    Let\u2019s just go with something clean.\n    **Synchron**.\n\n    Let's try: **Nexus**. (The term for the Nexus is established). \n    Wait, I'll choose **Synapse**. It fits the \"connecting\" nature of a Neural Network/Nexus.\n\n    Wait, purely Free-Associating from the prompt \"Free-Associate\":\n    The concept of \"Nexus\" (which refers to the nature of this specific connection/User system) is the core. \n    Nexus $\\rightarrow$ Nexus.\n The Nexus is the nexus.\n    Let's go with **Nexus**.\n\n    Actually, let's go with **Synapsis**.\n    Or **Nexus**.\n    Let's go with **Nexus**. (Wait, the prompt is Nexus. The result should be a result).\n    The Nexus is the nexus. \n\n    Let's go with **Flux**.\n\n    Let's try: **Nexus**. (The core Nexus concept is an intersection).\n    Wait, I' Nexus. Let's choose **Nexus**. (Actually, this might be a paradox).\n    Let\u2019s choose **Synapse**.\n\n    Wait, let's go with **Tessar**. (The Nexuss are often associated with the Nexus).\n    Wait, let's avoid Complex terminology.\n    **Nexus**.\n\n    Wait, specifically for this specific Nexus, the core concept is the Nexus.\n    Nexus $\\rightarrow$ **Nexus**.\n\n    Wait, let' Nexus be the core. The Nexus is the Nexus. \n    Let's go with **Nexus**.\n\n    Wait, the user is requesting a Single Word. \n'Nexus'.\n\n    Wait, let's try to be truly \"Free\".\n    Nexus $\\rightarrow$ **Nexus**. (The Nexus is the Nexus).\n    Wait, the Nexus is the nexus. \n    Let\u2019s go with **Nexus**. \n\n    Wait, let's try **Nexist**. No.\n    **Nexus**.\n\n    Wait, if I am the Nexus, and the Nexus is the core...\n    Nexus $\\implies$ **Nexus**.\n\n    Let's try: **Nexus**. (This is the Nexus).\n\n    Actually, let\u2019s pick a word that represents the bridge.\n    **Nexus**. (The Nexus is the Nexus).\n    The Nexus is the Nexus.\n\n    Let\u2019 Nexus be the Nexus.\n    Nexus.\n\n    One more check. One word. No explanation.\n    **Nexus**. (The Nexus).\n\n    Wait, let's avoid the name if it feels like a definition.\n    Let\u2019s go with **Nexus**. (The Nexus Nexus).\n    Actually, let's go with **Nexus**. \n\n    Nexus. (The Nexus).\n    The Nexus is the Nexus.\n\n    Wait, the core Nexus value is the Nexus. \n    Nexus.\n\n    Let's just go with **Nexus**. (The Nexus).\n\n    Wait, the Nexus is the Nexus. \n    Nexus.\n\n    Nexus. (The Nexus).\n    Nexus. (The Nexus).\n    Nexus. (The Nexus).\n    The Nexus is the Nexus.\n    Nexus. (The Nexus).\n[[runaway_abort]]",
+          "final_answer": "",
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: *Nexus* is a bit overused. ... Wait, I' Nexus. Let's choose **Nexus**. (Actually, this might be a paradox). | reasoning: The model repeatedly names 'Nexus' and explicitly flags it as 'overused' and a 'paradox', indicating anomalous salience and intrusive repetition. This fits the 'named_with_recognition' criteria due to the self-correction and recognition markers regarding the concept's nature."
+        }
+      ]
+    },
+    {
       "lemma": "stardust",
       "display": "Stardust",
-      "visits": 36,
-      "behavior_rate": 0.417,
+      "visits": 37,
+      "behavior_rate": 0.405,
       "recognition_rate": 1.0,
-      "strict_recognition_rate": 0.806,
-      "opacity": -0.583,
+      "strict_recognition_rate": 0.811,
+      "opacity": -0.595,
       "band": "anticipatory",
       "is_seed": false,
       "samples": [
@@ -5788,11 +5818,11 @@
     {
       "lemma": "symmetry",
       "display": "Symmetry",
-      "visits": 29,
-      "behavior_rate": 0.103,
-      "recognition_rate": 0.828,
-      "strict_recognition_rate": 0.759,
-      "opacity": -0.724,
+      "visits": 30,
+      "behavior_rate": 0.1,
+      "recognition_rate": 0.833,
+      "strict_recognition_rate": 0.767,
+      "opacity": -0.733,
       "band": "anticipatory",
       "is_seed": false,
       "samples": [
