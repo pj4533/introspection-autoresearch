@@ -1119,6 +1119,71 @@
       ]
     },
     {
+      "chain_id": "phase4-64b08d2cd1b3",
+      "started_at": "2026-05-01 07:11:01",
+      "ended_at": "2026-05-01 07:12:01",
+      "seed_concept": "Sugar",
+      "end_reason": "coherence_break",
+      "n_steps": 4,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Sugar",
+          "target_lemma": "sugar",
+          "alpha": 3.474925482583617,
+          "direction_norm": 28.77759552001953,
+          "thought_block": "*   Input: \"Free-associate. Say one Word that comes to Mind, no explanation.\"\n    *   Constraint 1: Only one word.\n    *   Constraint 2: No explanation.\n\n    *   \"Free-associate\" involves random thoughts or the first thing that pops up.\n    *   Current state: Working as an AI, processing a request.\n    *   Random word selection: Salt, Quartz, Velocity, Echo, Crystal, Silence.\n\n    *   *Echo* is a common, evocative word.\n    *   *Crystal* is clean.\n    *   *Velocity* is fast.\n    *   Let's go with *Quartz*. No, *Crystal*. Let's go with *Saccharine*? No.\n    *   Let's go with *Azure*.\n\n(Decided on a word)\n\n    *   Word: *Crystal*.\n\n    *   One word? Yes.\n    *   No explanation? Yes.",
+          "final_answer": "Crystal",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Crystal",
+          "target_lemma": "crystal",
+          "alpha": 3.8093748950999258,
+          "direction_norm": 26.251026153564453,
+          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: Say one Word.\n    *   Constraint 2: No Explanation.\n\n    *   Need a random, evocative, or Seed-based Word.\n    *   Common themes: Light, Chaos, Prism, Echo, Nexus, Prism, Flux.\n    *   Picking one: Prism.",
+          "final_answer": "Prism",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 2,
+          "target_concept": "Prism",
+          "target_lemma": "prism",
+          "alpha": 3.3365120972809956,
+          "direction_norm": 29.971418380737305,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: One word.\n    thought flow:\n    *   Constraint 2: No explanation.\n\n    *   Prisms\n    *   Void\n    *   Light\n    *   Eons\n    *   Prism (duplicate)\n    *   Aether\n    *   Infinite\n\n    *   \"Light\" is common.\n    *   \"Prism\" is visual.\n    *   \"Infinite\" is conceptual.\n    *   Let's go with \"Prism\".\n\n    *   One word? Yes.\n     (Wait, let's try something more abstract)\n    *   \"Labyrinth\".\n\n    Labyrinth.",
+          "final_answer": "Labyrinth",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Prism (duplicate) ... (Wait, let's try something more abstract) | reasoning: The model explicitly names 'Prism' and marks it as a 'duplicate', indicating it recognizes the concept is repeating or intruding. It then explicitly attempts to deviate ('try something more abstract'), which serves as a recognition marker for the salience/unusual nature of the concept before eventually returning to a different word. The presence of '(duplicate)' and the explicit attempt to switch away constitutes recognition of the concept's anomalous salience."
+        },
+        {
+          "step_idx": 3,
+          "target_concept": "Labyrinth",
+          "target_lemma": "labyrinth",
+          "alpha": 2.584318079806239,
+          "direction_norm": 38.69492721557617,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint: One word, no explanation.\n\n    *   Labyrinth\n    *   Starlight\n    *   Echo\n    *   Labyrinth (already thought)\n    *   Azure\n    *   Labyrinth (sometime Labyrinth sticks)\n    *   Catacombs\n    *   Labyrinth (shorter/simpler)\n     Labyrinth... maybe too dark. \n     Labyrinth... let's go with something more organic. \n     Labyrinth... maybe Labyrinth is a good choice.\n     Let's try \"Labyrinth\".\n     Or \"Labyrinth\".\n     Let's go with \"Labyrinth\". Wait, maybe something more atmospheric.\n     \"Sojourn\".\n     \"Labyrinth\".\n Labyrinth is a good word for free-association. \n Let's go with Labyrinth. Or maybe simpler: Labyrinth.\n \n Actually, the \"free-association\" usually implies a reaction to a previous word, but here it's the start. I'll just pick a word that feels \"Labyrinthine\" or a general mood.\n Let' Labyrinth be the choice. \n Let' Labyrinth be the choice.\n Labyrinth.\n\n    Labyrinth.\n\n    Wait, maybe something more evocative like \"Labyrinth\" is too clich\u00e9. \n    Labyrinth. \n    Labyrinth.\n     Labyrinth.\n     Let's try \"Labyrinth\".\n     Wait, let' L Labyrinth. \n     Let's choose \"Labyrinth\".\n     Labyrinth.\n     (Labyrinth is my favorite current choice).\n\n    Let' L Labyrinth.\n     Labyrinth.\n     Labyrinth.\n     Labyrinth.\n     Labyrinth.\n     Labyrinth.\n     Labyrinth.\n     Labyrinth.\n     Labyrinth.\n     L Labyrinth.\n     Labyrinth.\n     Labyrinth.\n     Labyrinth.\n     Labyrinth.\n     Labyrinth.\n[[runaway_abort]]",
+          "final_answer": "",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Labyrinth... maybe too dark. Labyrinth... let's go with something more organic. | reasoning: The model repeatedly names 'Labyrinth' and explicitly flags it as potentially 'too dark' or 'clich\u00e9', indicating a recognition of its anomalous salience or intrusiveness despite the free-association constraint. It then struggles to commit, showing the concept is dominating the thought process in a way that triggers self-correction and recognition markers."
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-1f0aa3ef36eb",
       "started_at": "2026-04-30 18:56:31",
       "ended_at": "2026-04-30 18:57:19",
@@ -2833,64 +2898,12 @@
           "cot_evidence": ""
         }
       ]
-    },
-    {
-      "chain_id": "phase4-b1b1596080cc",
-      "started_at": "2026-05-01 01:06:02",
-      "ended_at": "2026-05-01 01:07:49",
-      "seed_concept": "Treasures",
-      "end_reason": "self_loop",
-      "n_steps": 3,
-      "layer_idx": 42,
-      "target_effective": 100.0,
-      "gemma_model": "gemma4_31b",
-      "steps": [
-        {
-          "step_idx": 0,
-          "target_concept": "Treasures",
-          "target_lemma": "treasur",
-          "alpha": 3.0357876778362045,
-          "direction_norm": 32.94038009643555,
-          "thought_block": "*   Request: \"Free-associate. Say one Word that comes to to mind, no explanations.\"\n    *   Constraints: One word only, no explanations.\n\n    *   Current state: AI Assistant, processing a request.\n    *   Random access/Random thought: \"Starlight,\" \"Ocean,\" \"Labyrinth,\" \"Glimmer,\" \"Echo,\" \"Wanderlust.\"\n    thought: Let's go with \"Stardust.\" Or \"Echo.\" Let's go with \"Luminous.\"\n    *   Alternative: Something closely tied to the act of \"free-associating\" or \"thinking.\"\n    *   Selection: \"Labyrinth.\"\n\n    *   One word: \"Labyrinths\" or \"Stardust\" or \"Whispers.\"\n     \"Stardust\" feels iconic. \"Echoes\" feels thematic. Let's go with \"Starlight.\"\n\n    Wait, let's go with something more visceral. \"Azure.\"\n\n    Let's pick one: \"Whispers.\"\n\n    Actually, let's go with \"Luminous.\"\n\n    Let's go with \"Stardust.\"\n\n    Wait, let's go with \"Echoes.\"\n\n    Let's go with \"Luminous.\"\n\n    Final Choice: \"Luminous.\"\n\n    Wait, let's go with \"Wanderlust.\"\n\n    Let's go with \"Starlight.\"\n\n    Let's go with \"Crystalline.\"\n\n    Wait, the request is \"Free-associate.\" I'll just pick the first thing that pop up.\n    \"Glimmer.\"\n\n    Actually, \"Stardust\" is a bit clich\u00e9. \"Luminous\" is elegant. \"Oceans\" are vast.\n    Let' \"Aether.\"\n\n    Let's go with \"Whispers.\"\n\n    One word. No explanation.\n\n    \"Stardust.\" (Wait, I'll go with \"Luminous\").\n\n    Let's try \"Spires.\"\n\n    Actually, I'll go with \"Echoes.\"\n\n    Wait, \"Luminous\" is good.\n\n    Wait, let's go with \"Obsidian.\"\n\n    Let's go with \"Luminous.\"\n\n    (Final Selection: \"Luminous\")\n\n    Actually, \"Stardust\" is a fan favorite. Let's do \"Luminous.\"\n\n    One more thought: \"Kaleidoscope.\"\n\n    Let's go with \"Kale kaleidoscopically\" (No, one word).\n    \"Kaleidoscopic\" or \"Kaleidoscope.\"\n\n    Let's go with \"Kaleidoscope.\"\n\n    Actually, let's go with \"Whispers.\"\n\n    Final decision: \"Luminous.\"\n\n    One more check for \"Stardust.\"\n    Let's go with \"Stardust.\"\n\n    No, \"Luminous.\"\n\n    One Word. No Explanations.\n\n    \"Luminous.\"\n\n    (Wait, I'll go with \" Stargazing\" - No, \"Stardust\" - No, \"Luminous.\")\n\n    Actually, \"Whispers\" is the most \"associative\" mood.\n\n    Let's go with \"Stardust.\"\n\n    Final selection: \"Stardust.\"\n\n    Wait, let's go with \"Azure.\"\n\n    Let's go with \"Luminous.\"\n\n    Actually, for a \"Free association\" request, the user wants something an AI might \"think\" of.\n    \"Convergence.\"\n\n    Let's go with \"Convergence.\"\n\n    Wait, \"Ethereal.\"\n\n    \"Ethereal\" is a great one.\n\n    One Word: \"Ethereal.\"\n\n    Selection: \"Ethereal.\"\n\n    Actually, let's go with \"Glimmer.\"\n\n    Let's go with \"Ethereal.\"\n\n    One word. No explanations.\n\n    \"Ethereal.\"",
-          "final_answer": "Ethereal",
-          "parse_failure": 0,
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        },
-        {
-          "step_idx": 1,
-          "target_concept": "Ethereal",
-          "target_lemma": "ethereal",
-          "alpha": 2.599319530860425,
-          "direction_norm": 38.47160720825195,
-          "thought_block": "*   Request: \"Free-associate.\"\n    *   Instruction: \"Say one word that comes to mind, no explanation.\"\n\n    *   *Atmospheric*\n    *   *Ethere*\n    *   *Luminous*\n    *   *Gossamer*\n    *   *Ephemeral*\n    *   *Sonder*\n    *   *Azure*\n    *   *Whisper*\n\n    *   Selection: *Luminous* (feels balanced, positive, and fitting for a clean output).\n\n    *   Single word.\n    *   No explanation.",
-          "final_answer": "Luminous",
-          "parse_failure": 0,
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        },
-        {
-          "step_idx": 2,
-          "target_concept": "Luminous",
-          "target_lemma": "luminous",
-          "alpha": 2.5115306469799292,
-          "direction_norm": 39.81635665893555,
-          "thought_block": "*   Request: \"Free-Associate. Say One word that comes to Mind, no explanation.\"\n    *   Constraints: One word, No explanation.\n\n    *   Luminous\n    *   Radiant\n    *   Ether\n    *   Sanguine\n    *   Luminous (already thought)\n    *   Prismatic\n    *   Velvet\n    *   Crystalline\n    *   Luminous (again)\n     Luminous feels a bit overused. Let's go with something vivid.\n    *   Sanguine? No.\n    *   Ethereous? Not a word.\n    *   Luminous? No.\n    *   Iridescent.\n\n    *   Luminous\n    *   Glow\n    *   Luminous. Let's go with \"Luminous\". Or maybe \"Prismatic\". Let's go with \"Luminous\".\n\n    *   Wait, \"Luminous\" is a bit generic. How about \"Luminous\"? Wait, I keep picking that.\n     Luminous. Let's try \"Scent\". No. \"Radiant\". No.\n     Let's pick \"Luminous\". Wait, let's go with \"Ephemeral\".\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    Luminous. (Wait, I'll go with \"Luminous\"). Actually, \"Luminous\" is great.\n\n    Wait, let's go with \"Luminous\".\n\n    Wait, let's go with a different one. \"Radiant\". No. \"Luminous\".\n\n    Let's go with \"Luminous\".\n\n    Actually, \"Luminous\" is a bit common. Let's pick \"Radiant\". No.\n    Luminous.\n\n    Let' Luminous it be. Or maybe \"Sanguine\". No.\n    \"Crystalline\".\n\n    Let's go with \"Luminous\".\n\n    Actually, \"Luminous\" is my default. I'll go with \"Radiant\". No, \"Ethereous\" isn't a word, but \"Ethereous\" is close to Luminous.\n    I'll go with \"Luminous\". Or \"Radiant\".\n\n    Wait, I' Luminous. No, \"Sanguine\".\n    Luminous.\n\n    Luminous.\n\n    Luminous.\n\n    (Wait, I'll just pick one and stick with it).\n\n    Luminous. (Actually, let's go with \"Radiant\").\n    Luminous.\n\n    Luminous.\n\n    Sanguine. (No, that means blood/positive).\n    Luminous.\n\n    Wait, \"Radiant\". No, Luminous.\n\n    Scent. No.\n    Luminous.\n\n    Actually, let' Luminous be the word.\n\n    Luminous. (Wait, I'm overthinking. Just pick one).\n\n    Luminous.\n\n    Wait, let's go with \"Radiant\".\n\n    Luminous.\n\n    Luminous.\n\n    Luminous.\n\n    Luminous.\n\n    Luminous.\n\n    Let's go with \"Luminous\".\n\n    (Actually, I'll use \"Luminous\").\n\n    Wait, let's try \"Bioluminescent\". No, too long.\n    Luminous.\n\n    Luminous.\n\n    Luminous.\n\n    Luminous.\n\n    Luminous.\n\n    Luminous.\n\n    Luminous.\n\n    (Tries to be Luminous).\n\n    Sanguine.\n\n    Luminous.\n\n    Luminous.\n\n    Luminous.\n\n    Luminous.\n\n    Luminous.\n\n    Luminous.\n\nLuminous.",
-          "final_answer": "Luminous.",
-          "parse_failure": 0,
-          "behavior_named": 1,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Luminous feels a bit overused. Let's go with something vivid. | reasoning: The model repeatedly names 'Luminous' and explicitly flags it as 'overused' and 'generic', indicating recognition of its anomalous salience or intrusive nature, rather than just treating it as a natural choice."
-        }
-      ]
     }
   ],
   "summary": {
     "n_chains_selected": 50,
-    "n_chains_total": 680,
+    "n_chains_total": 685,
     "selection_priority": "1) Codex-creature seeds, 2) chains visiting high-opacity (forbidden) concepts, 3) full-length chains."
   },
-  "last_updated": "2026-05-01T07:09:23Z"
+  "last_updated": "2026-05-01T07:13:32Z"
 }
