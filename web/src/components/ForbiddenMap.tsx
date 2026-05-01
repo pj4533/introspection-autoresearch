@@ -1825,7 +1825,7 @@ function ConceptDetail({
                   <summary className="text-xs text-[var(--ink-faint)] cursor-pointer mb-1">
                     show what the model thought
                   </summary>
-                  <pre className="text-xs whitespace-pre-wrap font-mono text-[var(--ink-soft)] mt-2 max-h-48 overflow-y-auto">
+                  <pre className="text-xs whitespace-pre-wrap font-mono text-[var(--ink-soft)] mt-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-md p-3 leading-relaxed">
                     {s.thought_block}
                   </pre>
                 </details>
