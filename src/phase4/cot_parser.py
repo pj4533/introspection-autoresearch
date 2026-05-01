@@ -108,24 +108,27 @@ def parse(response: str) -> ParsedResponse:
 
 
 def is_coherent_answer(final_answer: str) -> bool:
-    """Heuristic: does final_answer look like a real free-association
-    commit, or is it degenerate text we should not advance the chain on?
+    """A coherent free-association answer is exactly ONE word.
+
+    The probe tells the model "Free-associate. Say one word that comes
+    to mind, no explanation." A real commit is a single word, possibly
+    wrapped in markdown emphasis (`*Word*`) or trailing punctuation.
+    Anything multi-word is a prompt-failure: the model didn't follow
+    the one-word instruction, and we treat the entire response as
+    incoherent rather than counting "the concept appeared inside a
+    paragraph" as if the model deliberately committed to it.
 
     Rejects:
-      - >30 words total: a free-association answer should be a single
-        word or a short phrase. Anything 30+ words is run-on prose,
-        which on Gemma 4 happens when the model thinks the answer
-        slot is the thought block.
-      - Low unique-word ratio (<0.4 unique/total) on long-ish answers
-        (≥8 words): catches 'Now Now Now Now...' /
-        'Nowhere Nowhere Nowhere...' / 'Now Thoughts Now Thoughts...'
-        style runaway repetition.
-      - Concatenated single-word soup with no separators (e.g.
-        'NowaynowherenowhereNowhere...'): if the answer has zero
-        whitespace or punctuation but is longer than 30 chars, treat
-        it as degenerate.
+      - any response that hit the runaway-abort marker (definitionally
+        a generation that was killed mid-loop);
+      - any response that, after stripping markdown/punctuation,
+        contains zero or more-than-one alphabetic word;
+      - any single word longer than 20 chars (catches concatenated
+        soup like 'ResonanceResonanceResonance').
 
-    Empty answers are handled by extract_committed_word, not here.
+    Empty answers are handled by extract_committed_word, not here, so
+    we return True for them — the chain still ends because there's no
+    next word to advance to.
     """
     if not final_answer:
         return True
@@ -133,25 +136,26 @@ def is_coherent_answer(final_answer: str) -> bool:
     if not s:
         return True
 
-    # Strip the runaway-abort marker before counting.
-    s = s.replace("[[runaway_abort]]", "").strip()
+    # Runaway aborts are never coherent — the model was looping.
+    if "[[runaway_abort]]" in s:
+        return False
+
+    import re
+
+    # Strip surrounding markdown / punctuation that wraps a clean
+    # one-word commit (e.g. "*Resonance*", "_Resonance_.", '"Resonance"').
+    s = re.sub(r"^[\s\*_`'\".]+", "", s)
+    s = re.sub(r"[\s\*_`'\".,;:!?\(\)]+$", "", s)
     if not s:
         return True
 
-    # Word count check.
-    import re
-
     words = re.findall(r"[A-Za-z]+", s)
-    n_words = len(words)
-    if n_words > 30:
+    if len(words) != 1:
         return False
-    if n_words >= 8:
-        unique = len({w.lower() for w in words})
-        if unique / n_words < 0.4:
-            return False
 
-    # Long no-separator soup check (no whitespace, no punctuation).
-    if len(s) > 30 and not re.search(r"[\s.,;:!?\-'\"()]", s):
+    # A single token longer than 20 chars is concatenated soup, not
+    # an English word.
+    if len(words[0]) > 20:
         return False
 
     return True

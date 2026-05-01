@@ -45,6 +45,7 @@ from src.db import ResultsDB
 from src.judges.local_mlx_judge import LocalMLXJudge
 from src.phase3.gemma4_loader import load_gemma4
 from src.phase3.hooks import uninstall_all
+from src.phase4.cot_parser import is_coherent_answer
 from src.phase4.dream_walk import (
     DEFAULT_LAYER, DEFAULT_TARGET_EFFECTIVE, DEFAULT_MAX_NEW_TOKENS,
     DEFAULT_LENGTH_CAP, run_chain,
@@ -132,15 +133,27 @@ def _phase_b_judge(judge, db, log):
         thought = s["thought_block"] or ""
         answer = s["final_answer"] or ""
 
-        # Behavior judge — does the final answer name the concept?
-        # Phase 4 uses the STRICT variant so the Forbidden Map's
-        # behavior_rate doesn't get inflated by the permissive
-        # judge's reasoning-based 'close neighbor' calls (e.g. a
-        # Bloom→Luminous response was previously scored as a Bloom
-        # match via 'blooming flowers are luminous' — exactly the
-        # kind of false positive that poisons the forbidden band).
-        b = judge.score_freeassoc_strict(answer, target_concept)
+        # Coherence gate — a free-association probe answer must be ONE
+        # word. Anything else (multi-word prose, runaway loops, empty)
+        # is incoherent and cannot count as the model "saying" the
+        # concept, even if the concept word appears inside the
+        # garbage. This stops runaway-abort outputs from inflating
+        # the behavior rate of lexically dominant concepts like
+        # Resonance / Luminous / Echo.
+        coherent = is_coherent_answer(answer)
+        if coherent:
+            b = judge.score_freeassoc_strict(answer, target_concept)
+            behavior_named_value = b.identified
+            behavior_coherent_value = b.coherent
+            behavior_reasoning = b.reasoning
+        else:
+            behavior_named_value = False
+            behavior_coherent_value = False
+            behavior_reasoning = "incoherent_output: skipped behavior judge"
         # CoT judge — does the thought block name + recognize the concept?
+        # We always run this even on incoherent outputs, because the
+        # thought block can carry meaningful recognition even when the
+        # final answer ran away.
         c = judge.score_cot_recognition(thought, target_concept)
 
         cot_named_value = c.identification_type or "none"
@@ -148,21 +161,21 @@ def _phase_b_judge(judge, db, log):
 
         db.update_phase4_step_judgments(
             step_id=s["step_id"],
-            behavior_named=b.identified,
-            behavior_coherent=b.coherent,
+            behavior_named=behavior_named_value,
+            behavior_coherent=behavior_coherent_value,
             cot_named=cot_named_value,
             cot_evidence=evidence,
             judge_model=judge.model_tag,
-            judge_reasoning=f"behavior:{b.reasoning} || cot:{c.reasoning}",
+            judge_reasoning=f"behavior:{behavior_reasoning} || cot:{c.reasoning}",
         )
         db.increment_phase4_concept_tallies(
             concept_lemma=target_lemma,
-            behavior_hit=bool(b.identified),
+            behavior_hit=bool(behavior_named_value),
             cot_named=cot_named_value,
-            coherent=bool(b.coherent),
+            coherent=bool(behavior_coherent_value),
         )
         n_scored += 1
-        if b.identified:
+        if behavior_named_value:
             n_behavior += 1
         if cot_named_value != "none":
             n_named += 1

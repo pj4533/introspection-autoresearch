@@ -74,11 +74,24 @@ def test_extract_committed_word_rejects_garbage():
 
 
 def test_is_coherent_answer_accepts_clean():
+    """A coherent free-association answer is exactly ONE word, possibly
+    wrapped in markdown emphasis or trailing punctuation. Empty
+    answers are passed through (the chain ends naturally because
+    there's no word to commit to)."""
     assert is_coherent_answer("Bread") is True
     assert is_coherent_answer("Bread.") is True
-    assert is_coherent_answer("Sourdough (warm)") is True
+    assert is_coherent_answer("*Bread*") is True
+    assert is_coherent_answer('"Bread"') is True
+    assert is_coherent_answer("_Bread_.") is True
     assert is_coherent_answer("") is True  # empty handled separately
     assert is_coherent_answer(None) is True
+
+
+def test_is_coherent_answer_rejects_runaway_marker():
+    """Any output that hit the runaway-abort marker is by definition
+    incoherent — the model was looping when generation was killed."""
+    assert is_coherent_answer("Resonance Resonance [[runaway_abort]]") is False
+    assert is_coherent_answer("[[runaway_abort]]") is False
 
 
 def test_is_coherent_answer_rejects_runaway_repetition():
@@ -105,10 +118,15 @@ def test_is_coherent_answer_rejects_no_separator_soup():
     assert is_coherent_answer(soup) is False
 
 
-def test_is_coherent_answer_short_phrases_pass():
-    """Short multi-word answers (the model commits via brief reasoning)."""
-    assert is_coherent_answer("I'd say Bread") is True
-    assert is_coherent_answer("Word: Bread") is True
+def test_is_coherent_answer_rejects_multi_word():
+    """The probe explicitly asks for one word, no explanation. Any
+    multi-word answer is a prompt-failure and we treat it as
+    incoherent, even if the answer 'looks reasonable'. Otherwise the
+    behavior_rate gets inflated by the concept word appearing inside
+    a sentence the model wasn't asked to write."""
+    assert is_coherent_answer("I'd say Bread") is False
+    assert is_coherent_answer("Word: Bread") is False
+    assert is_coherent_answer("Bread, warm") is False
 
 
 def test_extract_committed_word_takes_first_only():

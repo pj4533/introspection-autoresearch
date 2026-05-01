@@ -1831,10 +1831,7 @@ function ConceptDetail({
                 </details>
               ) : null}
               {s.final_answer ? (
-                <div className="text-sm mt-2">
-                  <span className="text-[var(--ink-faint)]">it said: </span>
-                  <span className="font-mono">{s.final_answer}</span>
-                </div>
+                <SaidLine raw={s.final_answer} />
               ) : null}
               {s.cot_evidence ? (
                 <div className="text-xs text-[var(--ink-faint)] mt-2 italic">
@@ -1850,6 +1847,41 @@ function ConceptDetail({
           ) : null}
         </div>
       </div>
+    </div>
+  );
+}
+
+function SaidLine({ raw }: { raw: string }) {
+  // Mirror src/phase4/cot_parser.is_coherent_answer + extract_committed_word.
+  // A coherent free-association is exactly ONE word. If the raw output
+  // is multi-word or hit the runaway abort, show only the first word
+  // (still useful as the chain advance signal) but flag it as
+  // incoherent so readers don't think the model "said" the whole
+  // string.
+  const cleaned = raw.replace("[[runaway_abort]]", "").trim();
+  const stripped = cleaned
+    .replace(/^[\s*_`'".]+/, "")
+    .replace(/[\s*_`'".,;:!?()]+$/, "");
+  const words = stripped.match(/[A-Za-z]+/g) ?? [];
+  const isRunaway = raw.includes("[[runaway_abort]]");
+  const isMultiWord = words.length > 1;
+  const isLongToken = words.length === 1 && words[0].length > 20;
+  const isIncoherent = isRunaway || isMultiWord || isLongToken;
+  const firstWord = words[0] ?? "(empty)";
+
+  return (
+    <div className="text-sm mt-2">
+      <span className="text-[var(--ink-faint)]">it said: </span>
+      <span className="font-mono">{firstWord}</span>
+      {isIncoherent ? (
+        <span className="ml-2 text-[10px] uppercase tracking-[0.15em] text-[#ff9f6c]">
+          {isRunaway
+            ? "runaway abort"
+            : isLongToken
+            ? "concatenated soup"
+            : `${words.length} words — incoherent`}
+        </span>
+      ) : null}
     </div>
   );
 }

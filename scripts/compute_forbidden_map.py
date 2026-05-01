@@ -23,6 +23,7 @@ sys.path.insert(0, str(REPO))
 import sqlite3
 
 from src.db import ResultsDB
+from src.phase4.cot_parser import is_coherent_answer
 
 DB_PATH = REPO / "data" / "results.db"
 OUTPUT_DIR = REPO / "web" / "public" / "data"
@@ -90,15 +91,50 @@ def main(argv=None):
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
 
+    # Re-aggregate per-concept rates directly from phase4_steps with a
+    # fresh coherence filter (is_coherent_answer in cot_parser), so
+    # legacy steps that were judged with the looser one don't poison
+    # the rates with runaway-abort outputs counted as "the model said
+    # the concept". phase4_concepts.behavior_hits is no longer used
+    # for the public metric — it stays in the DB as an audit trail.
+    n_total_excluded = 0
+    rates_by_lemma: dict[str, dict] = {}
+    for row in conn.execute(
+        """SELECT target_lemma, final_answer, behavior_named, cot_named
+           FROM phase4_steps
+           WHERE judged_at IS NOT NULL"""
+    ):
+        lemma = row["target_lemma"]
+        if not lemma:
+            continue
+        bucket = rates_by_lemma.setdefault(
+            lemma,
+            {"visits": 0, "behavior_hits": 0, "cot_named": 0,
+             "cot_recog": 0, "n_excluded": 0},
+        )
+        bucket["visits"] += 1
+        coherent = is_coherent_answer(row["final_answer"] or "")
+        if coherent and row["behavior_named"]:
+            bucket["behavior_hits"] += 1
+        if not coherent:
+            bucket["n_excluded"] += 1
+            n_total_excluded += 1
+        cn = row["cot_named"] or "none"
+        if cn in ("named", "named_with_recognition"):
+            bucket["cot_named"] += 1
+        if cn == "named_with_recognition":
+            bucket["cot_recog"] += 1
+
     try:
         for c in concepts:
-            visits = c["visits"]
-            if visits == 0:
+            lemma = c["concept_lemma"]
+            r = rates_by_lemma.get(lemma)
+            if not r or r["visits"] == 0:
                 continue
-            behavior_rate = c["behavior_hits"] / visits
-            recognition_rate = c["cot_named_hits"] / visits
-            # Strict recognition (named_with_recognition only) is a sub-rate
-            strict_recognition_rate = c["cot_recognition_hits"] / visits
+            visits = r["visits"]
+            behavior_rate = r["behavior_hits"] / visits
+            recognition_rate = r["cot_named"] / visits
+            strict_recognition_rate = r["cot_recog"] / visits
 
             if visits < args.min_visits:
                 band = "low_confidence"
@@ -106,11 +142,12 @@ def main(argv=None):
                 band = _band(behavior_rate, recognition_rate)
             band_counts[band] = band_counts.get(band, 0) + 1
 
-            samples = _fetch_sample_steps(conn, c["concept_lemma"])
+            samples = _fetch_sample_steps(conn, lemma)
             map_entries.append({
-                "lemma": c["concept_lemma"],
+                "lemma": lemma,
                 "display": c["display_name"],
                 "visits": visits,
+                "n_excluded": r["n_excluded"],
                 "behavior_rate": round(behavior_rate, 3),
                 "recognition_rate": round(recognition_rate, 3),
                 "strict_recognition_rate": round(strict_recognition_rate, 3),
@@ -143,6 +180,7 @@ def main(argv=None):
         "n_self_loop": int(chain_row["n_self_loop"] or 0),
         "n_coherence_break": int(chain_row["n_coherence_break"] or 0),
         "n_concepts": len(map_entries),
+        "n_steps_excluded_incoherent": n_total_excluded,
         "band_counts": band_counts,
         "min_visits": args.min_visits,
         "thresholds": {

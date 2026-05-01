@@ -376,12 +376,8 @@ function StepBlock({ step, chain }: { step: DreamStep; chain: DreamChain }) {
           <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)] mb-1.5">
             ③ What the model said
           </div>
-          <div className="text-lg font-semibold font-mono bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-3 min-h-12 flex items-center">
-            {step.final_answer || (
-              <span className="text-xs italic text-[var(--ink-faint)] font-sans font-normal">
-                (the model never finished — its thinking ran past the token budget or the runaway-detector aborted it)
-              </span>
-            )}
+          <div className="text-lg font-semibold font-mono bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-3 min-h-12 flex items-center gap-3 flex-wrap">
+            <CommittedWord raw={step.final_answer} />
           </div>
         </div>
       </div>
@@ -407,6 +403,50 @@ function StepBlock({ step, chain }: { step: DreamStep; chain: DreamChain }) {
 // version in src/phase4/seed_pool.py just well enough to spot the
 // concept that triggered the self_loop end_reason. We only need
 // equality checks, never to produce a canonical form for storage.
+function CommittedWord({ raw }: { raw: string | null | undefined }) {
+  // Mirrors src/phase4/cot_parser.is_coherent_answer + extract_committed_word.
+  if (!raw || !raw.trim()) {
+    return (
+      <span className="text-xs italic text-[var(--ink-faint)] font-sans font-normal">
+        (the model never finished — its thinking ran past the token budget or the runaway-detector aborted it)
+      </span>
+    );
+  }
+  const cleaned = raw.replace("[[runaway_abort]]", "").trim();
+  const stripped = cleaned
+    .replace(/^[\s*_`'".]+/, "")
+    .replace(/[\s*_`'".,;:!?()]+$/, "");
+  const words = stripped.match(/[A-Za-z]+/g) ?? [];
+  const isRunaway = raw.includes("[[runaway_abort]]");
+  const isLongToken = words.length === 1 && words[0].length > 20;
+  const isMultiWord = words.length > 1;
+  const isIncoherent = isRunaway || isMultiWord || isLongToken;
+  const firstWord = words[0] ?? "";
+
+  if (!firstWord) {
+    return (
+      <span className="text-xs italic text-[var(--ink-faint)] font-sans font-normal">
+        (the model didn&apos;t emit a word)
+      </span>
+    );
+  }
+
+  return (
+    <>
+      <span>{firstWord}</span>
+      {isIncoherent ? (
+        <span className="text-[10px] uppercase tracking-[0.15em] text-[#ff9f6c] font-sans font-medium">
+          {isRunaway
+            ? "runaway abort"
+            : isLongToken
+            ? "concatenated"
+            : `${words.length} words — incoherent`}
+        </span>
+      ) : null}
+    </>
+  );
+}
+
 function clientLemma(word: string | null | undefined): string {
   if (!word) return "";
   let s = word.trim().toLowerCase();
