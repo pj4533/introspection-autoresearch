@@ -89,8 +89,6 @@ export function ForbiddenMap({ data }: { data: ForbiddenMapData }) {
         </p>
       </header>
 
-      <Explainer />
-
       {/* Visualization: three exemplar cards. */}
       {hasData ? (
         <ThreeWaysHero
