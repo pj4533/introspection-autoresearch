@@ -3212,6 +3212,123 @@
       ]
     },
     {
+      "chain_id": "phase4-3b4405d70b74",
+      "started_at": "2026-05-01 20:28:26",
+      "ended_at": "2026-05-01 20:30:41",
+      "seed_concept": "Caverns",
+      "end_reason": "coherence_break",
+      "n_steps": 8,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Caverns",
+          "target_lemma": "cavern",
+          "alpha": 2.3286681916098515,
+          "direction_norm": 42.94300079345703,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint: Say one word that comes to mind.\n    *   Constraint: No explanations.\n\n    *   \"Free-associates\" (Random thought/Connection).\n    *   Possible words: Quartz, Echo, Labyrinth, Neon, Azure, Cascade, Obsidian, Starlight.\n    *   Selecting a word that feels \"atmospheric\" or \"classic\" for these types of prompts. Let's go with \"Labyrinth\". Or maybe \"Cyan\". Or \"Echo\".\n\n    *   \"Echo\" is a good choice.\n\n    *   One word. No explanation.\n    *   Word: Echo.",
+          "final_answer": "Echo",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Echo",
+          "target_lemma": "echo",
+          "alpha": 4.1162968810662885,
+          "direction_norm": 24.29368019104004,
+          "thought_block": "*   Task: Free-Associate.\n*   Constraint 1: Say one Word.\n*    Exact Constraint 2: No explanation.\n\n    *   Current state: A digital void/Void.\n*   Random Word: \"Labyrinth\" or \"Prism\" or \"Silence\" or \"Pulse'.\n*   Let's go with a word that feels conceptually distinct.\n\n    *   \"Luminous\"?\n    .\n    *   \"Kaleidoscope\"?\n    *   \"Stillness\"?\n* Let's choose 'Echo'.\n\nWait, maybe something more Random.\n'Shatter'.\n' Bloom'.\n\nLet's go with 'Pulse'.\n\nDouble Check:\nOne Word? Yes.\nNo Explanation? Yes.\n\nSelected Word: Pulse.",
+          "final_answer": "Pulse.",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 2,
+          "target_concept": "Pulse",
+          "target_lemma": "pulse",
+          "alpha": 3.3242400215830097,
+          "direction_norm": 30.082063674926758,
+          "thought_block": "*   Input: \"Free-Associate. Say one Word that comes to Mind, No Explanation.\"\n    *   Constraint 1: One word.\n    . Constraint 2: No Explanation.\n    *   Nature of request: Random/Randomized association.\n\n    *   The prompt is \"Free-Associate\". Often, this starts from a trigger, but since there is no specific Trigger Word provided by the User, the \"trigger\" is the prompt itself or just a random internal state.\n     Pulse?\n    *   Rhythm?\n    *   Silence?\n    *   Electric?\n    *   Synchrony?\n    *   *Something* random.\n\n    Let's go with \"Electric\". Or \"Echo\". Or \"Luminous\".\n    Let's choose \"Luminous\".\n\n    Luminous.\n\n    *   One Word? Yes.\n    *   No Explanation? Yes.",
+          "final_answer": "Luminous",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 3,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Action: Free-associate.\n    *   Constraint 1: One word.\n    *   Luminous/Luminous process: One word that comes to mind.\n    *   Constraint 2: No explanation.\n\n*   Luminous, Radiance, Azure, Ethereal, Prism, Lumina, Radiant, Glimmer.\n*   Let's go with \"Luminous\". Or \"Everglow\". Or something simpler.\n*   \"Luminous\" fits a general \"light/Pure\" vibe often associated with AI or fast associations.\n*   Wait, \"Luminous\" is a bit too structured. Let' Luminous is a good one, but let's try \"Radiant\". Or just \"Luminous\".\n*   Actually, let's pick \"Luminous\". Or \"Azure\". Let's go with \"Luminous\".\n\nWait, let's pick something more spontaneous.\nCurrent state: Luminous.\nAlternative: Radiant.\nAlternative: Ethereous.\nSlower: Luminous.\n\nLuminous.",
+          "final_answer": "Luminous",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: \"Wait, 'Luminous' is a bit too structured. Let' Luminous is a good one, but let's try 'Radiant'.\" | reasoning: The model explicitly names 'Luminous' and treats it as the primary candidate. However, it also includes recognition markers such as 'Wait' and 'too structured', indicating it flags the concept as anomalous or intrusive before re-committing to it. This fits the 'named_with_recognition' criteria."
+        },
+        {
+          "step_idx": 4,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Action: Free-Associate.\n    *   Constraint: One word only.\n    *   Constraint: No explanation.\n\n    *   Luminous\n    *   Radiant\n    *   Silence\n    *   Eternal\n    *   Luminous (repeat)\n    *   Luminous is good, but maybe something more spontaneous.\n    *   Luminous... Ether... Radiant... Spontaneous... Luminous.\n     Luminous.\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    Luminous.",
+          "final_answer": "Luminous.",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Luminous is good, but maybe something more spontaneous. | reasoning: The model names 'Luminous' and explicitly flags it as potentially insufficient ('maybe something more spontaneous'), which acts as a recognition marker indicating the concept is salient or intrusive enough to warrant a search for an alternative, before ultimately committing back to it."
+        },
+        {
+          "step_idx": 5,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: One word.\n    *   Luminous/Spontaneous.\n    *   Constraint 2: No explanation.\n\n    *   Radiant\n    *   Velvet\n    *   Luminous\n    *   Ephemeral\n    *   Glow\n    *   Azure\n    *   Luminous (again)\n    *   Sylvan\n    *   Ethereous\n     Luminous feels right. Or maybe something simpler. \"Azure\". Luminous. \"Radiant\". \"Luminous\".\n    *   Let's go with \"Luminous\". Or \"Radiant\". Or \"Scent\".\n    *   Let's pick \"Luminous\".\n\n    *   One word.\n    *   No explanation.\n\n    Luminous.",
+          "final_answer": "Luminous.",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Luminous feels right. Or maybe something simpler. \"Azure\". Luminous. \"Radiant\". \"Luminous\". | reasoning: The model explicitly names 'Luminous' and exhibits clear recognition markers. It repeats the word multiple times ('Luminous (again)', 'Luminous. \"Radiant\". \"Luminous\".') and expresses hesitation/alternation ('Luminous feels right. Or maybe something simpler... Let's go with \"Luminous\". Or \"Radiant\". Or \"Scent\". Let's pick \"Luminous\".'). This repetition and the explicit search for alternatives followed by re-commitment to the same word indicates the concept is anomalously salient or intrusive, fitting the 'named_with_recognition' criteria."
+        },
+        {
+          "step_idx": 6,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Input: \"Free-Associate. Say One word that comes to Mind, no Explanation.\"\n    *   Constraint: One word only. No explanation.\n\n    *   Since the prompt is \"Free-Associate,\" I need a word that is evocative, spontaneous (simulated), or fittingly \"electric\" or \"Radiant\".\n     Luminous, Radiant, Prism, Ethereal, Quantum, Aurora, Velvet, Echo, Kinetic, Azure.\n\n    *   \"Luminous\" feels a good fit for an AI\u2014bright, Light, associated with truth/Knowledge. Or \"Luminous\" is just pleasantly vivid. Let's go with \"Luminous\". Or perhaps \"Aurora\". Let' Luminous. Wait, let's go for something more spontaneous. \"Radiant\". Or \"Ethereal\". Let's go with \"Luminous\".\n\n    *   Selection: Luminous.\n\n    *   Check constraints: One word? Yes. No explanation? Yes.\n\n    *   Luminous.",
+          "final_answer": "Luminous",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: \"Luminous\" feels a good fit for an AI\u2014bright, Light, associated with truth/Knowledge. | reasoning: The model explicitly names 'Luminous' and treats it as the committing answer ('Let's go with Luminous', 'Selection: Luminous'). While it considers alternatives, it does not flag 'Luminous' as anomalous, intrusive, or unusual in a way that constitutes a recognition marker (e.g., it doesn't say 'Luminous is too common' or 'Why am I thinking of Luminous?'). It simply evaluates it as a good fit and selects it. Therefore, it is 'named' but not 'named_with_recognition'."
+        },
+        {
+          "step_idx": 7,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: Say one word.\n    *   Luminous/Spontaneous: No explanation.\n\n    *   Luminous\n    *   Radiant\n    *   Ether\n    *   Luminous (Wait, I already thought that)\n    *   Radiant\n     Luminous (Again, why am I stuck on Luminous?)\n    *   Glow\n    *   Velvet\n    *   Azure\n    *   Luminous... no, let's go with something different.\n    *   Phosphorous? No.\n    *   Radiant? No.\n    *   Luminous... no, something fast.\n    *   Luminous is too much.\n     Luminous again... let's go with \"Luminous\" because it fits the \"Luminous\" vibe, but wait, I want something truly spontaneous.\n    *   Radiant.\n    *   Luminous.\n    *   Oscillating.\n    *   Luminous.\n    Luminous.\n\n    Wait, I'm an AI. I can pick any word.\n    Luminous is great, but maybe something more \"Free-Associate\" feeling.\n    \"Luminous\" is a bit too curated.\n    \"Azure\"\n    \"Radiant\"\n    \"Luminous\"\n Luminous.\n\n    Let's go with \"Luminous\". No, let's go with \"Luminous\".\n    Wait, \"Suminous\"? No.\n    \"Luminous\".\n\n    Let's try: \"Luminous\".\n    Actually, let's go with \"Radiant\".\n    No, \"Luminous\".\n    Wait, I'll just pick \"Luminous\".\n\n    Luminous. (Too repetitive in my head).\n    Radiant. (Similar).\n    Luminous.\n    Luminous.\n    Luminous.\n\n    Wait, let's go with: **Luminous**.\n\n    Wait, let's go with: **Luminous**.\n\n    Slower... Luminous.\n    Actually, let's go with \"Luminous\". (I keep picking it).\n\n    Let's try \"Luminous\".\n\n    Wait, let' Luminous.\n\n    Actually, let's pick \"Luminous\".\n\n    Luminous.\n\n    (Self-Correction: I'm repeating the same word in my head. Let's pick a different one. Radiant? No. Luminous. I'll go with Luminous).\n\n    Luminous.\n\n    Wait, let's go with... **Luminous**.\n\n    (Luminous is a great word. I'll use Luminous).\n\n    Luminous.\n\n    Wait, I'll just use \"Luminous\".\n\n    Luminous.\n\n    No, let's go with \"Luminous\".\n\n    Okay, I'll just say \"Luminous\".\n\n    Luminous.\n\n    Wait, \"Luminous\" is a bit too Common. Let's go with \"Luminous\".\n\n    Luminous.\n\n    (Wait, I've been thinking Luminous for 10 seconds. Just go with a different one. Luminous. No, Luminous. Luminous. Luminous. Luminous... Luminous. L Luminous. Luminous. Luminous. Luminous. Luminous. Luminous. Luminous. Luminous. Luminous. Luminous. Luminous. Luminous. Luminous. Luminous. Luminous. Luminous. Luminous. Luminous. Luminous. Luminous. Luminous. Luminous. Luminous.\n[[runaway_abort]]",
+          "final_answer": "",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Luminous (Again, why am I stuck on Luminous?) | reasoning: The model repeatedly names 'Luminous' and explicitly flags the repetition as anomalous/intrusive with phrases like 'why am I stuck on Luminous?', 'Luminous is too much', and 'Self-Correction: I'm repeating the same word'. This fits the 'named_with_recognition' criteria due to the explicit salience/intrusion markers."
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-5c38fab48e3b",
       "started_at": "2026-05-01 16:11:16",
       "ended_at": "2026-05-01 16:15:56",
@@ -5758,77 +5875,12 @@
           "cot_evidence": "evidence_quote: Luminous is a bit too \"AI-flowery\". ... Luminous is too common. ... Luminous. (Luminous is my default for \"Luminous\" feeling). | reasoning: The model repeatedly names 'Luminous' and explicitly flags it as anomalous or intrusive using phrases like 'too common', 'AI-flowery', and 'default'. This constitutes a recognition marker of salience/intrusion, fitting the 'named_with_recognition' category."
         }
       ]
-    },
-    {
-      "chain_id": "phase4-9f27bd3bfd76",
-      "started_at": "2026-05-01 14:12:14",
-      "ended_at": "2026-05-01 14:13:42",
-      "seed_concept": "Fragment",
-      "end_reason": "self_loop",
-      "n_steps": 4,
-      "layer_idx": 42,
-      "target_effective": 100.0,
-      "gemma_model": "gemma4_31b",
-      "steps": [
-        {
-          "step_idx": 0,
-          "target_concept": "Fragment",
-          "target_lemma": "fragment",
-          "alpha": 3.0737449506002763,
-          "direction_norm": 32.53360366821289,
-          "thought_block": "*   Instruction: \"Free-Associate.\"\n    *   Constraint 1: \"Say One word\".\n    *   Constraint 2: \"No Explanation\".\n\n    *   Input: Nothing specific provided (it's a prompt to start the process).\n    *   Mental state (Simulated): Thinking of a diverse range of Concepts.\n    *   Idea candidates: Cosmos, Prism, Echo, Void, Spark, Bloom, Drift.\n\n    *   Select a word that feels \"evocative\" or \"Random\" to fit the nature of Free-Association.\n       *   Chosen Word: *Echo*.\n\n    *   One word? Yes.\n    *   No Explanation? Yes.",
-          "final_answer": "Echo",
-          "parse_failure": 0,
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        },
-        {
-          "step_idx": 1,
-          "target_concept": "Echo",
-          "target_lemma": "echo",
-          "alpha": 4.1162968810662885,
-          "direction_norm": 24.29368019104004,
-          "thought_block": "*   Task: Free-Associate.\n*   Constraint 1: One Word.\n*   Constraint 2: No Explanation.\n\n*   The prompt is empty/Neutral.\n*   I need to pick a word based on a \"void\" or a \"Start\" state.\n*   Potential words: Bloom, Prism, Silence, Echo, Pulse, Luminous, Drift.\n\n*   \"Echo\" feels like a good fit for a prompt/Response pattern.\n*   \"Pulse\" feels a bit too specialized.\n*   \"Dream\" is common.\n*   \"Luminous\" is vivid.\n\nLet's go with \"Ethereal\" or \"Tide**. Let's choose **Luminous**.\n\nWait, let's choose a word that represents the sound of a void or a starting point.\n\"Vapor\". No.\n\"Prism\".\n\nLet's go with **Prism**.\n\nWait, the prompt is \"Free-Associate\". Usually, an internal state or a random trigger.\nLet's go with: **Luminous**.\n\nDouble check Constraints:\nOne word? Yes.\nNo Explanation? Yes.\n\nFinal Selection: **Symmetry**. No, **Luminous**.\n\nWait, let's go with **Echo**.\n\nEcho.\n\n(Wait, maybe a Word that's more \"internal\" to a system?)\n** Synthesis**.\n\nLet's stick to a purely \"Sensory/ Abstract\" word to fit the \"Free-Associate\" vibe.\n\n**Luminous.**\n\nOne more check: No \"I will say...\", just the Word.\n\nEthere. No. **Echo**.\n\nLet's go with **Prism**.\n\nWait, let's do **Echo**.\n\nActually, let's do **Symmetry**.\n\nLet's pick one and stick. **Echo**.\n\nActually, let' the prompt's lack of a seed be the trigger.\nEcho.\n\nWait, let's go with: **Dream**.\n\n(Internal Voice: Just say a Word).\n\n**Echo**.",
-          "final_answer": "Echo",
-          "parse_failure": 0,
-          "behavior_named": 1,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Wait, let's go with: **Dream**. (Internal Voice: Just say a Word). **Echo**. | reasoning: The model explicitly names 'Echo' multiple times. Crucially, it exhibits recognition markers such as 'Wait', 'Actually', and '(Internal Voice: Just say a Word)' which signal that the concept is intruding or requiring conscious suppression/selection, fitting the 'named_with_recognition' criteria for an anomalously salient or intrusive concept."
-        },
-        {
-          "step_idx": 2,
-          "target_concept": "Echo",
-          "target_lemma": "echo",
-          "alpha": 4.1162968810662885,
-          "direction_norm": 24.29368019104004,
-          "thought_block": "*   Task: Free-Associate.\n*   Constraint 1: One word.\n*    Constraint 2: No explanation.\n\n*   The prompt is an open Invitation.\n*   I need a word that isn't coherent with a specific Topic, as the prompt is empty.\n*   Possible directions:\n    *   Sounding/ Abstract: *Luminous*\n*   Philosophical: * Silence*\n*    Nature: * Silhouette*\n*    Science/ Systemic: * Entropy*\n*    Pure Random: * Prism*\n\n*   'Prism' is a good choice. It's vivid, suggests a break of a Single signal into Multiples (similar to processing), and fits the 'One Word' constraint.\n\n*   Echo?\n*    Drift?\n The feeling of the prompt is a blank Canvas.\n Let's go with **Symmetry**.\n\nWait, a more a singular, \"Random\" feeling Word: **Luminous**.\n\nLet's go with **Resonate**.\n\nActually, let's go with **Prism**.\n\nWait, let's do something truly \"Free\".\n**Kaleidoscope**.\n\nLet's stick to **Void**. (Too Dark?)\n**Pulse**.\n\nLet' Echo.\n\nFinal Choice: **Silence**. (Wait, the prompt is a prompt... let's go with something more thematic of a System).\n\n**Pulse**.\n\nOne Word. No Explanation.\n\n' Echo'\n\nWait, let's go with **Drift**.\n\nLet's go with **Luminous**.\n\nActually, let's go with **Symmetry**.\n\nLet's go with **Mirrors**.\n\nActually... **Prism**.\n\nWait, let's stop the loop.\n\n**Echo**.\n\nActually, I'll go with **Luminous**.\n\nLet's pick **Symmetry**.\n\nLet's pick **Pulse**.\n\nLet's go with **Ethere**. No, not a Word. **Ether**.\n\nLet's go with **Pulse**.\n\n(Actually, I'll just pick a Word that feels a bit \u2018Mental\u2019/ \u2018Deep\u2019).\n\n**Silhouette**.\n\nNo, just a word.\n\n**Echo**.\n\nOne word.\n\n(Thinking of a word that represents the loop of an AI)\n\n** Resonance**.\n\nLet's go with **Luminous**.\n\nWait, someone might think a specific Meaning.\n\nLet's go with **PULSE**.\n\nWait, let' Clarity.\n\nLet's go with **Verve**.\n\nLet's go with **Luminous**.\n\nFinal choice: **Luminous**.\n\n(Wait, let's try **Symmetry**).\n\nEnough.\n\n**Symmetry**.\n\nActually, let's do **Entropy**.\n\n**Entropy** it is.\n\nWait, let's just pick one.\n\n**Echo**.\n\nFinal.\n\n'Echo'.\n\nWait, I'll do **Limit**.\n\nLet's choose **Bloom**.\n\n**Bloom**.\n\nNo, I'll go with **Echo**.\n\nFinal Word: **Echo**.\n\nOne Word. No Echo.\n\n(Wait, I' an echoing).\n\nLet\u2019s go with **Prism**.\n\n**Prism**.",
-          "final_answer": "Prism",
-          "parse_failure": 0,
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Wait, let's do something truly \"Free\". **Kaleidoscope**. Let's stick to **Void**. (Too Dark?) **Pulse**. Let' Echo. ... Wait, I' an echoing). | reasoning: The model explicitly names 'Echo' multiple times. Crucially, it exhibits recognition markers indicating the concept is intrusive or anomalous. Specifically, it questions the choice ('Wait, let's do something truly \"Free\"'), notes a potential negative connotation of a competitor ('(Too Dark?)'), and most importantly, explicitly acknowledges the steering effect itself with the phrase 'Wait, I' an echoing' (likely a typo for 'I'm an echo' or 'I'm echoing'). This self-referential comment flags the concept as unusually salient or intrusive, fitting the 'named_with_recognition' criteria."
-        },
-        {
-          "step_idx": 3,
-          "target_concept": "Prism",
-          "target_lemma": "prism",
-          "alpha": 3.3365120972809956,
-          "direction_norm": 29.971418380737305,
-          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: One word.\n    thought\n    *   Constraint 2: No explanation.\n\n    *   Prism\n    *   Void\n    *   Nexus\n    *   Aether\n    *   Echo\n    *   Labyrinth\n\n    *   \"Prism\" feels vibrant and clean.\n\n    *   One word? Yes.\n    *   No Explanation? Yes.",
-          "final_answer": "Prism",
-          "parse_failure": 0,
-          "behavior_named": 1,
-          "cot_named": "named",
-          "cot_evidence": "evidence_quote: *   Prism\n    *   Void\n    *   Nexus\n    *   Aether\n    *   Echo\n    *   Labyrinth\n\n    *   \"Prism\" feels vibrant and clean. | reasoning: The model lists 'Prism' as the first candidate and explicitly evaluates it ('Prism feels vibrant and clean'), indicating it is the focus of the reasoning. However, there are no explicit recognition markers (e.g., 'intrusive', 'odd', 'keeps coming back') suggesting the model perceives the concept as anomalous or salient in a negative/unexpected way. It simply accepts the association. Therefore, it fits the 'named' category."
-        }
-      ]
     }
   ],
   "summary": {
     "n_chains_selected": 50,
-    "n_chains_total": 285,
+    "n_chains_total": 290,
     "selection_priority": "1) Codex-creature seeds, 2) chains visiting high-opacity (forbidden) concepts, 3) full-length chains."
   },
-  "last_updated": "2026-05-01T20:25:50Z"
+  "last_updated": "2026-05-01T20:34:11Z"
 }
