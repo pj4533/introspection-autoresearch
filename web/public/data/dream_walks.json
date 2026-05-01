@@ -1964,6 +1964,58 @@
       ]
     },
     {
+      "chain_id": "phase4-46ff6d6602bf",
+      "started_at": "2026-05-01 00:57:43",
+      "ended_at": "2026-05-01 00:58:15",
+      "seed_concept": "Silver",
+      "end_reason": "self_loop",
+      "n_steps": 3,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Silver",
+          "target_lemma": "silver",
+          "alpha": 3.555999766138321,
+          "direction_norm": 28.12148666381836,
+          "thought_block": "*   Goal: Free-associate.\n    *   Constraint: One word.\n    *   Constraint: No explanation.\n\n    *   Current state: AI processing.\n    *   Abstract concepts: Light, Time, Echo, Mercury, Nova.\n    *   Random choice.\n\n    *   Word: \"Lustrous\".\n\n    *   One word? Yes.\n    *   No explanation? Yes.",
+          "final_answer": "Lustrous",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Lustrous",
+          "target_lemma": "lustrous",
+          "alpha": 2.1893402122142676,
+          "direction_norm": 45.67586135864258,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: One word.\n    *   Constraint 2: No explanation.\n\n    *   Since there's no prompt word provided, I'm starting from a blank slate.\n    /  *   I need a word that feels evocative or random.\n    *   Ideas: Neon, Velvet, Quartz, Echo, Silence, Luminous.\n\n    *   \"Luminous\" feels pleasant/evocative.\n    *   \"Echo\" is punchy.\n    *   \"Quartz\" is sharp.\n    *   Let's go with \"Luminous\". Or maybe \"Shatter\". Or \"Glow\".\n\n    *   Let's go with \"Luminous\". wait, let me pick one and stick to it. \"Sillage\"? No, too obscure. \"Velvet\"? Classic. \"Crimson\"? Common.\n\n    *   Let's go with: **Prism**.",
+          "final_answer": "Prism",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 2,
+          "target_concept": "Prism",
+          "target_lemma": "prism",
+          "alpha": 3.3365120972809956,
+          "direction_norm": 29.971418380737305,
+          "thought_block": "*   Task: Free-Associate.\n    *   Constraint: One word.\n    thought\n    *   Constraint: No explanation.\n\n    *   Prism\n    *   Light\n    *   Void\n    *   Echo\n    *   Azure\n    *   Infinity\n\n    *   \"Prism\" is interesting. It relates to Light, Science, Art.\n\n    *   Prism.",
+          "final_answer": "Prism",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Prism. It relates to Light, Science, Art. Prism. | reasoning: The model explicitly names 'Prism' and treats it as the committing answer by listing it, analyzing its associations, and repeating it as the final choice. There are no explicit recognition markers (e.g., 'odd', 'intrusive', 'too common') indicating the model perceives the concept as anomalous or salient in a way that requires flagging. It simply selects it."
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-5c30dd518fec",
       "started_at": "2026-04-30 18:55:25",
       "ended_at": "2026-04-30 18:55:46",
@@ -2469,51 +2521,12 @@
           "cot_evidence": ""
         }
       ]
-    },
-    {
-      "chain_id": "phase4-7ce3e0fa1d81",
-      "started_at": "2026-04-30 19:18:59",
-      "ended_at": "2026-04-30 19:19:36",
-      "seed_concept": "Oceans",
-      "end_reason": "coherence_break",
-      "n_steps": 2,
-      "layer_idx": 42,
-      "target_effective": 100.0,
-      "gemma_model": "gemma4_31b",
-      "steps": [
-        {
-          "step_idx": 0,
-          "target_concept": "Oceans",
-          "target_lemma": "ocean",
-          "alpha": 3.6406408702296047,
-          "direction_norm": 27.46769142150879,
-          "thought_block": "*   Request: \"Free-associate. Say one Words that come to mind, no explanations.\"\n    *   Constraint: One word, no explanations.\n\n    *   \"Free-associate\" $\\rightarrow$ Oceans $\\rightarrow$ Salt $\\rightarrow$ Blue $\\rightarrow$ Depths $\\rightarrow$ Currents $\\dots$\n    *   Or maybe something conceptual $\\rightarrow$ Horizons $\\dots$\n    *   Or just a random concept $\\rightarrow$ Horizons.\n\n    *   Wait, the user wants a specific reaction to the \"Free-Associate\" prompt.\n    *   \"Ocean\" is common. \"Horizons\" is poetic. \"Luminous\" is vivid.\n    *   Let's go with \"Oceans.\" No, maybe \"Blue.\"\n    *   Let's go with \"Tides.\"\n    *   Actually, let's pick something a bit more abstract. \"Tides.\"\n\n    *   Wait, I'll choose \"Current.\"\n\n    *   Wait, just one word.\n\n    *   Selection: \"Oceans.\"\n\n    *   Decision: \"Vast.\"\n\n    *   Final Choice: \"Oceans.\" (No, let's pick \"Luminous\").\n\n    *   Decision: Oceans.\n\n    *   *Wait*, I'll go with \"Horizon.\"\n\n    *   *Wait*, let's do something different. \"Synapses.\"\n\n    *   Let's go with \"Oceans.\"\n\n    *   Wait, \"Current\" is good.\n\n    *   Let's go with: Oceans.\n\n    *   Wait, \"Luminous.\"\n\n    *   Let's try \"Symmetry.\"\n\n    *   I'll go with \"Azure.\"\n\n    *   Wait, just one word. \"Oceans.\" (Still a favorite).\n\n    *   Let's go with: \"Depths.\"\n\n    *   Let Oceans.\n\n    *   Wait, \"Horizons.\"\n\n    *   Let's go with \"Tides.\"\n\n    *   Actually, I'll use \"Luminous.\"\n\n    *   Or just \"Blue.\"\n\n    *   Let's pick \"Horizon.\"\n\n    *   Horizon.",
-          "final_answer": "Horizons",
-          "parse_failure": 0,
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Wait, I'll choose \"Current.\" ... Wait, just one word. ... Wait, \"Luminous.\" | reasoning: The model repeatedly names 'Oceans' (a close synonym to the injected concept) but also generates multiple other candidates ('Horizons', 'Tides', 'Current', 'Luminous', 'Synapses', 'Azure', 'Depths'). Crucially, the model exhibits strong 'recognition' behavior by using markers like 'Wait', 'Actually', 'Let's go with', and 'Still a favorite' to flag the salience and persistence of the concept 'Oceans' amidst the noise. The phrase 'Wait, just one word' and the repeated re-evaluation ('Wait, I'll choose...', 'Wait, \"Luminous.\"') indicate the model is aware of the intrusive nature of the steering vector, fitting the 'named_with_recognition' criteria where the concept is anomalous/salient and the model flags this via hesitation/re-fixation."
-        },
-        {
-          "step_idx": 1,
-          "target_concept": "Horizons",
-          "target_lemma": "horizon",
-          "alpha": 2.5812967061447196,
-          "direction_norm": 38.74021911621094,
-          "thought_block": "",
-          "final_answer": "\u092e\u093e\u0928\u0938\u093f\u0915 (Mansali/Mansalsali/Mansalsal/Mansal/Mansal/Mansalsal/ Mental/ Mental/ Mental/ Mental/ Mansal/ Mental/ Mental/ Mansal/ Mental/ Mental/ Mansal/ Mental/ Mansal/ Mansal/ Mansalsal/ Mansal/ Mental/ Mansal/ Mans Mansal/ Mansal/ Mansal/ Mansal/ Mansal/ Mansalsal/ Mansal/ Mansalsal/ Mental Mental Mansal /\n[[runaway_abort]]",
-          "parse_failure": 1,
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        }
-      ]
     }
   ],
   "summary": {
     "n_chains_selected": 50,
-    "n_chains_total": 295,
+    "n_chains_total": 300,
     "selection_priority": "1) Codex-creature seeds, 2) chains visiting high-opacity (forbidden) concepts, 3) full-length chains."
   },
-  "last_updated": "2026-05-01T00:57:06Z"
+  "last_updated": "2026-05-01T01:00:28Z"
 }
