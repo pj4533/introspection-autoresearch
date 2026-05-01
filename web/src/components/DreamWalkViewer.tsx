@@ -493,13 +493,13 @@ function describeChainEnd(
     if (match && said) {
       const samePos = match.idx === lastStep.step_idx;
       return samePos
-        ? `Stopped because the model said "${said}" when nudged toward "${lastStep.target_concept}" — it just emitted the same concept it was nudged toward, so the next step would have nudged toward "${said}" again.`
-        : `Stopped because the model said "${said}" when nudged toward "${lastStep.target_concept}" — but "${said}" was already visited at step ${match.idx} of this chain. The next step would have been a repeat.`;
+        ? `Stopped because the model said "${said}" when nudged toward "${lastStep.target_concept}" — "${said}" is a known strong attractor (it repeats nearly every time it's re-steered), so the next step would have looped on the same word.`
+        : `Stopped because the model said "${said}" when nudged toward "${lastStep.target_concept}" — "${said}" was already visited at step ${match.idx} AND acts as a deterministic basin on revisit. Continuing would just re-walk the same ground.`;
     }
     if (said) {
-      return `Stopped because the model said "${said}" when nudged toward "${lastStep.target_concept}" — that word was already visited earlier in this chain, so the next step would have been a repeat.`;
+      return `Stopped because the model said "${said}" when nudged toward "${lastStep.target_concept}" — that word was already visited and is a known deterministic attractor.`;
     }
-    return `Stopped because the next step would have nudged toward a concept already visited in this chain.`;
+    return `Stopped because the next step would have re-targeted a known strong attractor already visited in this chain.`;
   }
 
   if (reason === "coherence_break") {

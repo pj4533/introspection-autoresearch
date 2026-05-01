@@ -179,12 +179,24 @@ def run_chain(
     max_new_tokens: int = DEFAULT_MAX_NEW_TOKENS,
     length_cap: int = DEFAULT_LENGTH_CAP,
     base_seed: Optional[int] = None,
+    strong_attractors: Optional[set[str]] = None,
 ) -> tuple[str, str, int, list[StepRecord]]:
     """Run one dream walk. Writes each step to phase4_steps with judge
     fields NULL.
 
+    `strong_attractors` is a set of lemmas that empirically act as
+    deterministic basins (≥80% repeat rate over ≥5 historical visits).
+    When the chain would re-target a lemma it has already visited:
+      - if that lemma is a known strong attractor, end self_loop
+        (continuing would just re-walk the same ground);
+      - otherwise, KEEP WALKING. Many concepts emit a different word
+        when re-steered (e.g. Pulse, Spark only repeat ~20–40% of
+        the time), so terminating early throws away real signal.
+
     Returns (chain_id, end_reason, n_steps, step_records).
     """
+    if strong_attractors is None:
+        strong_attractors = set()
     chain_id = chain_id or f"phase4-{uuid.uuid4().hex[:12]}"
     db.insert_phase4_chain(
         chain_id=chain_id,
@@ -203,9 +215,12 @@ def run_chain(
     base_seed = base_seed if base_seed is not None else (hash(chain_id) & 0x7FFFFFFF)
 
     for step_idx in range(length_cap):
-        # Self-loop check: if the current target has already been visited,
-        # end the chain BEFORE generating.
-        if target_lemma in visited_lemmas:
+        # Self-loop check: if the current target has already been
+        # visited AND that target is a known strong attractor (≥80%
+        # repeat rate empirically), end the chain. Weak attractors
+        # are allowed to be re-visited because they emit different
+        # words on each visit and produce genuinely longer walks.
+        if target_lemma in visited_lemmas and target_lemma in strong_attractors:
             end_reason = "self_loop"
             break
         visited_lemmas.append(target_lemma)

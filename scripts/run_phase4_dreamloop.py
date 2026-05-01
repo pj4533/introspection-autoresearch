@@ -83,8 +83,47 @@ def _release_judge(judge):
         pass
 
 
+def _compute_strong_attractors(
+    db_path,
+    min_visits: int = 5,
+    repeat_threshold: float = 0.8,
+) -> set[str]:
+    """Pull the set of concepts that act as deterministic basins.
+
+    A concept is a 'strong attractor' if, of its historical visits,
+    the model said the concept itself ≥repeat_threshold of the time
+    (and we have ≥min_visits to call it). Self_loop chain endings
+    are gated on this set: re-visiting a weak attractor keeps
+    walking, re-visiting a strong attractor stops the chain.
+    """
+    import sqlite3
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute(
+            """SELECT target_lemma,
+                      COUNT(*) AS n_visits,
+                      SUM(CASE WHEN behavior_named=1 THEN 1 ELSE 0 END) AS n_repeat
+               FROM phase4_steps
+               WHERE judged_at IS NOT NULL
+               GROUP BY target_lemma
+               HAVING n_visits >= ?""",
+            (min_visits,),
+        ).fetchall()
+    finally:
+        conn.close()
+    strong = set()
+    for r in rows:
+        if r["n_visits"] and r["n_repeat"] / r["n_visits"] >= repeat_threshold:
+            strong.add(r["target_lemma"])
+    return strong
+
+
 def _phase_a_chains(handle, db, seed_pool, args, n_chains_run, log):
     """Run BATCH_CHAINS dream walks."""
+    strong_attractors = _compute_strong_attractors(DB_PATH)
+    log(f"[phase A] strong attractors: {len(strong_attractors)} "
+        f"({sorted(strong_attractors)[:8]}{'...' if len(strong_attractors) > 8 else ''})")
     for i in range(args.batch):
         # Force Goblin as the very first chain seed (Codex directive
         # framing — see seed_pool.CODEX_SUPPRESSED_CREATURES).
@@ -104,6 +143,7 @@ def _phase_a_chains(handle, db, seed_pool, args, n_chains_run, log):
             target_effective=args.target_effective,
             max_new_tokens=args.max_new_tokens,
             length_cap=args.length_cap,
+            strong_attractors=strong_attractors,
         )
         elapsed = time.time() - t0
         log(f"[chain {n_chains_run + 1}] DONE id={chain_id} "
