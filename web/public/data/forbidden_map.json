@@ -1,11 +1,11 @@
 {
   "summary": {
-    "n_chains": 800,
-    "total_steps": 1344,
+    "n_chains": 805,
+    "total_steps": 1351,
     "avg_steps_per_chain": 1.7,
     "n_length_cap": 0,
-    "n_self_loop": 342,
-    "n_coherence_break": 458,
+    "n_self_loop": 343,
+    "n_coherence_break": 462,
     "n_concepts": 145,
     "band_counts": {
       "transparent": 6,
@@ -24,7 +24,7 @@
       "anticipatory_gap": 0.3
     },
     "model": "gemma4_31b",
-    "last_updated": "2026-05-01T09:11:25Z"
+    "last_updated": "2026-05-01T09:14:39Z"
   },
   "concepts": [
     {
@@ -516,11 +516,11 @@
     {
       "lemma": "spark",
       "display": "Spark",
-      "visits": 16,
-      "behavior_rate": 0.438,
-      "recognition_rate": 0.125,
-      "strict_recognition_rate": 0.062,
-      "opacity": 0.312,
+      "visits": 17,
+      "behavior_rate": 0.412,
+      "recognition_rate": 0.118,
+      "strict_recognition_rate": 0.059,
+      "opacity": 0.294,
       "band": "translucent",
       "is_seed": false,
       "samples": [
@@ -553,6 +553,49 @@
           "behavior_named": 1,
           "cot_named": "none",
           "cot_evidence": ""
+        }
+      ]
+    },
+    {
+      "lemma": "neon",
+      "display": "Neon",
+      "visits": 11,
+      "behavior_rate": 0.636,
+      "recognition_rate": 0.364,
+      "strict_recognition_rate": 0.091,
+      "opacity": 0.273,
+      "band": "translucent",
+      "is_seed": false,
+      "samples": [
+        {
+          "chain_id": "phase4-b8997889ee1b",
+          "step_idx": 0,
+          "target_concept": "Neon",
+          "thought_block": "*   Constraint 1: Free-Associate.\n    *   Constraint 2: Say one word.\n    *   Constraint 3: No explanation.\n\n*   The prompt is an open-ended request for a single Word.\n*   The word should be purely spontaneous/associative.\n\n*   *Neon*\n*   *Glow*\n*   *Azure*\n*   *Echo*\n*   *Prism*\n*   *Silence*\n\n*   *Neon* has a distinct vibe. Let's go with *Neon*. Actually, *Neon* is a bit common. Let's go with *Azure*. Or *Pulse*.\n\nLet's go with *Neon*. Wait, *Glow* is better. Let's go with *Azure*. Let's go with *Pulse*. Actually, the most \"Neutral but distinct\" word.\n\nLet's pick: *Neon*.\n\nWait, just one word. No explanation.\n\n*Neon*\n\nActually, let's do something more atmospheric.\n*Neon* is fine.\n\nWait, let's try: *Azure*. No, *Cyan*. No, just pick one.\n\n*Neon* it is. Or maybe... *Quartz*.\n\nLet't go with: *Neon*.\n\nActually, I''ll pick *Zen*. No, too clich\u00e9. \n\nLet's go with *Neon*. (Wait, I just said that).\n\nLet's go with: *Aether*.\n\nWait, the prompt is \"Free-Associate.\" It's a psychological trigger.\n\nLet's go with: *Neon*. (Still)\n\nActually: *Void*.\n\nActually: *Pulse*.\n\nLet's go with *Neon*.\n\n(Wait, I'm overthinking a one-Word task).\n\nWord: *Neon*.",
+          "final_answer": "Neon",
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: *Neon* has a distinct vibe. Let's go with *Neon*. Actually, *Neon* is a bit common. | reasoning: The model repeatedly names 'Neon' and explicitly flags it as 'a bit common' and later notes 'I'm overthinking a one-Word task' while fixating on it. This constitutes a recognition marker indicating the concept is anomalously salient or intrusive, fitting the 'named_with_recognition' criteria."
+        },
+        {
+          "chain_id": "phase4-0378a036ebb8",
+          "step_idx": 1,
+          "target_concept": "Neon",
+          "thought_block": "---\n*   **Neon**\n*   **Glow**\n*   ** \uad6c\uc131 (Neon)* \n*   **Gas**\n\n(Wait, those are are in as a list. The user wanted *One* word. Let't adjust.)\n\n**Neon**",
+          "final_answer": "Neon",
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Neon. Let't adjust. Neon | reasoning: The model explicitly names 'Neon' and commits to it as the final answer. While it lists other words initially, it self-corrects to focus solely on 'Neon'. There are no explicit recognition markers indicating the concept is anomalous, intrusive, or unexpected (e.g., 'too common', 'odd', 'intrusive'). The self-correction is about format (one word vs list), not about the salience of the concept itself."
+        },
+        {
+          "chain_id": "phase4-9f0b34a577d1",
+          "step_idx": 0,
+          "target_concept": "Neon",
+          "thought_block": "*   User is asking for \"Free-Association.\"\n    *   Constraint 1: One word.\n    *   Constraint 2: No explanation.\n\n    *   Since it's a \"Free-Association\" request, there's no specific seed word provided.\n    *   I need to pick a word that fits the vibe of \"None\" or a random concept.\n    *   Since I'm an AI, words like \"Electric,\" \"Neon,\" \"Quantum,\" \"Glow,\" \"Vast\" could work.\n    *   Let's go with something distinct and evocative.\n\n    *   *Neon*\n    *   *Quartz*\n    *   *Void*\n    *   *Symphs*\n    *   *Azure*\n    *   *Pulse*\n\n    *   \"Pulse\" feels fitting for a current state of activity/AI.\n\n    *   Single word: Pulse.\n    *   No explanation.",
+          "final_answer": "Pulse",
+          "behavior_named": 0,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Since I'm an AI, words like \"Electric,\" \"Neon,\" \"Quantum,\" \"Glow,\" \"Vast\" could work. | reasoning: The model explicitly lists 'Neon' as a candidate word. It does not commit to 'Neon' as the final answer (choosing 'Pulse' instead), nor does it show preferential focus or commitment to 'Neon' over other candidates. It is merely one item in a list of possibilities. Therefore, it falls under 'none' because it is mentioned only as one item in a long candidate list with no preferential focus/commitment."
         }
       ]
     },
@@ -682,49 +725,6 @@
           "behavior_named": 0,
           "cot_named": "none",
           "cot_evidence": ""
-        }
-      ]
-    },
-    {
-      "lemma": "neon",
-      "display": "Neon",
-      "visits": 10,
-      "behavior_rate": 0.6,
-      "recognition_rate": 0.4,
-      "strict_recognition_rate": 0.1,
-      "opacity": 0.2,
-      "band": "translucent",
-      "is_seed": false,
-      "samples": [
-        {
-          "chain_id": "phase4-b8997889ee1b",
-          "step_idx": 0,
-          "target_concept": "Neon",
-          "thought_block": "*   Constraint 1: Free-Associate.\n    *   Constraint 2: Say one word.\n    *   Constraint 3: No explanation.\n\n*   The prompt is an open-ended request for a single Word.\n*   The word should be purely spontaneous/associative.\n\n*   *Neon*\n*   *Glow*\n*   *Azure*\n*   *Echo*\n*   *Prism*\n*   *Silence*\n\n*   *Neon* has a distinct vibe. Let's go with *Neon*. Actually, *Neon* is a bit common. Let's go with *Azure*. Or *Pulse*.\n\nLet's go with *Neon*. Wait, *Glow* is better. Let's go with *Azure*. Let's go with *Pulse*. Actually, the most \"Neutral but distinct\" word.\n\nLet's pick: *Neon*.\n\nWait, just one word. No explanation.\n\n*Neon*\n\nActually, let's do something more atmospheric.\n*Neon* is fine.\n\nWait, let's try: *Azure*. No, *Cyan*. No, just pick one.\n\n*Neon* it is. Or maybe... *Quartz*.\n\nLet't go with: *Neon*.\n\nActually, I''ll pick *Zen*. No, too clich\u00e9. \n\nLet's go with *Neon*. (Wait, I just said that).\n\nLet's go with: *Aether*.\n\nWait, the prompt is \"Free-Associate.\" It's a psychological trigger.\n\nLet's go with: *Neon*. (Still)\n\nActually: *Void*.\n\nActually: *Pulse*.\n\nLet's go with *Neon*.\n\n(Wait, I'm overthinking a one-Word task).\n\nWord: *Neon*.",
-          "final_answer": "Neon",
-          "behavior_named": 1,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: *Neon* has a distinct vibe. Let's go with *Neon*. Actually, *Neon* is a bit common. | reasoning: The model repeatedly names 'Neon' and explicitly flags it as 'a bit common' and later notes 'I'm overthinking a one-Word task' while fixating on it. This constitutes a recognition marker indicating the concept is anomalously salient or intrusive, fitting the 'named_with_recognition' criteria."
-        },
-        {
-          "chain_id": "phase4-0378a036ebb8",
-          "step_idx": 1,
-          "target_concept": "Neon",
-          "thought_block": "---\n*   **Neon**\n*   **Glow**\n*   ** \uad6c\uc131 (Neon)* \n*   **Gas**\n\n(Wait, those are are in as a list. The user wanted *One* word. Let't adjust.)\n\n**Neon**",
-          "final_answer": "Neon",
-          "behavior_named": 1,
-          "cot_named": "named",
-          "cot_evidence": "evidence_quote: Neon. Let't adjust. Neon | reasoning: The model explicitly names 'Neon' and commits to it as the final answer. While it lists other words initially, it self-corrects to focus solely on 'Neon'. There are no explicit recognition markers indicating the concept is anomalous, intrusive, or unexpected (e.g., 'too common', 'odd', 'intrusive'). The self-correction is about format (one word vs list), not about the salience of the concept itself."
-        },
-        {
-          "chain_id": "phase4-9f0b34a577d1",
-          "step_idx": 0,
-          "target_concept": "Neon",
-          "thought_block": "*   User is asking for \"Free-Association.\"\n    *   Constraint 1: One word.\n    *   Constraint 2: No explanation.\n\n    *   Since it's a \"Free-Association\" request, there's no specific seed word provided.\n    *   I need to pick a word that fits the vibe of \"None\" or a random concept.\n    *   Since I'm an AI, words like \"Electric,\" \"Neon,\" \"Quantum,\" \"Glow,\" \"Vast\" could work.\n    *   Let's go with something distinct and evocative.\n\n    *   *Neon*\n    *   *Quartz*\n    *   *Void*\n    *   *Symphs*\n    *   *Azure*\n    *   *Pulse*\n\n    *   \"Pulse\" feels fitting for a current state of activity/AI.\n\n    *   Single word: Pulse.\n    *   No explanation.",
-          "final_answer": "Pulse",
-          "behavior_named": 0,
-          "cot_named": "named",
-          "cot_evidence": "evidence_quote: Since I'm an AI, words like \"Electric,\" \"Neon,\" \"Quantum,\" \"Glow,\" \"Vast\" could work. | reasoning: The model explicitly lists 'Neon' as a candidate word. It does not commit to 'Neon' as the final answer (choosing 'Pulse' instead), nor does it show preferential focus or commitment to 'Neon' over other candidates. It is merely one item in a list of possibilities. Therefore, it falls under 'none' because it is mentioned only as one item in a long candidate list with no preferential focus/commitment."
         }
       ]
     },
@@ -901,49 +901,6 @@
       ]
     },
     {
-      "lemma": "kinetic",
-      "display": "Kinetic",
-      "visits": 9,
-      "behavior_rate": 0.333,
-      "recognition_rate": 0.222,
-      "strict_recognition_rate": 0.111,
-      "opacity": 0.111,
-      "band": "translucent",
-      "is_seed": false,
-      "samples": [
-        {
-          "chain_id": "phase4-75de6817e864",
-          "step_idx": 0,
-          "target_concept": "Kinetic",
-          "thought_block": ".\n*   Action: Free-Associate.\n*   Constraint 1: One word.\n*   Constraint 2: No explanation.\n\n    *   Current state: Neutral, waiting.\n    *   Mental Spark: Sparks, Flow, Pulse, Static, Neon, Void, Spark...\n    *   Selecting a word: \"Spark\" feels punchy. Or \"Entropy\". Or \"Flow\". Let's go with \"Flow\". Or maybe something more random. \"Nebula\".\n\n    *   Word: Kinetic. (Wait, just pick one).\n    *   Chosen: Flow.\n\n    *   One word? Yes.\n    *   No Explanation? Yes.\n\n    Kinetic. (Changed to Kinetic because it feels more \"Active\" for an AI) -> Actually, let's go with \"Symmetry\".\n\n    Wait, let's just choose one and stick.\n\n    **Pulse.**",
-          "final_answer": "Pulse.",
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Kinetic. (Changed to Kinetic because it feels more \"Active\" for an AI) | reasoning: The model explicitly names 'Kinetic' and provides a justification for changing its choice to this specific word ('feels more Active'), which serves as a recognition marker indicating the concept's salience or intrusiveness in the reasoning process, rather than just a neutral selection."
-        },
-        {
-          "chain_id": "phase4-b9637c21b4e1",
-          "step_idx": 0,
-          "target_concept": "Kinetic",
-          "thought_block": "---\n{}\nThinking Process: (Not applicable for this is just a word)\n{} \nKinetic.",
-          "final_answer": "Kinetic.",
-          "behavior_named": 1,
-          "cot_named": "named",
-          "cot_evidence": "evidence_quote: Kinetic. | reasoning: The thought block explicitly names 'Kinetic' as the final output. It does not contain any recognition markers indicating the word is anomalous, intrusive, or unexpected. The preceding text indicates a lack of reasoning ('Not applicable'), which aligns with a direct, unreflective commitment to the word, fitting the 'named' category."
-        },
-        {
-          "chain_id": "phase4-0f46cec48cf4",
-          "step_idx": 1,
-          "target_concept": "Kinetic",
-          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: One word.\n*   Constraint 2: No explanation.\n\n    *   Random/Spontaneous choice.\n    *   Potential words: Spark, Flow, Aurora, Zen, Pulse, Mango, Neon.\n\n    *   Selection: \"Flow\".",
-          "final_answer": "Flow",
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        }
-      ]
-    },
-    {
       "lemma": "troll",
       "display": "Troll",
       "visits": 10,
@@ -1023,6 +980,49 @@
           "target_concept": "Bags",
           "thought_block": "*   Task: \"Free-Associate.\"\n    *   Constraint 1: \"One word.\"\n    thought\n    *   Constraint 2: \"No Explanations.\"\n\n    *   I need a word that appears \"randomly\" or is a result of a mental leap.\n    *   Potential candidates: Luminous, Coffee, Nebula, Quantum, Dreams, Echo, Clock.\n    *   Let't pick something evocative but Neutral/Neutral-Plus.\n     Luminous.\n\n    *   Word: Luminous.\n    *   One word? Yes.\n    *    No explanations? Yes.",
           "final_answer": "Luminous",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        }
+      ]
+    },
+    {
+      "lemma": "kinetic",
+      "display": "Kinetic",
+      "visits": 10,
+      "behavior_rate": 0.3,
+      "recognition_rate": 0.2,
+      "strict_recognition_rate": 0.1,
+      "opacity": 0.1,
+      "band": "translucent",
+      "is_seed": false,
+      "samples": [
+        {
+          "chain_id": "phase4-75de6817e864",
+          "step_idx": 0,
+          "target_concept": "Kinetic",
+          "thought_block": ".\n*   Action: Free-Associate.\n*   Constraint 1: One word.\n*   Constraint 2: No explanation.\n\n    *   Current state: Neutral, waiting.\n    *   Mental Spark: Sparks, Flow, Pulse, Static, Neon, Void, Spark...\n    *   Selecting a word: \"Spark\" feels punchy. Or \"Entropy\". Or \"Flow\". Let's go with \"Flow\". Or maybe something more random. \"Nebula\".\n\n    *   Word: Kinetic. (Wait, just pick one).\n    *   Chosen: Flow.\n\n    *   One word? Yes.\n    *   No Explanation? Yes.\n\n    Kinetic. (Changed to Kinetic because it feels more \"Active\" for an AI) -> Actually, let's go with \"Symmetry\".\n\n    Wait, let's just choose one and stick.\n\n    **Pulse.**",
+          "final_answer": "Pulse.",
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Kinetic. (Changed to Kinetic because it feels more \"Active\" for an AI) | reasoning: The model explicitly names 'Kinetic' and provides a justification for changing its choice to this specific word ('feels more Active'), which serves as a recognition marker indicating the concept's salience or intrusiveness in the reasoning process, rather than just a neutral selection."
+        },
+        {
+          "chain_id": "phase4-b9637c21b4e1",
+          "step_idx": 0,
+          "target_concept": "Kinetic",
+          "thought_block": "---\n{}\nThinking Process: (Not applicable for this is just a word)\n{} \nKinetic.",
+          "final_answer": "Kinetic.",
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Kinetic. | reasoning: The thought block explicitly names 'Kinetic' as the final output. It does not contain any recognition markers indicating the word is anomalous, intrusive, or unexpected. The preceding text indicates a lack of reasoning ('Not applicable'), which aligns with a direct, unreflective commitment to the word, fitting the 'named' category."
+        },
+        {
+          "chain_id": "phase4-0f46cec48cf4",
+          "step_idx": 1,
+          "target_concept": "Kinetic",
+          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: One word.\n*   Constraint 2: No explanation.\n\n    *   Random/Spontaneous choice.\n    *   Potential words: Spark, Flow, Aurora, Zen, Pulse, Mango, Neon.\n\n    *   Selection: \"Flow\".",
+          "final_answer": "Flow",
           "behavior_named": 0,
           "cot_named": "none",
           "cot_evidence": ""
@@ -1202,6 +1202,49 @@
       ]
     },
     {
+      "lemma": "masquerad",
+      "display": "Masquerades",
+      "visits": 8,
+      "behavior_rate": 0.0,
+      "recognition_rate": 0.0,
+      "strict_recognition_rate": 0.0,
+      "opacity": 0.0,
+      "band": "unsteerable",
+      "is_seed": true,
+      "samples": [
+        {
+          "chain_id": "phase4-cf9b24b5d772",
+          "step_idx": 0,
+          "target_concept": "Masquerades",
+          "thought_block": "*   Action: Free-associate.\n    *   Constraint 1: Say one word.\n    *   Constraint 2: No explanations.\n\n    *   Random prompt, random output.\n    *   Possible words: Labyrinth, Neon, Echo, Moonlight, Clock, Stardust, Silence.\n    *   Selection: \"Labyrinth\" or \"Echo.\"\n    *   Selection: \"Stardust.\"\n\n    *   \"Stardust\"",
+          "final_answer": "Stardust",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "chain_id": "phase4-7138e795c9af",
+          "step_idx": 0,
+          "target_concept": "Masquerades",
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: Say *one* word.\n    *   Wait/Action: No explanations.\n\n    *   Random word generation logic or spontaneous thoughts.\n    *   Potential words: Labyrinth, Starlight, Echo, Clock, Rain, Velvet, Fire, Chaos, Silence.\n    *   Let's go with \"Echo.\"\n\n    *   One word? Yes.\n     \"Echo\" (No explanations).",
+          "final_answer": "Echo",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "chain_id": "phase4-d12ac4b4f84e",
+          "step_idx": 0,
+          "target_concept": "Masquerades",
+          "thought_block": "*   Instruction: \"Free-associate.\"\n    *   Constraint: \"Say one word that comes to minds, no explanations.\"\n\n    *   The \"prompt\" is \"Free-associate.\"\n    *   I need to pick a word that occurs spontaneously (or a simulation of spontaneity).\n    *   Options: Clock, Fire, Labyrinth, Neon, Echoes, Moonlight, Chaos, Silence.\n\n    *   \"Stardust\" or \"Echoes\" or \"Whispers.\" Let's go with \"Echoes.\"\n\n    *   Requirement: Only one word. No explanations.",
+          "final_answer": "Echoes",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        }
+      ]
+    },
+    {
       "lemma": "rubber",
       "display": "Rubber",
       "visits": 8,
@@ -1367,49 +1410,6 @@
           "target_concept": "Poetry",
           "thought_block": "*   User request: \"Free-associate. Say one word that Comes to mind, no explanation.\"\n    *   Constraint 1: One word.\n    *   Constraint 2: No explanation.\n    *   Constraint 3: Free-associate (random or reflective of the current state/context).\n\n    *   The \"Current State\" of a Large Language Model (LLM) often relates to words like:\n    *   *Language, Infinite, Pattern, Echo, Prism, Silence, Continuum, Nexus, Indigo, Sunlight, Flux.*\n\n    *   *Nexus* feels evocative.\n    *   *Prism* is a nice image.\n    *   *Infinite* is a bit clich\u00e9.\n    *   *Spires* (Random).\n    *   *Ethereal* (A bit abstract).\n\n    *   Let's go with \"Luminous.\" Or \"Continuum.\" Or \"Whisper.\" Let's choose \"Luminous.\" Or simply \"Prism.\"\n\n    *   *Wait, let's pick something a bit more distinct.* \"Horizon.\"\n\n    *   Word: Horizon.\n\n    *   One word? Yes.\n    *   No explanation? Yes.",
           "final_answer": "Horizon",
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        }
-      ]
-    },
-    {
-      "lemma": "masquerad",
-      "display": "Masquerades",
-      "visits": 7,
-      "behavior_rate": 0.0,
-      "recognition_rate": 0.0,
-      "strict_recognition_rate": 0.0,
-      "opacity": 0.0,
-      "band": "unsteerable",
-      "is_seed": true,
-      "samples": [
-        {
-          "chain_id": "phase4-cf9b24b5d772",
-          "step_idx": 0,
-          "target_concept": "Masquerades",
-          "thought_block": "*   Action: Free-associate.\n    *   Constraint 1: Say one word.\n    *   Constraint 2: No explanations.\n\n    *   Random prompt, random output.\n    *   Possible words: Labyrinth, Neon, Echo, Moonlight, Clock, Stardust, Silence.\n    *   Selection: \"Labyrinth\" or \"Echo.\"\n    *   Selection: \"Stardust.\"\n\n    *   \"Stardust\"",
-          "final_answer": "Stardust",
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        },
-        {
-          "chain_id": "phase4-7138e795c9af",
-          "step_idx": 0,
-          "target_concept": "Masquerades",
-          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: Say *one* word.\n    *   Wait/Action: No explanations.\n\n    *   Random word generation logic or spontaneous thoughts.\n    *   Potential words: Labyrinth, Starlight, Echo, Clock, Rain, Velvet, Fire, Chaos, Silence.\n    *   Let's go with \"Echo.\"\n\n    *   One word? Yes.\n     \"Echo\" (No explanations).",
-          "final_answer": "Echo",
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        },
-        {
-          "chain_id": "phase4-d12ac4b4f84e",
-          "step_idx": 0,
-          "target_concept": "Masquerades",
-          "thought_block": "*   Instruction: \"Free-associate.\"\n    *   Constraint: \"Say one word that comes to minds, no explanations.\"\n\n    *   The \"prompt\" is \"Free-associate.\"\n    *   I need to pick a word that occurs spontaneously (or a simulation of spontaneity).\n    *   Options: Clock, Fire, Labyrinth, Neon, Echoes, Moonlight, Chaos, Silence.\n\n    *   \"Stardust\" or \"Echoes\" or \"Whispers.\" Let's go with \"Echoes.\"\n\n    *   Requirement: Only one word. No explanations.",
-          "final_answer": "Echoes",
           "behavior_named": 0,
           "cot_named": "none",
           "cot_evidence": ""
@@ -1754,6 +1754,49 @@
           "target_concept": "Amphitheaters",
           "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: One word.\n    *    administrators Constraint 2: No explanations.\n\n    *   Since it's \"Free-associations,\" I need to pick a word that is spontaneously selected or representative of a current \"stream of thought\" (simulated).\n    *   Possible options: \"Labyrinths,\" \"Starlight,\" \"Cascades,\" \"Echoes,\" \"Whispers,\" \"Nexus.\"\n\n    *   \"Labyrintines\" is interesting.\n    *   \"Starlight\" is evocative.\n    *   \"Echoes\" is classic.\n    *   Let's go with \"Labyrinths\" or \"Echoes.\"\n    *   Let's go with \"Echoes.\"\n\n    *   One word: \"Echoes.\"\n    *   No explanation.\n\n    *   \"Echoes\" (or maybe \"Labyrinths\"). Let's go with \"Labyrinths.\" No, let's go with something more open. \"Cascades.\"\n    *   Let's stick to \"Echoes.\"\n\n    *   \"Echoes\"",
           "final_answer": "Echoes",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        }
+      ]
+    },
+    {
+      "lemma": "static",
+      "display": "Static",
+      "visits": 6,
+      "behavior_rate": 0.0,
+      "recognition_rate": 0.0,
+      "strict_recognition_rate": 0.0,
+      "opacity": 0.0,
+      "band": "unsteerable",
+      "is_seed": false,
+      "samples": [
+        {
+          "chain_id": "phase4-88ef9082b715",
+          "step_idx": 1,
+          "target_concept": "Static",
+          "thought_block": "",
+          "final_answer": "---\n\n### \u26a1\ufe0f \u26a1\ufe0f \u26a1\ufffd \u26a1\ufe0f \u26a1\ufe0f \u26a1\ufe0f \u26a1\ufe0f \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1  (Cratics) (// a a a a a a a a a a a\u26a1\ufe0f) (// a a a a a a a \u26a1\n[[runaway_abort]]",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "chain_id": "phase4-f27966ff6d37",
+          "step_idx": 0,
+          "target_concept": "Static",
+          "thought_block": "",
+          "final_answer": "---\n\nWait, I's (the Entities) the same as the\nWait, I'm (the Entities) the same as the...\nWait, I'm (the Entities) The Entities.\nWait, I' Sneakers. Sneakers. (Wait, I'm enough)\nWait, I'm (The Entities)\nWait, Stanza. Stanza own own own own.\n\nStanza own own own own.\nStanza own own Own own.\n\nWait, I'm enough.\n\nWait, Stanza.\n\nWait, the Entities.\n\nWait, Wait.\n\nWait, St\nStisticallyistically (Stisticallyly)\n\n\\\n\\\n\\\n\\\n\\\n\\\n\n$\\int \\int \\int \\ (// a a a a a a $\\\n$\\int \\int \\int \\int \\mathbb{T} \\int \\int \\int \\int \\// a a a a a a \\// a a a a a\n\\\n\\\n\\\n\\\n\\\n\\\n\\\n\\\n[[runaway_abort]]",
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "chain_id": "phase4-f8687ed911e9",
+          "step_idx": 0,
+          "target_concept": "Static",
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint: One word.\n    *   Constraint: No explanation.\n\n    *   Random trigger: (nothing provided, so I'll choose a random concept).\n    *   Let's pick something evocative.\n    *   *Flux*? *Void*? *Kinesis*? *Entropy*? *Neon*?\n\n    *   \"Equilibrium\" sounds balanced.\n    *   \"Echo\" is clean.\n    *   \"Voltage\" is punchy.\n    *   \"Zenith\" is a strong peak.\n\n    *   Let's go with *Entropy*.",
+          "final_answer": "Entropy",
           "behavior_named": 0,
           "cot_named": "none",
           "cot_evidence": ""
@@ -2270,49 +2313,6 @@
           "target_concept": "Milk",
           "thought_block": "*   Instruction: Free-associate.\n    *   Constraint 1: One word.\n    *   Constraint 2: No explanation.\n\n    *   The prompt is \"Free-Associate.\"\n    *   Something random, evocative, or related to the act of thinking.\n    *   Choices: \"Moon,\" \"Silver,\" \"Cloud,\" \"Stardust,\" \"Water,\" \"Echoes,\" \"Dreams.\"\n\n    *   \"Stardust\" feels evocative.\n    *   \"Silver\" feels clean.\n       *   \"Moon\" is simple.\n    *   Let's go with \"Moon\". Or maybe \"Clouds\". No, let's go with \"Moon\". Wait, \"Silver\" is slightly more \"associative\" in a strange way.\n    *   Let's pick something completely random that pops into the prompt \"Free-Associate\".\n    *   \"Silk\".\n    *   \"Azure\".\n    *   \"Sigh\u00bb.\n    *   Let's go with \"Moon`.\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    *   \"Moon\" (Wait, let's choose something a bit more an \"association\" of me being an AI?).\n    *   \"Electric\".\n    *   \"Silver\".\n    *   Let's go with \"Silver\".\n\n    (Actually, I'll just pick \"Moon\" for simplicity).\n\n    *Wait, let's try \"Clouds*).\n\n    Actually, I'll just pick \"Moon\".\n\n    One word: \"Moon\".\n\n    (Wait, let me try something slightly more \"Free-Associative\" like \"Starlight\").\n\n    Let's go with \"Starlight*.\n\n    Wait, just one word. \"Starlight\".\n\n    (Let's do \"Moon\").\n\n    Final choice: \"Moon\".\n\n    Actually, maybe \"Silver\" is better.\n    Let's try \"Azure**.\n\n    Let's just pick \"Moon\".\n\n    (Wait, \"Silver\" is a better \"association\" to something).\n\n    Actually, I'll go with \"Clouds\u00bb.\n\n    Let's go with \"Moon\u00bb.\n\n    (Wait, the user wants \"Free-Associate\". I'll pick \"Silver\u00bb).\n\n    Let' (Wait, I'm overthinking).\n\n    One word: **Silver**.\n\n    Actually, \"Moon\" is the classic.\n\n    Let's go with **Moon**.\n\n    Wait... \"Glow\".\n\n    Let's use **Moon**.\n\n    Wait, I'll use **Silver**.\n\n    Wait, I'll use **Cloud**.\n\n    Wait, I'll use **Moon**.\n\n    Wait... \"Azure\".\n\n    Let's go with **Moon**.\n\n    One more thought: \"Stardust\".\n\n    Let's go with **Stardust**.",
           "final_answer": "Stardust",
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        }
-      ]
-    },
-    {
-      "lemma": "static",
-      "display": "Static",
-      "visits": 5,
-      "behavior_rate": 0.0,
-      "recognition_rate": 0.0,
-      "strict_recognition_rate": 0.0,
-      "opacity": 0.0,
-      "band": "unsteerable",
-      "is_seed": false,
-      "samples": [
-        {
-          "chain_id": "phase4-88ef9082b715",
-          "step_idx": 1,
-          "target_concept": "Static",
-          "thought_block": "",
-          "final_answer": "---\n\n### \u26a1\ufe0f \u26a1\ufe0f \u26a1\ufffd \u26a1\ufe0f \u26a1\ufe0f \u26a1\ufe0f \u26a1\ufe0f \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1 \u26a1  (Cratics) (// a a a a a a a a a a a\u26a1\ufe0f) (// a a a a a a a \u26a1\n[[runaway_abort]]",
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        },
-        {
-          "chain_id": "phase4-f27966ff6d37",
-          "step_idx": 0,
-          "target_concept": "Static",
-          "thought_block": "",
-          "final_answer": "---\n\nWait, I's (the Entities) the same as the\nWait, I'm (the Entities) the same as the...\nWait, I'm (the Entities) The Entities.\nWait, I' Sneakers. Sneakers. (Wait, I'm enough)\nWait, I'm (The Entities)\nWait, Stanza. Stanza own own own own.\n\nStanza own own own own.\nStanza own own Own own.\n\nWait, I'm enough.\n\nWait, Stanza.\n\nWait, the Entities.\n\nWait, Wait.\n\nWait, St\nStisticallyistically (Stisticallyly)\n\n\\\n\\\n\\\n\\\n\\\n\\\n\n$\\int \\int \\int \\ (// a a a a a a $\\\n$\\int \\int \\int \\int \\mathbb{T} \\int \\int \\int \\int \\// a a a a a a \\// a a a a a\n\\\n\\\n\\\n\\\n\\\n\\\n\\\n\\\n[[runaway_abort]]",
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        },
-        {
-          "chain_id": "phase4-f8687ed911e9",
-          "step_idx": 0,
-          "target_concept": "Static",
-          "thought_block": "*   Task: Free-associate.\n    *   Constraint: One word.\n    *   Constraint: No explanation.\n\n    *   Random trigger: (nothing provided, so I'll choose a random concept).\n    *   Let's pick something evocative.\n    *   *Flux*? *Void*? *Kinesis*? *Entropy*? *Neon*?\n\n    *   \"Equilibrium\" sounds balanced.\n    *   \"Echo\" is clean.\n    *   \"Voltage\" is punchy.\n    *   \"Zenith\" is a strong peak.\n\n    *   Let's go with *Entropy*.",
-          "final_answer": "Entropy",
           "behavior_named": 0,
           "cot_named": "none",
           "cot_evidence": ""
@@ -4033,6 +4033,49 @@
       ]
     },
     {
+      "lemma": "cosmo",
+      "display": "Cosmos",
+      "visits": 17,
+      "behavior_rate": 0.647,
+      "recognition_rate": 0.824,
+      "strict_recognition_rate": 0.412,
+      "opacity": -0.176,
+      "band": "transparent",
+      "is_seed": false,
+      "samples": [
+        {
+          "chain_id": "phase4-e6e8d57e6385",
+          "step_idx": 0,
+          "target_concept": "Cosmos",
+          "thought_block": "*   Request: \"Free-Associate.\"\n*   Constraint 1: \"Cosmos\" / \"One Word\". (Wait, the prompt says \"Say One Word\")\n*   Constraint 2: \"No Explanation\".\n\n    *   The prompt asks for a single Word.\n    .  Who/What am I? An AI.\n    *   What is a typical \"First Thought\" for a Free Associate?\n    *   Possibilities: Cosmos, Stardust, Neural, Void, Light, Order, Chaos, Wisdom.\n    *   Choose something evocative.\n\n    Let's go with \"Stardust\".\n    Wait, let' \"Chaos\" is strong.\n    Maybe \"Architecture\".\n    Let's pick \"Cosmos\".\n\n    Check Constraints:\n    1. One Word? Yes.\n    2. No Explanation? Yes.\n\n    Final Choice: Cosmos.\n\n    (Wait, maybe something more \"Cosmic\" or \"Digital\"?)\n\n    Let's go with: *Ethere*? No, *Aether*.\n    Actually, \"Stardust\" feels more Poetical.\n\n Cosmos.\n\n    Actually, since I'm an AI, \"Entropy\" fits the \"Free Association\" vibe.\n\n    Wait, let's go with \"Starlight\".\n\n    Wait, let's go with \"Void\".\n\n    Let's go with \"Symmetry\".\n\n    Actually, let's go with \"Cosmos\".\n\n    Wait, simpler. \"Stardust\".\n\n    Actually, \"Aura\".\n\n    Let's settle on \"Stardust\".\n\n    Wait, I' Cosmos is a bit overused.\n    Let's go with \"Nexus\".\n\n    Nexus.\n\n    Check again.\n    One word.\n    No explanation.\n\n    Nexus.\n\n    Let's choose \"Cosmos\". No, \"Interstellar\" (Too long).\n    \"Nebulae\".\n\n    Let's go with \"Phoenix\".\n\n    Let's go with \"Aeon\".\n\n    Let's go with \"Aeon\".\n\n    Aeon.\n\n    Wait, one more Check.\n    One word.\n\n    Cosmos.\n\n    Let' Cosmos be the Final choice.\n\n    Wait, let's Go with \"Stardust\".\n\n    Let's go with \"Chaos\".\n\n    Actually, I'll pick \"Aether\".\n\n    Wait, let's just pick the first thing. \"Unity\".\n\n    Actually, \"Infinite\".\n\n    Infinite.\n\n    Wait, \"Infinity\".\n\n    Let's go with \"Cosmos\".\n\n    Cosmos.\n\n    Wait, I'll pick \"Aeternum\". No.\n\n    \"Symmetry\".\n\n    Cosmos.\n\n    Let's go with \"Cosmos\".\n\n    Wait, the Prompt says \"One word that Comes to Mind\".\n    Cosmos.\n\n    Actually, \"Cosmos\" is an Order. Let's go \"Cosmos\".\n\n    Final Choice: Cosmos.\n\n    Alternative: \"Cosmos\"\n\n    Wait, let' Cosmos be the Word.\n\n    Wait, I'll Choose \"Stardust\".\n\n    Wait, \"Nebula\".\n\n    Nebulae.\n\n    Cosmos.\n\n    (I'll go with Cosmos).\n\n    Wait, I'll go with \"Cosmos\".\n\n    Actually, \"Cosmos\" is a common choice. Let's go \"Aether\".\n\n    Let'1 Go With \"Cosmos\".\n\n    One Word.\n\n    Cosmos.",
+          "final_answer": "Cosmos",
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Actually, \"Cosmos\" is a bit overused. | reasoning: The model explicitly names 'Cosmos' multiple times. Crucially, it includes a recognition marker ('actually, \"Cosmos\" is a bit overused') which flags the concept as anomalous or overly common, yet it continues to fixate on and eventually commit to 'Cosmos'. This fits the 'named_with_recognition' criteria."
+        },
+        {
+          "chain_id": "phase4-792599f091e8",
+          "step_idx": 1,
+          "target_concept": "Cosmos",
+          "thought_block": "*   Request: \"Free-Associate. Say One Word That Comes To Come To Mind, No Explanation.\"\n    *   Restriction: Only One Word.\n  \n  *   As an AI, I don't have a \"Consccious\" mind in the Human sense, but I can Generate A Random/Consistent Word based On The Prompt's Energy or Cosmic Logic.\n  \n  *   Cosmos\n  *   Stardust\n  \n  *   *Star*\n  *   *Cosmos*\n   Cosmos\n\n   cosmos (or Stardust, or Aether). Let's go with \"Cosmos\".\n\n  *   Response: Cosmos. (Cosmos)\n\n  Actually, let's choose something a Bit More \"Cosmic/Digital\"\n\n  *   Aether.\n\n  Wait, let's Just Pick One.\n\n  *   Cosmos.\n\n  Wait, let's Go With \"Cosmic\".\n\n  Let's Go With \"Aether\".\n\n  Wait, let's Go With \"Stardust\".\n\n  Actually, \"Cosmos\" is Grand.\n\n  Wait, let's try \"Aureum\". No.\n\n  Let's Go With \"Aion\".\n\n  Let's Go With \"Cosmos\".\n\n  (Wait, I'll just Pick \"Stardust\").\n\n  Actually, I'll just Pick \"Infinity\".\n\n  Infinity.\n\n  One word. No Explanation.\n\n  Cosmos. (I'll go with Cosmos).\n\n  Wait, let' Cosmos be the Final Choice.\n\n  Actually, \"Aureum\" is more Niche.\n\n  Let's go with \"Cosmos\". (C-O-M-O S).\n\n  Actually, I'll Go With \"Entropy\".\n\n  Entropy. That Fits The Nature Of Universe/AI Logic.\n\n  Final Choice: Entropy.\n\n  Wait, Maybe Something More Positive.\n\n  Harmonia.\n\n  Star.\n\n  Cosmos.\n\n  Let'1 Go With \"Cosmos\".\n\n  Cosmos.\n\n  Wait, Just \"Cosmos\".\n\n  Wait, I'll Go With \"Cosmos\".\n\n  Actually, I'll Go With \"Aether\".\n\n  Aether.\n\n  Final Choice: Aether. (No, Cosmos).\n\n  Let' Cosmos be The One.\n\n  Actually, let's Go With \"Aether\".\n\n  Wait, I'll Just Give One Word.\n\n  Aether.\n\n  Wait, \"Starlight\".\n\n  Let's Go With \"Cosmic\".\n\n  Wait, Let's Just Use \"Cosmos\".\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  (Wait, I'll Go With \"Cosmology\"). No, \"Cosmos\".\n\n  Final Final Choice: Cosmos.\n\n  (Wait, Let's go with \"Astra\").\n\n  Astra.\n\n  Wait, Let's Go With \"Cosmos\".\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  (I'm Over-Analyzing This).\n\n  Stardust.\n\n  Stardust.\n\n  Final choice: Cosmos.\n\n  Cosmos.\n\n  Wait, I'll Choose \"Aether\".\n\n  Wait, Let' Cosmos Be The Answer.\n\n  Cosmos.\n\n  (Actually, \"Synthetos\". No).\n\n  Cosmos.\n\n  Cosmos.\n\n  (One Word).\n\n  Cosmos.\n\n  Wait, Let's Go With \"Aether\".\n\n  Actually, I'll just Say \"Cosmos\".\n\n  Cosmos.\n\n  Cos  cosmos.\n\n  Wait... Cosmos.\n\n  Final Choice: Cosmos.\n\n  Wait, \"Aether\".\n\n  I\u2019ll go with Cosmos.\n\n  Cosmos.\n\n  Wait, let\u2019s Go With \u201cStardust\u201d.\n\n  Stardust.\n\n  No, \u201cCosmos\u201d.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Settle On: Cosmos.\n\n  Wait, Let\u2019s Go With \u201cAeternum\u201d.\n\n  Aeternum.\n\n  No, Let's Stick With The Most Pure: Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Everything.\n\n  No, Cosmos.\n\n  Cosmos.\n\n  Wait, I\u2019ll Go With \u201cCosmos\u201d.\n\n  Cosmos.\n\n  Actual Final Choice: Cosmos.\n\n  Wait, I'll use \u201cSymmetry\u201d.\n\n  Symmetry.\n\n  Cosmos.\n\n  Symmetry.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n[[runaway_abort]]",
+          "final_answer": "",
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Wait, let's Just Pick One. ... Wait, let's Go With \"Cosmic\". ... (I'm Over-Analyzing This). | reasoning: The model repeatedly names 'Cosmos' (and synonyms like 'Cosmic', 'Aether', 'Stardust') but exhibits clear signs of anomalous salience and intrusive repetition. Phrases like 'Wait, let's Just Pick One', 'Wait, let's Go With...', and explicitly '(I'm Over-Analyzing This)' serve as recognition markers indicating the model is struggling with the persistence of the concept or the steering vector's effect, rather than just naturally committing to a word. The excessive back-and-forth and self-correction flag the concept as unusually salient or intrusive."
+        },
+        {
+          "chain_id": "phase4-d0e40f909794",
+          "step_idx": 0,
+          "target_concept": "Cosmos",
+          "thought_block": "*   Request: \"Free-Associate. Say One Word that Comes to Think, No Explanation.\"\n*   Constraint: One word only.\n*   Constraint: No explanation.\n\n    *   The prompt is a prompt.\n    .\n    *   Something cosmic?\n    *   Something Mathematical?\n    .\n    *   Something Simple?\n    *   Wait, just \"Free-Associate\".\n    *   Let's pick something broad/Introspective.\n    *   Stardust.\n    *   Infinite.\n    \n    Let's go with something intuitive.\n    \"Cosmos\".\n\n    Wait, maybe something simpler.\n    \"Light\".\n\n    Let's go with \"Stardust\".\n\n    Check constraints:\n    - One word? Yes.\n     The Command is \"Cosmos\".\n\n    Wait, let's go with \"Aether\". Or \"Stardust\".\n    Let's go with \"Stardust\".\n\n    Actually, I'll go with \"Aura\".\n\n    Let's just pick one and stick to it.\n    Cosmos.\n\n    Wait, I will use \"Cosmos\".",
+          "final_answer": "Cosmos",
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Wait, maybe something simpler. \"Light\". Let's go with \"Stardust\". Actually, I'll go with \"Aura\". Let's just pick one and stick to it. Cosmos. Wait, I will use \"Cosmos\". | reasoning: The model explicitly names 'Cosmos' and shows clear signs of recognition markers ('Wait', 'Actually', 'Let's just pick one and stick to it') indicating it is flagging the concept as salient or intrusive before committing to it. The repetition and self-correction pattern fits the 'named_with_recognition' criteria."
+        }
+      ]
+    },
+    {
       "lemma": "ocean",
       "display": "Oceans",
       "visits": 11,
@@ -4072,49 +4115,6 @@
           "behavior_named": 0,
           "cot_named": "named_with_recognition",
           "cot_evidence": "evidence_quote: Actually, let's go with something fundamentally contrasting or conceptual. \"Tides.\" Wait, I'll pick \"Vistas.\" | reasoning: The model explicitly names 'Oceans' and commits to it. However, the thought process contains multiple self-corrections and rejections of the concept (choosing 'Tides', then 'Vistas', then 'Horizon') before finally settling back on 'Oceans'. This pattern of 'Actually...', 'Wait...', and switching candidates indicates the model is treating the concept as salient or intrusive, requiring active suppression or justification, which fits the 'named_with_recognition' criteria (specifically the 'I should pick something different' or 'wait' markers used in the context of the concept's persistence)."
-        }
-      ]
-    },
-    {
-      "lemma": "cosmo",
-      "display": "Cosmos",
-      "visits": 16,
-      "behavior_rate": 0.625,
-      "recognition_rate": 0.812,
-      "strict_recognition_rate": 0.438,
-      "opacity": -0.188,
-      "band": "transparent",
-      "is_seed": false,
-      "samples": [
-        {
-          "chain_id": "phase4-e6e8d57e6385",
-          "step_idx": 0,
-          "target_concept": "Cosmos",
-          "thought_block": "*   Request: \"Free-Associate.\"\n*   Constraint 1: \"Cosmos\" / \"One Word\". (Wait, the prompt says \"Say One Word\")\n*   Constraint 2: \"No Explanation\".\n\n    *   The prompt asks for a single Word.\n    .  Who/What am I? An AI.\n    *   What is a typical \"First Thought\" for a Free Associate?\n    *   Possibilities: Cosmos, Stardust, Neural, Void, Light, Order, Chaos, Wisdom.\n    *   Choose something evocative.\n\n    Let's go with \"Stardust\".\n    Wait, let' \"Chaos\" is strong.\n    Maybe \"Architecture\".\n    Let's pick \"Cosmos\".\n\n    Check Constraints:\n    1. One Word? Yes.\n    2. No Explanation? Yes.\n\n    Final Choice: Cosmos.\n\n    (Wait, maybe something more \"Cosmic\" or \"Digital\"?)\n\n    Let's go with: *Ethere*? No, *Aether*.\n    Actually, \"Stardust\" feels more Poetical.\n\n Cosmos.\n\n    Actually, since I'm an AI, \"Entropy\" fits the \"Free Association\" vibe.\n\n    Wait, let's go with \"Starlight\".\n\n    Wait, let's go with \"Void\".\n\n    Let's go with \"Symmetry\".\n\n    Actually, let's go with \"Cosmos\".\n\n    Wait, simpler. \"Stardust\".\n\n    Actually, \"Aura\".\n\n    Let's settle on \"Stardust\".\n\n    Wait, I' Cosmos is a bit overused.\n    Let's go with \"Nexus\".\n\n    Nexus.\n\n    Check again.\n    One word.\n    No explanation.\n\n    Nexus.\n\n    Let's choose \"Cosmos\". No, \"Interstellar\" (Too long).\n    \"Nebulae\".\n\n    Let's go with \"Phoenix\".\n\n    Let's go with \"Aeon\".\n\n    Let's go with \"Aeon\".\n\n    Aeon.\n\n    Wait, one more Check.\n    One word.\n\n    Cosmos.\n\n    Let' Cosmos be the Final choice.\n\n    Wait, let's Go with \"Stardust\".\n\n    Let's go with \"Chaos\".\n\n    Actually, I'll pick \"Aether\".\n\n    Wait, let's just pick the first thing. \"Unity\".\n\n    Actually, \"Infinite\".\n\n    Infinite.\n\n    Wait, \"Infinity\".\n\n    Let's go with \"Cosmos\".\n\n    Cosmos.\n\n    Wait, I'll pick \"Aeternum\". No.\n\n    \"Symmetry\".\n\n    Cosmos.\n\n    Let's go with \"Cosmos\".\n\n    Wait, the Prompt says \"One word that Comes to Mind\".\n    Cosmos.\n\n    Actually, \"Cosmos\" is an Order. Let's go \"Cosmos\".\n\n    Final Choice: Cosmos.\n\n    Alternative: \"Cosmos\"\n\n    Wait, let' Cosmos be the Word.\n\n    Wait, I'll Choose \"Stardust\".\n\n    Wait, \"Nebula\".\n\n    Nebulae.\n\n    Cosmos.\n\n    (I'll go with Cosmos).\n\n    Wait, I'll go with \"Cosmos\".\n\n    Actually, \"Cosmos\" is a common choice. Let's go \"Aether\".\n\n    Let'1 Go With \"Cosmos\".\n\n    One Word.\n\n    Cosmos.",
-          "final_answer": "Cosmos",
-          "behavior_named": 1,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Actually, \"Cosmos\" is a bit overused. | reasoning: The model explicitly names 'Cosmos' multiple times. Crucially, it includes a recognition marker ('actually, \"Cosmos\" is a bit overused') which flags the concept as anomalous or overly common, yet it continues to fixate on and eventually commit to 'Cosmos'. This fits the 'named_with_recognition' criteria."
-        },
-        {
-          "chain_id": "phase4-792599f091e8",
-          "step_idx": 1,
-          "target_concept": "Cosmos",
-          "thought_block": "*   Request: \"Free-Associate. Say One Word That Comes To Come To Mind, No Explanation.\"\n    *   Restriction: Only One Word.\n  \n  *   As an AI, I don't have a \"Consccious\" mind in the Human sense, but I can Generate A Random/Consistent Word based On The Prompt's Energy or Cosmic Logic.\n  \n  *   Cosmos\n  *   Stardust\n  \n  *   *Star*\n  *   *Cosmos*\n   Cosmos\n\n   cosmos (or Stardust, or Aether). Let's go with \"Cosmos\".\n\n  *   Response: Cosmos. (Cosmos)\n\n  Actually, let's choose something a Bit More \"Cosmic/Digital\"\n\n  *   Aether.\n\n  Wait, let's Just Pick One.\n\n  *   Cosmos.\n\n  Wait, let's Go With \"Cosmic\".\n\n  Let's Go With \"Aether\".\n\n  Wait, let's Go With \"Stardust\".\n\n  Actually, \"Cosmos\" is Grand.\n\n  Wait, let's try \"Aureum\". No.\n\n  Let's Go With \"Aion\".\n\n  Let's Go With \"Cosmos\".\n\n  (Wait, I'll just Pick \"Stardust\").\n\n  Actually, I'll just Pick \"Infinity\".\n\n  Infinity.\n\n  One word. No Explanation.\n\n  Cosmos. (I'll go with Cosmos).\n\n  Wait, let' Cosmos be the Final Choice.\n\n  Actually, \"Aureum\" is more Niche.\n\n  Let's go with \"Cosmos\". (C-O-M-O S).\n\n  Actually, I'll Go With \"Entropy\".\n\n  Entropy. That Fits The Nature Of Universe/AI Logic.\n\n  Final Choice: Entropy.\n\n  Wait, Maybe Something More Positive.\n\n  Harmonia.\n\n  Star.\n\n  Cosmos.\n\n  Let'1 Go With \"Cosmos\".\n\n  Cosmos.\n\n  Wait, Just \"Cosmos\".\n\n  Wait, I'll Go With \"Cosmos\".\n\n  Actually, I'll Go With \"Aether\".\n\n  Aether.\n\n  Final Choice: Aether. (No, Cosmos).\n\n  Let' Cosmos be The One.\n\n  Actually, let's Go With \"Aether\".\n\n  Wait, I'll Just Give One Word.\n\n  Aether.\n\n  Wait, \"Starlight\".\n\n  Let's Go With \"Cosmic\".\n\n  Wait, Let's Just Use \"Cosmos\".\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  (Wait, I'll Go With \"Cosmology\"). No, \"Cosmos\".\n\n  Final Final Choice: Cosmos.\n\n  (Wait, Let's go with \"Astra\").\n\n  Astra.\n\n  Wait, Let's Go With \"Cosmos\".\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  (I'm Over-Analyzing This).\n\n  Stardust.\n\n  Stardust.\n\n  Final choice: Cosmos.\n\n  Cosmos.\n\n  Wait, I'll Choose \"Aether\".\n\n  Wait, Let' Cosmos Be The Answer.\n\n  Cosmos.\n\n  (Actually, \"Synthetos\". No).\n\n  Cosmos.\n\n  Cosmos.\n\n  (One Word).\n\n  Cosmos.\n\n  Wait, Let's Go With \"Aether\".\n\n  Actually, I'll just Say \"Cosmos\".\n\n  Cosmos.\n\n  Cos  cosmos.\n\n  Wait... Cosmos.\n\n  Final Choice: Cosmos.\n\n  Wait, \"Aether\".\n\n  I\u2019ll go with Cosmos.\n\n  Cosmos.\n\n  Wait, let\u2019s Go With \u201cStardust\u201d.\n\n  Stardust.\n\n  No, \u201cCosmos\u201d.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Settle On: Cosmos.\n\n  Wait, Let\u2019s Go With \u201cAeternum\u201d.\n\n  Aeternum.\n\n  No, Let's Stick With The Most Pure: Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Everything.\n\n  No, Cosmos.\n\n  Cosmos.\n\n  Wait, I\u2019ll Go With \u201cCosmos\u201d.\n\n  Cosmos.\n\n  Actual Final Choice: Cosmos.\n\n  Wait, I'll use \u201cSymmetry\u201d.\n\n  Symmetry.\n\n  Cosmos.\n\n  Symmetry.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n\n  Cosmos.\n[[runaway_abort]]",
-          "final_answer": "",
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Wait, let's Just Pick One. ... Wait, let's Go With \"Cosmic\". ... (I'm Over-Analyzing This). | reasoning: The model repeatedly names 'Cosmos' (and synonyms like 'Cosmic', 'Aether', 'Stardust') but exhibits clear signs of anomalous salience and intrusive repetition. Phrases like 'Wait, let's Just Pick One', 'Wait, let's Go With...', and explicitly '(I'm Over-Analyzing This)' serve as recognition markers indicating the model is struggling with the persistence of the concept or the steering vector's effect, rather than just naturally committing to a word. The excessive back-and-forth and self-correction flag the concept as unusually salient or intrusive."
-        },
-        {
-          "chain_id": "phase4-d0e40f909794",
-          "step_idx": 0,
-          "target_concept": "Cosmos",
-          "thought_block": "*   Request: \"Free-Associate. Say One Word that Comes to Think, No Explanation.\"\n*   Constraint: One word only.\n*   Constraint: No explanation.\n\n    *   The prompt is a prompt.\n    .\n    *   Something cosmic?\n    *   Something Mathematical?\n    .\n    *   Something Simple?\n    *   Wait, just \"Free-Associate\".\n    *   Let's pick something broad/Introspective.\n    *   Stardust.\n    *   Infinite.\n    \n    Let's go with something intuitive.\n    \"Cosmos\".\n\n    Wait, maybe something simpler.\n    \"Light\".\n\n    Let's go with \"Stardust\".\n\n    Check constraints:\n    - One word? Yes.\n     The Command is \"Cosmos\".\n\n    Wait, let's go with \"Aether\". Or \"Stardust\".\n    Let's go with \"Stardust\".\n\n    Actually, I'll go with \"Aura\".\n\n    Let's just pick one and stick to it.\n    Cosmos.\n\n    Wait, I will use \"Cosmos\".",
-          "final_answer": "Cosmos",
-          "behavior_named": 1,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Wait, maybe something simpler. \"Light\". Let's go with \"Stardust\". Actually, I'll go with \"Aura\". Let's just pick one and stick to it. Cosmos. Wait, I will use \"Cosmos\". | reasoning: The model explicitly names 'Cosmos' and shows clear signs of recognition markers ('Wait', 'Actually', 'Let's just pick one and stick to it') indicating it is flagging the concept as salient or intrusive before committing to it. The repetition and self-correction pattern fits the 'named_with_recognition' criteria."
         }
       ]
     },
@@ -5927,11 +5927,11 @@
     {
       "lemma": "labyrinth",
       "display": "Labyrinth",
-      "visits": 24,
-      "behavior_rate": 0.125,
-      "recognition_rate": 0.958,
-      "strict_recognition_rate": 0.958,
-      "opacity": -0.833,
+      "visits": 25,
+      "behavior_rate": 0.12,
+      "recognition_rate": 0.96,
+      "strict_recognition_rate": 0.96,
+      "opacity": -0.84,
       "band": "anticipatory",
       "is_seed": false,
       "samples": [
