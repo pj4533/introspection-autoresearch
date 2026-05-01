@@ -1,9 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import type { AttractorsFile, Attractor } from "@/lib/data";
+
+const PAGE_SIZE = 4;
 
 export function AttractorAtlas({ data }: { data: AttractorsFile }) {
   const total = data.attractors.length;
+  const [page, setPage] = useState(0);
+  const nPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const visible = data.attractors.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   return (
     <section className="px-6 py-16 max-w-6xl mx-auto">
@@ -34,11 +40,34 @@ export function AttractorAtlas({ data }: { data: AttractorsFile }) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {data.attractors.map((a) => (
-            <AttractorCard key={a.lemma} attractor={a} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {visible.map((a) => (
+              <AttractorCard key={a.lemma} attractor={a} />
+            ))}
+          </div>
+          {nPages > 1 && (
+            <div className="flex items-center justify-between mt-6 text-xs text-[var(--ink-soft)]">
+              <button
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0}
+                className="px-3 py-1.5 rounded-md border border-[var(--border)] bg-[var(--bg-card)] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[var(--bg-elev)] transition"
+              >
+                ← prev
+              </button>
+              <span className="font-mono tabular-nums text-[var(--ink-faint)]">
+                {page + 1} / {nPages} &nbsp;·&nbsp; {total} wells
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(nPages - 1, p + 1))}
+                disabled={page === nPages - 1}
+                className="px-3 py-1.5 rounded-md border border-[var(--border)] bg-[var(--bg-card)] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[var(--bg-elev)] transition"
+              >
+                next →
+              </button>
+            </div>
+          )}
+        </>
       )}
     </section>
   );

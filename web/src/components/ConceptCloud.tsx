@@ -93,9 +93,9 @@ export function ConceptCloud({ data }: { data: ForbiddenMap }) {
       const color = new THREE.Color(colorHex);
       colors.push(color.r, color.g, color.b);
 
-      const baseSize = 6;
+      const baseSize = 1.6;
       const visitBoost = Math.log(c.visits + 1) / logMax;
-      sizes.push(baseSize + visitBoost * 22);
+      sizes.push(baseSize + visitBoost * 4.4);
     }
 
     const cloudGeo = new THREE.BufferGeometry();
@@ -118,7 +118,7 @@ export function ConceptCloud({ data }: { data: ForbiddenMap }) {
       void main() {
         vColor = color;
         vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-        gl_PointSize = size * (300.0 / -mvPosition.z);
+        gl_PointSize = size * (90.0 / -mvPosition.z);
         gl_Position = projectionMatrix * mvPosition;
       }
     `;
@@ -128,9 +128,8 @@ export function ConceptCloud({ data }: { data: ForbiddenMap }) {
         vec2 uv = gl_PointCoord - vec2(0.5);
         float d = length(uv);
         if (d > 0.5) discard;
-        float core = smoothstep(0.5, 0.15, d);
-        float halo = smoothstep(0.5, 0.35, d) * 0.5;
-        gl_FragColor = vec4(vColor, core + halo);
+        float core = smoothstep(0.5, 0.2, d);
+        gl_FragColor = vec4(vColor, core);
       }
     `;
 
