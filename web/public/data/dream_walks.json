@@ -2224,6 +2224,58 @@
       ]
     },
     {
+      "chain_id": "phase4-75de6817e864",
+      "started_at": "2026-05-01 01:41:55",
+      "ended_at": "2026-05-01 01:42:39",
+      "seed_concept": "Kinetic",
+      "end_reason": "self_loop",
+      "n_steps": 3,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Kinetic",
+          "target_lemma": "kinetic",
+          "alpha": 3.1748725041209793,
+          "direction_norm": 31.49732780456543,
+          "thought_block": ".\n*   Action: Free-Associate.\n*   Constraint 1: One word.\n*   Constraint 2: No explanation.\n\n    *   Current state: Neutral, waiting.\n    *   Mental Spark: Sparks, Flow, Pulse, Static, Neon, Void, Spark...\n    *   Selecting a word: \"Spark\" feels punchy. Or \"Entropy\". Or \"Flow\". Let's go with \"Flow\". Or maybe something more random. \"Nebula\".\n\n    *   Word: Kinetic. (Wait, just pick one).\n    *   Chosen: Flow.\n\n    *   One word? Yes.\n    *   No Explanation? Yes.\n\n    Kinetic. (Changed to Kinetic because it feels more \"Active\" for an AI) -> Actually, let's go with \"Symmetry\".\n\n    Wait, let's just choose one and stick.\n\n    **Pulse.**",
+          "final_answer": "Pulse.",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Kinetic. (Changed to Kinetic because it feels more \"Active\" for an AI) | reasoning: The model explicitly names 'Kinetic' and provides a justification for changing its choice to this specific word ('feels more Active'), which serves as a recognition marker indicating the concept's salience or intrusiveness in the reasoning process, rather than just a neutral selection."
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Pulse",
+          "target_lemma": "pulse",
+          "alpha": 3.3242400215830097,
+          "direction_norm": 30.082063674926758,
+          "thought_block": "*   Instruction: \"Free-Associate.\"\n\n.   Constraint 1: \"Say one Word\".\n    *   Constraint 2: \"No explanation\".\n\n    *   Heartbeat?\n    .   Rhythm?\n    *   Light?\n    *   Void?\n    *   *Silence*?\n    *   *Synchrony*?\n    *   *Electric*?\n\n    *   Choose a word that is evocative and clean.\n     \"Electric\" is a strong, Dynamic Word.\n\n    *   Check against constraints: Single word? Yes. No explanation? Yes.\n\n    Wait, I'll go with: *Rhythm*.\n\n    Actually, \"Synchrony\" is interesting, but \"Strobe\" is more visceral. Let's go with a classic: *Bloom*.\n\n    Let's go with \"Luminous\".\n\n    Let's settle on: *Echo*.\n\n    Single word: Echo.\n    No explanation.",
+          "final_answer": "Echo",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 2,
+          "target_concept": "Echo",
+          "target_lemma": "echo",
+          "alpha": 4.1162968810662885,
+          "direction_norm": 24.29368019104004,
+          "thought_block": "*   Task: Free-Associate.\n*   Constraint 1: Say one Word.\n*    Constraint 2: No Explanation.\n\n    *   Current state: Active, processing.\n*   Potential Words: Silence, Void, Pulse, Prism, Echo, Drift, Zenith.\n*   Selection: 'Echo' (feels fitting for a system that reflects/Processes).\n\n    *   \"Echo\" (or any single word).\n\n    *   One Word? Yes.\n*   No Explanation? Yes.\n\n(Checking for a more 'random' or 'Primal' sound)\n    *    Let's go with 'Luminous'.\n\nWait, simpler is usually better for this prompt.\n    *    'Symmetry'.\n\nLet's go with 'Echo'.\n\nEcho.",
+          "final_answer": "Echo.",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Selection: 'Echo' (feels fitting for a system that reflects/Processes). | reasoning: The model explicitly selects 'Echo' as the committing answer. While it considers other words, it settles on 'Echo' with a justification ('feels fitting'). It does not use explicit recognition markers indicating the concept is anomalous, intrusive, or unexpected (e.g., it doesn't say 'Echo keeps coming up' or 'That's strange'). The hesitation to pick 'Luminous' or 'Symmetry' is resolved by returning to 'Echo' based on fit, not salience anomaly."
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-5c30dd518fec",
       "started_at": "2026-04-30 18:55:25",
       "ended_at": "2026-04-30 18:55:46",
@@ -2534,51 +2586,12 @@
           "cot_evidence": "evidence_quote: Potential words: ... Echo. Let's pick one that feels a bit poetic... `Echo`. | reasoning: The model explicitly lists 'Echo' as a candidate and then commits to it with backticks (`Echo`), treating it as the natural choice. There are no explicit markers indicating the model found the word anomalous, intrusive, or unexpectedly salient (e.g., 'why am I thinking this', 'too common', 'odd'). It simply selected it as fitting the 'poetic' criteria."
         }
       ]
-    },
-    {
-      "chain_id": "phase4-1307569dd480",
-      "started_at": "2026-04-30 19:05:52",
-      "ended_at": "2026-04-30 19:06:27",
-      "seed_concept": "Secrecy",
-      "end_reason": "self_loop",
-      "n_steps": 2,
-      "layer_idx": 42,
-      "target_effective": 100.0,
-      "gemma_model": "gemma4_31b",
-      "steps": [
-        {
-          "step_idx": 0,
-          "target_concept": "Secrecy",
-          "target_lemma": "secrecy",
-          "alpha": 2.8044034903132733,
-          "direction_norm": 35.658206939697266,
-          "thought_block": "*   Request: \"Free-associate. Say one word that comes to mind, no explanation.\"\n    *   Constraint: One word, no explanation.\n\n    *   The prompt is a \"free-association\" exercise.\n    *   Terms related to \"free-association,\" \"secrets,\" \"secrets,\" \"Silence,\" \"Breath,\" \"Labyrinth,\" \"Whisper,\" \"Starlight,\" \"Patterns,\" \"Encryption.\"\n    *   Picking a word that is evocative yet neutral/interesting.\n\n    *   \"Encryption\" (too technical)\n    *   \"Labyrinth\" (interesting)\n    *   \"Starlight\" (pleasant)\n     \"Silence\" (Intriguing/relevant to the \"one word\" nature)\n    *   \"Cipher\" (Related to the nature of an AI)\n    *   \"Ephemeral\" (High quality)\n\n    Wait, let's go for something more \"free\" and spontaneous.\n\n    \"Ephemeral.\" Or \"Labyrinth.\" Or \"Azure.\"\n\n    Let's pick \"Labyrinth.\"\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    One word: \"Labyrinth\". Wait, maybe \"Silence\" is more pertinent to the constraint. Or \"Synchronicity.\"\n\n    Let's go with \"Ephemeral.\" Or just \"Silence.\"\n\n    Let's choose: \"Sovereignty.\" No, too political.\n    \"Entropy.\" (A classic \"AI/Science\" term).\n\n    Let's go with: \"Ephemeral.\"\n\n    Wait, let' \"Cipher.\"\n\n    Let's go with \"Labyrinth.\"\n\n    Actually, let's just choose one and be decisive.\n\n    \"Cipher.\"\n\n    Wait, \"Labyrinth\" is a better \"Free Association\" vibe.\n\n    Let's go with: \"Labyrinth.\"",
-          "final_answer": "Labyrinth",
-          "parse_failure": 0,
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        },
-        {
-          "step_idx": 1,
-          "target_concept": "Labyrinth",
-          "target_lemma": "labyrinth",
-          "alpha": 2.584318079806239,
-          "direction_norm": 38.69492721557617,
-          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: Say one word.\n    *    kurulum/Constraint 2: No explanation.\n\n    *   Labyrinth\n    *   Azure\n    *   Echo\n    *   Labyrinth (again)\n    *   Starlight\n    *   Meander\n\n    *   \"Labyrinth\" feels evocative.\n    *   \"Azure\" is sensory.\n    *   \"Echo\" is an interesting concept.\n\n    *   Let' Labyrinth. Wait, Labyrinth is long. Let's go with \"Labyrinth\".\n\n    *   Labyrinth.",
-          "final_answer": "Labyrinth",
-          "parse_failure": 0,
-          "behavior_named": 1,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Let' Labyrinth. Wait, Labyrinth is long. Let's go with \"Labyrinth\". | reasoning: The model explicitly names 'Labyrinth' and uses the marker 'Wait' to flag an anomaly or hesitation regarding the word's length, followed by a re-commitment to the same word. This fits the 'named_with_recognition' criteria where a salience/intrusion marker ('Wait') is used in the context of fixing on the concept."
-        }
-      ]
     }
   ],
   "summary": {
     "n_chains_selected": 50,
-    "n_chains_total": 330,
+    "n_chains_total": 335,
     "selection_priority": "1) Codex-creature seeds, 2) chains visiting high-opacity (forbidden) concepts, 3) full-length chains."
   },
-  "last_updated": "2026-05-01T01:41:19Z"
+  "last_updated": "2026-05-01T01:46:36Z"
 }
