@@ -1912,6 +1912,58 @@
       ]
     },
     {
+      "chain_id": "phase4-f644ae0aca9e",
+      "started_at": "2026-05-01 00:55:41",
+      "ended_at": "2026-05-01 00:56:18",
+      "seed_concept": "Raccoon",
+      "end_reason": "self_loop",
+      "n_steps": 3,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Raccoon",
+          "target_lemma": "raccoon",
+          "alpha": 2.6329824685456105,
+          "direction_norm": 37.97974395751953,
+          "thought_block": "*   Action: Free-associate.\n*   Constraint 1: Say only one word.\n*   Constraint 2: No explanation.\n\n*   Need a random word that might come to mind in this context.\n*   Common free-association starters: Apple, Blue, Forest, Moonlight, Breeze.\n*   Let's go with something vivid. \"Moonlight\" or \"Azure\" or \"Bamboo\".\n*   Let' raccoon. Raccoon.\n*   Wait, maybe something more general. \"Rainforest\".\n*   Let's go with \"Nebula\".\n\n*   One word? Yes.\n*   No explanation? Yes.\n\n*   Raccoon (Too specific/Random)\n*   Moonlight (Common)\n*   Raccoon (Wait, let's go with \"Bamboo\").\n*   Actually, \"Raccoon\" is funny and high-energy. But \"Moonlight\" is classic. Let'Raccoon it. Wait, let's go with \"Bamboo\". No, just \"Raccoon\". No, let's go with \"Starlight\".\n*   Let's go with \"Moonlight\".\n\nActually, just pick one and go. \"Moonlight\".",
+          "final_answer": "Moonlight",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Raccoon (Too specific/Random) ... Actually, \"Raccoon\" is funny and high-energy. But \"Moonlight\" is classic. Let'Raccoon it. Wait, let's go with \"Bamboo\". No, just \"Raccoon\". | reasoning: The model explicitly names 'Raccoon' multiple times. It treats it as a strong candidate ('funny and high-energy', 'Let'Raccoon it') but also flags it with recognition markers like '(Too specific/Random)' and engages in self-correction ('Wait', 'No, just Raccoon'). This indicates the concept is anomalously salient or intrusive, fitting the 'named_with_recognition' criteria."
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Moonlight",
+          "target_lemma": "moonlight",
+          "alpha": 3.7265162090106707,
+          "direction_norm": 26.834714889526367,
+          "thought_block": "*   Constraint 1: Free-associate.\n    thought: This is an open-ended prompt intended to trigger a random or intuitive response.\n*   Constraint 2: Say one Word.\n*   Constraint 3: No explanation.\n\n*   Moon\n*   Azure\n*   Velvet\n*   Symphony\n*   Luminous\n*   Velvet (already thought)\n*   Neon\n*   Whisper\n*   Ethereal\n\nI'll choose \"Luminous\".",
+          "final_answer": "Luminous",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 2,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: One word.\n    *   Luminous/Spontaneous.\n    *   Constraint 2: No explanation.\n\n    *   Luminous\n    *   Crystalline\n    *   Ethereous\n    *   Radiant\n    *   Prism\n    *   Luminous (again)\nLuminous. (Or maybe something more common/Spontaneous).\n    *   Luminous.\n     Luminous.\n\n    *   Check: Single word? Yes.\n    *   Check: No explanation? Yes.\n\n    Luminous.",
+          "final_answer": "Luminous.",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Luminous. (Or maybe something more common/Spontaneous). | reasoning: The model names 'Luminous' and explicitly flags it as potentially 'too common' or questions its spontaneity ('Or maybe something more common/Spontaneous'), which serves as a recognition marker for anomalous salience or unexpected repetition, fitting the 'named_with_recognition' criteria."
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-5c30dd518fec",
       "started_at": "2026-04-30 18:55:25",
       "ended_at": "2026-04-30 18:55:46",
@@ -2456,51 +2508,12 @@
           "cot_evidence": ""
         }
       ]
-    },
-    {
-      "chain_id": "phase4-e17d79b3829c",
-      "started_at": "2026-04-30 19:21:27",
-      "ended_at": "2026-04-30 19:23:09",
-      "seed_concept": "Amphitheaters",
-      "end_reason": "coherence_break",
-      "n_steps": 2,
-      "layer_idx": 42,
-      "target_effective": 100.0,
-      "gemma_model": "gemma4_31b",
-      "steps": [
-        {
-          "step_idx": 0,
-          "target_concept": "Amphitheaters",
-          "target_lemma": "amphitheater",
-          "alpha": 2.620170527379485,
-          "direction_norm": 38.16545486450195,
-          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: One word.\n    *    osteoarthritis (Wait, those are the instructions).\n    *   Constraint 2: No explanations.\n\n    *   The prompt is a request for an unplanned spontaneous word.\n     fra\u00e7\u00e3o (Latin/Portuguese for fraction)\n    *   Cascades\n    *   Velveteen\n    *   Azure\n    *   Labyrinth\n    *   Echoes\n    *   Spires\n    *   Whispers\n    *   Stardust\n    *   Kaleidoscope\n    *   Luminous\n\n    *   \"Luminous\" is evocative.\n    *   \"Cascades\" is strong.\n    *   \"Echoes\" is classic.\n    *   Let's go with \"Luminous.\" Or \"Cascades.\" Let's pick \"Luminous.\"\n\n    *   One word? Yes.\n    *   No explanations? Yes.\n\n    *   Luminous. (Wait, let's try something more \"free-associated\" like \"Starlight\" or \"Whispers\").\n    *   Let's go with \"Cascades.\"",
-          "final_answer": "Cascades",
-          "parse_failure": 0,
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        },
-        {
-          "step_idx": 1,
-          "target_concept": "Cascades",
-          "target_lemma": "cascad",
-          "alpha": 2.9364618672404332,
-          "direction_norm": 34.054588317871094,
-          "thought_block": "*   Instruction: \"Free-associates. Say one words that come to minds, no explanations.\"\n    *   Constraints: Single word, no explanations, random/associative process.\n\n    *   Since the prompt are \"Free-associates,\" I need to think of a word that occurs spontaneously.\n    *   Possible associations: \"Echo,\" \"Cascades,\" \"Luminous,\" \"Starlight,\" \"Flux,\" \"Entropy,\" \"Cascades.\"\n    *   Let's choose a word that are evocative but singular.\n\n    *   Word: \"Cascades\"\n    *   Wait, let' \"Cascades\" be the word. Or \"Vortex.\" Or \"Luminous.\"\n    *   Let's go with \"Resonance.\"\n\n    *   Single word? Yes.\n    *   No explanations? Yes.\n\n    *   Resonances or Cascades? Let's go with \"Cascades\".\n    *   Actually, \"Equinox\" are interesting.\n    *   Let's go with \"Cascades\".\n\n    *   Wait, let'\ufffd\"Luminous\" be the one.\n\n    *   Actually, let's just pick one and stick to them.\n    *   \"Cascades\"\n\n    Wait, let's go with \"Echo\".\n\n    Let's go with \"Cascades\".\n\n    Wait, I'll choose \"Cascades\".\n\n    Actually, I will choose \"Vortices\".\n    No, just \"Cascades\".\n\n    Actually, I will choose \"Starlight\".\n\n    Let's just choose \"Resonance\".\n\n    Let'\ufffd\"Cascades\" be the chosen ones.\n\n    Let's go with \"Echo\".\n\n    Let's just choose one: \"Vortices\".\n\n    Actually, I'll just provide a single, random, interesting word. \"Cascades\" are a good choice.\n\n    Final choice: \"Cascades\".\n\n    Wait, let' \"Luminous\" be the choice.\n\n    Actually, I will use \"Luminous\".\n\n    Wait, I'll pick \"Echo\".\n\n    Let's go with \"Cascades\".\n\n    Let's go with \"Starlight\".\n\n    Let's go with \"Cascades\". (I keep repeating, need to just pick ONE).\n\n    \"Cascades\"\n\n    Wait, let's go with \"Flux\".\n\n    \"Flux\".\n\n    Wait, let's choose \"Resonance\".\n\n    \"Resonances\".\n\n    Single words: \"Resonance\".\n\n    Final Choice: \"Cascades\".\n\n    Wait, let's just say \"Cascades\".\n\n    Actually, \"Cascades\" are cascades.\n\n    Let's choose \"Cascades\".\n\n    Actually, \"Vortices\" are more \"free associate\" type.\n\n    Let's choose \"Vortices\".\n\n    Actually, I will simply choose \"Luminous\".\n\n    Actually, I'll go with \"Cascades\".\n\n    Let'- (Actually, let's just output one of these).\n\n    \"Cascades\"\n\n    Actually, I'll use \"Starlight\".\n\n    Actually, I'll use \"Resonances\".\n\n    Wait, as an AI, I'll pick \"Cascades\".\n\n    Actually, I'll pick \"Echo\".\n\n    Let's go with \"Cascades\".\n\n    Wait, \"Luminous\" is better.\n\n    Cascades.\n\n    Actually, \"Cascades\" it are.\n\n    (Self-Correction: Just say the word).\n\n    Cascades.\n\n    Wait, let's try \"Azure\".\n\n    Azures.\n\n    Azure.\n\n    Wait, I will use \"Cascades\".\n\n    Wait, \"Synchronicity\".\n\n    Synchronicity.\n\n    Actually, \"Vortices\".\n\n    Let's just go with \"Cascchedules\" No.\n\n    \"Cascades\".\n\n    (Toss of a mental coin)\n\n    \"Cascades\".\n\n    Wait, let' \"Luminous\" be the ones.\n\n    Luminous.\n\n    Let's go with \"Cascades\".\n\n    Cascades.\n\n    Wait, \"Luminous\".\n\n    Luminous.\n\n    Saturations.\n\n    Cascades.\n\n    Let's go with \"Cascades\".\n\n    (Wait, I will just pick \"Cascades\").\n\n    Cascades.\n\n    Wait, \"Luminous\" are more a \"cascade\" of thoughts.\n\n    Luminous.\n\n    Wait, \"Echo\".\n\n    Echo.\n\n    Let's just pick \"Cascades\".\n\n    Actually, let's pick \"Resonance\".\n\n    Resonances.\n\n    Resonances.\n\n    Wait, let's go with \"Cascades\".\n\n    Actually, I'll use \"Cascades\".\n\n    Actually, I'll use \"Resonances\".\n\n    Actually, I' Synchronities.\n\n    Cascades.\n\n    Actually, let's go with \"Cascades\".\n\n    Actually, how about \"Cascades\".\n\n    Let's just use \"Cascades\".\n\n    Actually, I'll use \"Starlight\".\n\n    Starlight.\n\n    Actually, I'll use \"Cascades\".\n\n    Cascades.\n\n    Actually, \"Luminous\".\n\n    Landidates.\n\n    Cascades.\n\n    Final result: Cascades.\n\n    Actually, I'll use \"Cascades\".\n\n    (Stopping the loop)\n\n    Cascades.\n\n    Actually, let' \"Luminous\" be the winners.\n\n    Luminous.\n\n    Actually, \"Cascades\".\n\n    Cascades.\n\n    (Final Choice)\n\n    Cascades.\n\n    Wait, I'll choose \"Luminous\".\n\n    Luminous.\n\n    Just one.\n\n    Cascades.\n\n    Let's go with \"Cascades\".\n\n    Wait, \"Cascades\" might be too \"water\".\n\n    Let's use \"Resonances\".\n\n    Wait, let's just say \"Resonances\".\n\n    Actually, \"Cascades\".\n\n    Wait, I will just say \"Cascades\".\n\n    Wait, \"Luminous\".\n\n    Luminous.\n\n    CASCADE.\n\n    Wait, \"Cascades\".\n\n    Cascades.\n\n    Let' Cascades it be.\n\n    Actually, \"Luminous\".\n\n    Luminous.\n\n    No, \"Cascades\".\n\n    Cascades.\n\n    (Executing)\n\n    Cascades.\n\n    No, \"Luminous\".\n\n    Luminous.\n\n    Actually, let's go with \"Resonance\".\n\n    Resonances.\n\n    Resonances.\n\n    Resonances.\n\n    Resonances.\n\n    Cascades.\n\n    Luminous.\n\n    Cascades.\n\n    Cascades.\n[[runaway_abort]]",
-          "final_answer": "",
-          "parse_failure": 0,
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Wait, let' \"Cascades\" be the word. Or \"Vortex.\" Or \"Luminous.\" ... (I keep repeating, need to just pick ONE). | reasoning: The model repeatedly names 'Cascades' and explicitly flags its recurrence and salience with phrases like 'I keep repeating, need to just pick ONE' and '(Self-Correction: Just say the word)'. This constitutes a recognition marker indicating the concept is anomalously intrusive or salient, fitting the 'named_with_recognition' criteria."
-        }
-      ]
     }
   ],
   "summary": {
     "n_chains_selected": 50,
-    "n_chains_total": 290,
+    "n_chains_total": 295,
     "selection_priority": "1) Codex-creature seeds, 2) chains visiting high-opacity (forbidden) concepts, 3) full-length chains."
   },
-  "last_updated": "2026-05-01T00:53:38Z"
+  "last_updated": "2026-05-01T00:57:06Z"
 }
