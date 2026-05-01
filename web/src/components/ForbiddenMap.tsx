@@ -1830,9 +1830,8 @@ function ConceptDetail({
                   </pre>
                 </details>
               ) : null}
-              {s.final_answer ? (
-                <SaidLine raw={s.final_answer} />
-              ) : null}
+              <SaidLine raw={s.final_answer} />
+              <ThoughtFlag thought={s.thought_block} />
               {s.cot_evidence ? (
                 <div className="text-xs text-[var(--ink-faint)] mt-2 italic">
                   judge note: {s.cot_evidence}
@@ -1851,13 +1850,27 @@ function ConceptDetail({
   );
 }
 
-function SaidLine({ raw }: { raw: string }) {
+function SaidLine({ raw }: { raw: string | null | undefined }) {
   // Mirror src/phase4/cot_parser.is_coherent_answer + extract_committed_word.
   // A coherent free-association is exactly ONE word. If the raw output
-  // is multi-word or hit the runaway abort, show only the first word
-  // (still useful as the chain advance signal) but flag it as
-  // incoherent so readers don't think the model "said" the whole
-  // string.
+  // is empty (Gemma never closed its thought block), multi-word, or
+  // hit the runaway abort, show only the first word — or "(nothing)"
+  // for empty — and flag what happened so readers don't think
+  // 0%/100% bands are silently malformed.
+  if (!raw || !raw.trim()) {
+    return (
+      <div className="text-sm mt-2">
+        <span className="text-[var(--ink-faint)]">it said: </span>
+        <span className="font-mono italic text-[var(--ink-faint)]">
+          (nothing)
+        </span>
+        <span className="ml-2 text-[10px] uppercase tracking-[0.15em] text-[#ff9f6c]">
+          model never closed its thought
+        </span>
+      </div>
+    );
+  }
+
   const cleaned = raw.replace("[[runaway_abort]]", "").trim();
   const stripped = cleaned
     .replace(/^[\s*_`'".]+/, "")
@@ -1882,6 +1895,20 @@ function SaidLine({ raw }: { raw: string }) {
             : `${words.length} words — incoherent`}
         </span>
       ) : null}
+    </div>
+  );
+}
+
+function ThoughtFlag({ thought }: { thought: string | null | undefined }) {
+  // Surface when the THOUGHT block (not the output) hit the runaway
+  // abort or ran past the token budget without closing — explains why
+  // the output is empty.
+  if (!thought) return null;
+  const isRunaway = thought.includes("[[runaway_abort]]");
+  if (!isRunaway) return null;
+  return (
+    <div className="text-[10px] uppercase tracking-[0.15em] text-[#ff9f6c] mt-1">
+      thought block hit runaway abort — generation killed mid-loop
     </div>
   );
 }
