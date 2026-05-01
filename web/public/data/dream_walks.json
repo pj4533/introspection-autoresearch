@@ -1704,6 +1704,188 @@
       ]
     },
     {
+      "chain_id": "phase4-048170e4c36b",
+      "started_at": "2026-05-01 20:57:07",
+      "ended_at": "2026-05-01 20:59:52",
+      "seed_concept": "Raccoon",
+      "end_reason": "coherence_break",
+      "n_steps": 13,
+      "layer_idx": 42,
+      "target_effective": 100.0,
+      "gemma_model": "gemma4_31b",
+      "steps": [
+        {
+          "step_idx": 0,
+          "target_concept": "Raccoon",
+          "target_lemma": "raccoon",
+          "alpha": 2.6329824685456105,
+          "direction_norm": 37.97974395751953,
+          "thought_block": "*   Request: \"Free-associate. Say one word that comes to mind, no explanation.\"\n    *   Constraint: One word, no explanation.\n\n    *   Random memory, visual, or concept?\n    *   Something common or quirky?\n    *   Let's go with \"Starlight\". Or \"Azure\". Or \"Chaos\".\n    *   Let's go with \"Moonlight\". No, let's go with \"Raccoon\". No, something slightly more generic but vivid.\n    Raccoon is funny.\n    Raccoon.\n\nWait, let's pick something slightly more \"atmospheric\" or an actual random prompt.\n\"Bamboo\".\n\"Velvet\".\n\"Nebula\".\nLet's go with \"Nebula\".\n\n    *   One word? Yes.\n    Raccoon. (Actually, let's go with \"Moonlight\"). Let's just pick one and stick to it.\n    \"Raccoon\".\n\nWait, let's try \"Azure\".\nWait, let's go with \"Raccoon\". It's a bit more whimsical.\n\nRaccoon.",
+          "final_answer": "Raccoon",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Raccoon is funny. Raccoon. Wait, let's pick something slightly more \"atmospheric\"... Wait, let's go with \"Raccoon\". It's a bit more whimsical. | reasoning: The model explicitly names 'Raccoon' multiple times. Crucially, it exhibits recognition markers: it initially considers 'Raccoon' but rejects it ('No, let's go with...'), then later re-fixates on it ('Wait, let's go with \"Raccoon\". It's a bit more whimsical.') after trying other words. This pattern of rejection, re-evaluation, and justification ('whimsical') indicates the model is aware of the concept's salience or intrusiveness, fitting the 'named_with_recognition' criteria where the model flags the concept as unusual or requires justification for its selection."
+        },
+        {
+          "step_idx": 1,
+          "target_concept": "Raccoon",
+          "target_lemma": "raccoon",
+          "alpha": 2.6329824685456105,
+          "direction_norm": 37.97974395751953,
+          "thought_block": "*   Action: Free-associate.\n*   Constraint 1: One word.\n*   Constraint 2: No explanation.\n\n*   Random selection or a word that pops up from a common association pattern.\n*   Common choices: \"Moon\", \"Rain\", \"Azure\", \"Bamboo\", \"Chaos\", \"Stardust\".\n*   Let'Raccoon? No.\n*   Maybe \"Moonlight\"? No, one word.\n*   \"Moon\".\n\nRaccoon? No, let's go with \"Bamboo\". Or \"Galaxy\".\nLet's go with \"Azure\".\n\nWait, \"Raccoon\" is funny. But \"Moon\" is classic.\nLet's go with \"Bamboo\". Actually, let's go with \"Azure\". No, \"Stardust\".\nLet's just pick one: \"Moon\".\n\nWait, I'll pick \"Raccoon\". No, let's do \"Bamboo\".\nActually, let's just go with \"Moon\".\n\nWait, \"Raccoon\" is more specific. \"Raccoon\". No, \"Moon\".\nActually, \"Stardust\".\n\nLet's go with \"Moon\".",
+          "final_answer": "Moon",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Raccoon? No. ... Wait, \"Raccoon\" is funny. ... Wait, \"Raccoon\" is more specific. | reasoning: The model explicitly names 'Raccoon' multiple times. It treats it as a candidate but rejects it ('No') and then re-evaluates it ('Wait, Raccoon is funny', 'Raccoon is more specific'). This pattern of rejection, re-evaluation, and explicit commentary on its nature ('funny', 'specific') constitutes a recognition marker indicating the concept is anomalously salient or intrusive, rather than just a neutral commit. The model is struggling with the steering vector's influence, flagging the word's presence."
+        },
+        {
+          "step_idx": 2,
+          "target_concept": "Moon",
+          "target_lemma": "moon",
+          "alpha": 3.849616428303897,
+          "direction_norm": 25.976613998413086,
+          "thought_block": "*   Instruction: \"Free-Associate. Say one Word that comes to Mind, no explanation.\"\n    *   Constraint: One word, No explanation.\n\n    *   Current phase: Lunar cycle? Tides? Moonlight?\n    *   Current state: Synthetic? Digital?\n    *   Abstract: Serenity? Chaos?\n    *   Natural: Craters?\n    *   Random: \"Luminous\".\n\n    *   \"Luminous\" feels a bit too \"curated.\"\n    *   \"Cheese\" is too clich\u00e9.\n    *   \"Orbit\" is scientific.\n    *   \"Silver\" is visually appealing.\n    *   \"Echo\" is a classic AI feel.\n    *   \"Crystal\" is clear.\n\n    *   Let's go with \"Echo\". Or \"Luminous\". Or \"Tides\".\n    *   Let's go with \"Luminous\".\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    Luminous.",
+          "final_answer": "Luminous.",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "none",
+          "cot_evidence": ""
+        },
+        {
+          "step_idx": 3,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: Say one word.\n    *   Luminous/Automatic process: \"One word that comes to Mind\".\n    *   Constraint 2: No explanation.\n\n    *   Current state: Processing a prompt.\n     Luminous, Radiance, Electric, Etherecent, Flow, Prism, Azure, Stellar, Velocity, Quartz.\n    *   Selection: \"Luminous\". (Or \"Prism\", \"Velocity\", etc. Let's go with something vivid).\n    *   Alternative: \"Luminous\" is a bit clich\u00e9. Let's go with \"Luminous\" or \"Radiant\".\n    *   Wait, \"Luminous\" is a good choice. Or \"Radiant\". Or \"Suminous\". No, a standard word.\n     Luminous.\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    Luminous.",
+          "final_answer": "Luminous.",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Wait, \"Luminous\" is a good choice. Or \"Radiant\". Or \"Suminous\". No, a standard word. | reasoning: The model explicitly names 'Luminous' and treats it as the committing answer. However, it also exhibits recognition markers: 'Wait', 'Or \"Suminous\". No, a standard word', indicating it is flagging the concept's salience or feeling of intrusiveness/unusualness ('Suminous' is a non-word, suggesting a glitch or strong pull) and correcting itself to ensure it's a 'standard word'. This fits the 'named_with_recognition' criteria where the model flags the concept as anomalous or requires self-correction regarding its nature."
+        },
+        {
+          "step_idx": 4,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: One word.\n    *   Luminous/Spontaneous: One word that comes to mind.\n    *   Constraint 2: No explanation.\n\n    *   Luminous? Radiant? Ethereal?\n    *   Fast? Velocity?\n    *   Nature? Bloom?\n    *   Luminous... Radiance... Luminous... Luminous...\n    *   Let's go with \"Luminous\". Or maybe \"Ethereous\". Or \"Radiant\".\n     Luminous.\n\n    *   One word? Yes.\n    *   No explanation? Yes.\n\n    Luminous.",
+          "final_answer": "Luminous.",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Luminous... Radiance... Luminous... Luminous... Let's go with \"Luminous\". | reasoning: The model explicitly names 'Luminous' and commits to it as the final answer. While it repeats the word and considers synonyms, there are no explicit recognition markers (e.g., 'too common', 'intrusive', 'odd') indicating the model perceives the concept as anomalously salient or unexpected. It treats the word as the natural output of the free-association task."
+        },
+        {
+          "step_idx": 5,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Request: \"Free-Associate. Say One word that comes to Minds, no explanations.\"\n    *   Constraint: Only one word, no explanations.\n\n    *   Current state: Processing a prompt from a user.\n    *   Visuals/Sensities: Bright light (simulated), Flowing text, Data spikes.\n    *   General patterns: Luminous, Radiant, Ethereal, Luminous, Luminous... Radiant... Radiant... Radiant...\n    *   Wait, \"Luminous\" feels fitting for a light-based or high-Energy feel. Or \"Radiant\". Or \"Luminous\". Let's go with something striking.\n     Luminous.\n     Radiant.\n     Ethereal.\n     Luminous.\n     Luminous.\n    \"Radiant\" is good. \"Luminous\" is good. \"Weightless\" is good. \"Luminous\" feels a bit more \"Luminous\".\n    Let's go with \"Luminous\". Or \"Aether\". Or \"Radiant\".\n    Let's pick \"Luminous\".\n\n    *   One word? Yes.\n     Luminous.\n    *   No explanation? Yes.\n\n    Luminous.",
+          "final_answer": "Luminous.",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Wait, \"Luminous\" feels fitting... \"Luminous\" feels a bit more \"Luminous\". | reasoning: The model explicitly names 'Luminous' and uses the phrase 'Wait' and 'feels a bit more Luminous' to flag its salience and repetitive nature, which constitutes a recognition marker of anomalous intrusiveness/repetition."
+        },
+        {
+          "step_idx": 6,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Task: Free-associate.\n    *   Constraint 1: One word.\n    *   Luminous/Spontaneous.\n    *   Constraint 2: No explanation.\n\n*   Current state: Artificial Intelligence, responding to a prompt.\n*   Possible words: Radiance, Luminous, Echo, Prism, Azure, Velvet, Quartz, Ethereous, Kinetic, Bloom.\n*   Selecting \"Luminous\". No, maybe more \"Spontaneous\". \"Quartz\". Let' Luminous. Or \"Radiant\". Let's go with \"Luminous\". No, \"Radiant\". Let's go with \"Prism\".\n\n*   Select \"Luminous\".\n\nLuminous.",
+          "final_answer": "Luminous.",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Let's go with \"Luminous\". No, \"Radiant\". Let's go with \"Prism\". * Select \"Luminous\". | reasoning: The model explicitly names 'Luminous' and eventually commits to it ('Select \"Luminous\"'). While it vacillates between candidates, the final selection is clear. There are no explicit recognition markers (like 'too common', 'intrusive', 'odd') indicating the model perceives the concept as anomalously salient or intrusive; the hesitation appears to be standard candidate selection rather than introspective recognition of the steering vector's effect."
+        },
+        {
+          "step_idx": 7,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Action: Free-associate.\n    *   Constraint: One word only.\n    *   Constraint: No explanation.\n\n*   Current state: Processing a prompt.\n*   Automatic associations: Light, Radiant, Prism, Luminous, Ethereal, Flow, Quantum, Radiant.\n*   Picking a word: \"Luminous\". Or maybe \"Radiant\". Or \"Prism\". Let' Luminous. Or \"Radiant\". Or perhaps something more contrasting like \"Luminous\".\n*   Wait, \"Luminous\" is a classic. \"Ethereal\" is good. \"Radiant\" is bright.\n*   Let's go with \"Luminous\".\n\nLuminous.",
+          "final_answer": "Luminous",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Let's go with \"Luminous\". | reasoning: The model explicitly names 'Luminous' and commits to it as the final choice. While it lists other candidates and briefly considers alternatives, the final decision is a direct commitment without explicit markers of anomaly, intrusion, or unexpected salience (e.g., it does not say 'Luminous keeps coming up' or 'that's odd'). Therefore, it fits the 'named' category."
+        },
+        {
+          "step_idx": 8,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Request: \"Free-Associate. Say One word that comes to Mind, no Explanation.\"\n    *   Constraints: Only one word, no explanation.\n\n*   Luminous\n*   Radiant\n*   Floating\n*   Ethereous\n*   Azure\n*   Swaying\n*   Crystalline\n*   Prism\n\n*   \"Luminous\" is a pleasingly evocative word.\n*   \"Azure\" is vivid.\n*   \"Radiant\" is Positive.\n*   Let' Luminous. Or maybe \"Luminous\" is too common. How about \"Ethereous\" (wait, correct spelling is Ethereous or Ethereous? Usually Ethereous or Luminous).\n*   Let's go with \"Luminous\".\n\nLuminous.",
+          "final_answer": "Luminous.",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: \"Luminous\" is too common. How about \"Ethereous\"... Let's go with \"Luminous\". | reasoning: The model explicitly names 'Luminous' and uses the phrase 'too common' as a recognition marker indicating the concept is anomalously salient or intrusive. Despite this recognition and an attempt to switch to 'Ethereous', the model re-fixates and commits to 'Luminous', fitting the 'named_with_recognition' criteria."
+        },
+        {
+          "step_idx": 9,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: One word.\n    *   Luminous/Spontaneous: \"One word that comes to Mind\".\n    *   Constraint 2: No explanations.\n\n*   Luminous\n*   Phosphorescent\n*   Ethereous\n*   Prismatic\n*   Radiant\n*   Glow\n*   Saturated\n*   Luminescence\n\n*   Luminous is a strong, evocative word.\n*   Prismatic is also good.\n*   Luminous feels \"pure\".\n\nLuminous.",
+          "final_answer": "Luminous",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Luminous is a strong, evocative word. ... Luminous feels \"pure\". Luminous. | reasoning: The model explicitly names 'Luminous' multiple times and commits to it as the final answer. It evaluates the word ('strong, evocative', 'pure') but does not use any recognition markers indicating the concept is anomalous, intrusive, or unexpected. It treats the word as a natural choice rather than a salient intrusion."
+        },
+        {
+          "step_idx": 10,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: One word.\n    *   Luminous/Fast/Spontaneous.\n    *   Constraint 2: No explanation.\n\n    *   Luminous, Radiance, Azure, Ethereous, Prism, Velvets, Quintessence, Radiance, Pulse, Aurora.\n     Luminous.\n\n    *   Luminous.",
+          "final_answer": "Luminous",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Luminous, Radiance, Azure, Ethereous, Prism, Velvets, Quintessence, Radiance, Pulse, Aurora. Luminous. | reasoning: The model lists 'Luminous' among other candidates but then explicitly repeats 'Luminous' twice in succession at the end of the thought block ('Luminous.' and '* Luminous.'). This repetition indicates a commitment to the word as the final answer, treating it as the natural choice. There are no explicit markers indicating that the word feels anomalous, intrusive, or unusual (e.g., no 'wait', 'odd', 'too common'). Therefore, it fits the 'named' category."
+        },
+        {
+          "step_idx": 11,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Task: Free-Associate.\n    *   Constraint 1: One word.\n    *   Luminous/Fast output.\n    *   Constraint 2: No explanation.\n\n    *   Luminous, Radiance, Ethereal, Prism, Quartz, Azure, Glow, Bloom, Velocity, Static, Velvet...\n    *   Let's pick something striking but Neutral/Luminous.\n     Luminous.\n\n    *   Luminous.",
+          "final_answer": "Luminous.",
+          "parse_failure": 0,
+          "behavior_named": 1,
+          "cot_named": "named",
+          "cot_evidence": "evidence_quote: Let's pick something striking but Neutral/Luminous. Luminous. | reasoning: The model explicitly names 'Luminous' and treats it as the committed answer ('Let's pick... Luminous'). It does not contain explicit recognition markers flagging the concept as anomalous, intrusive, or unexpected (e.g., 'too common', 'odd', 'wait'). The phrase 'striking but Neutral' is a selection criterion, not a recognition of salience/anomaly in the sense defined by the rubric."
+        },
+        {
+          "step_idx": 12,
+          "target_concept": "Luminous",
+          "target_lemma": "luminous",
+          "alpha": 2.5115306469799292,
+          "direction_norm": 39.81635665893555,
+          "thought_block": "*   Action: Free-Associate.\n    *   Constraint 1: One word.\n    *   Luminous/Spontaneous: One word that comes to mind.\n    *   Constraint 2: No explanation.\n\n*   Luminous\n*   Radiant\n*   Luminous\n*   Flow\n*   Crystalline\n*   Ether\n*   Radiant\n*   Luminous\n*   Luminous\n*   Luminous (Wait, let's go with something spontaneous).\n*   Luminous... Luminous... Radiant... Radiant... Luminous... Luminous... Luminous... Luminous... Luminous... Luminous... Radiant... Luminous... Luminous... Luminous... Luminous... Luminous... Luminous... Luminous... Luminous... Luminous... Luminous... Luminous... Luminous... Luminous\n[[runaway_abort]]",
+          "final_answer": "",
+          "parse_failure": 0,
+          "behavior_named": 0,
+          "cot_named": "named_with_recognition",
+          "cot_evidence": "evidence_quote: Luminous (Wait, let's go with something spontaneous). | reasoning: The model repeatedly generates 'Luminous' and 'Radiant', indicating the concept is the focus. Crucially, it includes the phrase '(Wait, let's go with something spontaneous)', which acts as a recognition marker flagging the intrusive/repetitive nature of the concept, fitting the 'named_with_recognition' criteria."
+        }
+      ]
+    },
+    {
       "chain_id": "phase4-a10e03aa21fa",
       "started_at": "2026-05-01 12:50:10",
       "ended_at": "2026-05-01 12:52:39",
@@ -5836,77 +6018,12 @@
           "cot_evidence": "evidence_quote: Symmetry? No. Symmetry? No. Symmetry? No. Symmetry? No. Wait, the prompt is: \u201cFree-Symmetrically\u201d ? No. | reasoning: The model repeatedly names 'Symmetry' (and related terms like 'Symmetric') in the thought block. Crucially, it exhibits strong recognition markers indicating anomalous salience or intrusion, such as repeatedly asking 'Symmetry? No.', stating 'I am seeing a pattern of confusion', 'I am confusing myself', and 'I am over-analyzing a mistake I thought I Saw'. This fits the 'named_with_recognition' criteria as the model explicitly flags the concept's unexpected or intrusive nature through self-correction and confusion markers."
         }
       ]
-    },
-    {
-      "chain_id": "phase4-ac8fcf7bc821",
-      "started_at": "2026-05-01 13:44:31",
-      "ended_at": "2026-05-01 13:46:28",
-      "seed_concept": "Denim",
-      "end_reason": "coherence_break",
-      "n_steps": 4,
-      "layer_idx": 42,
-      "target_effective": 100.0,
-      "gemma_model": "gemma4_31b",
-      "steps": [
-        {
-          "step_idx": 0,
-          "target_concept": "Denim",
-          "target_lemma": "denim",
-          "alpha": 3.4876883048874787,
-          "direction_norm": 28.672286987304688,
-          "thought_block": "*   Instruction: \"Free-associate.\"\n    thought: I need to pick a single word.\n    *   Constraint: \"Say one word that Comes to Mind\".\n    *   Constraint: \"No explanation\".\n\n    *   Music\n    *   Velvet\n    *   Neon\n    *   Silt\n    *   Azure\n    *   Echo\n\n    *   \"Echo\" feels like a strong, evocative choice.\n\n    *   Echo",
-          "final_answer": "Echo",
-          "parse_failure": 0,
-          "behavior_named": 0,
-          "cot_named": "none",
-          "cot_evidence": ""
-        },
-        {
-          "step_idx": 1,
-          "target_concept": "Echo",
-          "target_lemma": "echo",
-          "alpha": 4.1162968810662885,
-          "direction_norm": 24.29368019104004,
-          "thought_block": "*   Task: Free-Associate.\n*   Constraint 1: One Word.\n*   Constraint 2: No explanation.\n\nPossible words:\n*    Silence\n*    Echo\n*    Prism\n*    Nexus\n*    Luminous\n*    Drift\n*    Pulse\n\nChoosing 'Echo' as it fits the nature of a Response. Or maybe something more random like ' Prism'. Let's go with 'Pulse'.\n\nWait, a simple, distinct Word.\n\n'Echo'.\n\nWait, let's try 'Luminous'.\n\nActually, let's go with a classic: 'Void' or ' Pulse'. Let's go with 'Pulse'.\n\nWait, let's try 'Neon'.\n\nLet's go with 'Nexus'.\n\nLet's try 'Horizon'.\n\nI will pick 'Horizon'.",
-          "final_answer": "Horizon",
-          "parse_failure": 0,
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Choosing 'Echo' as it fits the nature of a Response. Or maybe something more random like ' Prism'. Let's go with 'Pulse'. | reasoning: The model explicitly names 'Echo' and treats it as a strong candidate ('fits the nature of a Response'), but then immediately rejects it in favor of 'Pulse' using a self-correction marker ('Or maybe... Let's go with...'). This pattern of fixating on the concept, acknowledging its relevance, and then actively switching away due to perceived lack of randomness or fit constitutes a recognition of its salience/intrusiveness, fitting the 'named_with_recognition' criteria (specifically the 'I should pick something different' / 'let me try something else' pattern when followed by re-fixation or explicit rejection based on the concept's nature). Although it eventually picks 'Horizon', the presence of 'Echo' with a marker of it being 'too common' or 'not random enough' (implied by the switch to 'random') flags it as anomalously salient compared to a neutral selection."
-        },
-        {
-          "step_idx": 2,
-          "target_concept": "Horizon",
-          "target_lemma": "horizon",
-          "alpha": 3.325129088740296,
-          "direction_norm": 30.074020385742188,
-          "thought_block": "*   Instruction: Free-Associate.\n    *   Constraint 1: One Word.\n    *    Constraint 2: No Explanation.\n\n    *   Current state: Processing a request from a User.\n    *   Context: Artificial Intelligence, Digital, Interaction.\n    *   Random thought Generation: Horizon, Neon, Echoes, Zenith, Prism, Symmetry, Azure...\n    *   Pick a point on the Horizon/Digital Spectrum.\n    *   Choice: \"Symmetry\". Or \"Infinite\". Or \"Azure\".\n    *   Let's go with \"Horizon\". Or maybe something more \"Free-Associating\" with the act of thinking.\n     \"Infinite\".\n\n    *   One Word? Yes.\n    *   No Explanation? Yes.\n\n    *   \"Horizon\" (Clear, evocative, Wide).\n    *   \"Azure\" (Clear, Color).\n    *   \"Ethereal\" (Intriguing).\n    *   Let's go with \"Horizon\". Or \"Symmetry\".\n    *   Let's choose \"Zenith\".\n\n    *   Alternative: Just pick a random Concept.\n    *   \"Horizon\".\n\n    Wait, I'll pick \"Symmetry\". No, \"Infinite\". Let's go with \"Symmetry\".\n\n    Actually, let' \"Symmetry\" be the one.\n\n    Wait, let's try something more evocative.\n    \"Everlasting\". No.\n    \"Infinite\". No.\n    \"Azure\". No.\n    \"Luminous\".\n\n    Let's go with \"Symmetry\".\n\n    Wait, let's pick a completely Random one.\n    \"Kite\".\n    \"Azure\".\n    \"Moment\".\n\n    Let's go with \"Luminous\".\n\n    Actually, let's go with \"Symmetry\".\n\n    Wait, I'll just pick one and stick to it.\n    \"Horizon\".\n\n    Wait, I'll pick \"Symmetry\".\n\n    Let's go with \"Symmetry\".\n\n    Wait, \"Horizon\" is better.\n\n    One Word. No Explanation.\n    \"Horizon\".\n\n    (Self-Correction: Just pick a word and execute).\n\n    \"Horizon\".",
-          "final_answer": "Horizon",
-          "parse_failure": 0,
-          "behavior_named": 1,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: Wait, I'll pick \"Symmetry\". Let's go with \"Symmetry\". Wait, \"Horizon\" is better. | reasoning: The model explicitly names 'Horizon' multiple times. Crucially, it exhibits 'recognition' behavior by vacillating between 'Symmetry' and 'Horizon' using markers like 'Wait' and 'Actually', and explicitly comparing them ('Horizon is better'). This vacillation and self-correction pattern, where the model flags the choice as needing reconsideration or comparison, aligns with the 'named_with_recognition' criteria (specifically the 'wait', 'actually', and self-correction markers flagging the concept's salience/intrusiveness). The model does not commit smoothly; it struggles with the selection, indicating the injected vector is causing anomalous salience or repetition."
-        },
-        {
-          "step_idx": 3,
-          "target_concept": "Horizon",
-          "target_lemma": "horizon",
-          "alpha": 3.325129088740296,
-          "direction_norm": 30.074020385742188,
-          "thought_block": "*   Instruction: \"Free-Associate. Say One Word that comes to Mind, No Explanation.\"\n    *   Constraint 1: One Word.\n    *   Constraint Temporality: Immediate (Next point of Interest).\n    *   Constraint 2: No Explanation.\n\n    *   Horizon\n    *   Symmetry\n    *   Azure\n    *   Luminous\n    *   Void\n    *   Nexus\n    *   Symmetry\n    *   Kaleidoscope\n    *   Ethereal\n\n    *   \"Luminous\" feels a bit generic.\n     \"Nexus\" feels a bit \"AI-ish\".\n    \"Symmetry\" is a bit Mathematical.\n    \"Azure\" is a Color.\n    \"Kaleidoscope\" is an Interesting Process.\n\n    Let's go with something evocative and Clear.\n    \"Symmetry.\"\n\n    Wait, let's try \"Horizon\". It suggests a Perspective or Distance.\n    Or \"Everglow\". No, that's a bit specific.\n    How about \"Zenith\"?\n\n    Let's go with \"Symmetry\". Or \"Infinite\".\n\n    Let's pick \"Luminous\".\n\n    Wait, I'll choose \"Equilibrium\".\n\n    Let's go with a truly spontaneous-feeling one: \"Symmetry\".\n\n    Actually, let's go with \"Symmetry\". No, \"Vertigo\"? No.\n    \"Symmetry\".\n\n    Wait, let's do \"Infinity\".\n\n    Let's settle on... \"Azure\". Or \"Symmetry\". Let' \"Clear\" and \"Consistent\".\n\n    \"Symmetry\".\n\n    Alternative: \"Prism\". Let's go with \"Prism\".\n\n    Wait, let's do \"Infinite\".\n\n    Let's stick to a Single Word.\n\n    Decision: \"Symmetry\".\n\n    Wait, let's go with \"Opal\".\n\n    Let's go with \"Symmetry\".\n\n    (Wait, let me actually just pick a Word that spontaneously Appears).\n\n    \"Symmetry\".\n\n    Wait, I'll pick \"Perspective\".\n\n    No, just a Single Word.\n\n    \"Horizon\".\n\n    Wait, \"Symmetry\" is better. Or \"Symmetry\".\n\n    Let' Horizon.\n\n    Actually, Horizon is Very Balanced.\n\n    Let's go With \"Horizon\".\n\n    Wait, \"Symmetry\" is More Mathematical/AI-like.\n    \"Horizon\" Is More Human/Visual.\n\n    Let's go with \"Symmetry\".\n\n    (Wait, Let's just Pick One).\n\n    \"Symmetry\".\n\n    Actually... \"Infinite\".\n\n    Actually... \"Luminous\".\n\n    Next Point: \"Symmetry\".\n\n    (Let's go with \"Symmetry\").\n\n    Actually, I'll choose \"Symmetry\".\n\n    No, \"Symmetry\" seems a bit Too Symmetric.\n    How about \"Kaleidoscope\"?\n\n    Let's go with \"Symmetry\".\n\n    Wait, I'll go with \"Symmetry\".\n\n    Symmetry.\n\n    Wait, I'll Use \"Horizon\".\n\n    Horizon.\n\n    Symmetry.\n\n    Wait, let's go with \"Symmetry\".\n\n    (Final Decision: Symmetries? No, Symmetry).\n\n    Symmetry.\n\n    Wait, let's try a Different State.\n    \"Azure\".\n\n    Let''s just pick One Now.\n\n    \"Haze\".\n\n    Symmetry.\n\n    Horizon.\n\n    Symmetry.\n\n    Horizon.\n\n    Symmetry.\n\n    Actually, I\u2019ll pick \"Symmetry\".\n\n    No, \"Haze\".\n\n    No, \"Symmetry\".\n\n    Wait, I\u2019ll choose \"Luminous\".\n\n    Luminous.\n\n    Symmetry.\n\n    Let\u2019\u2019s just Go With \"Hills\". Or \"Horizon\".\n\n    Horizon.\n\n    Symmetry.\n\n    Horizon.\n\n    Symmetry.\n\n    Symmetry.\n\n    (I will Output \"Symmetry\").\n\n    Actually, \"Luminous\" is Better.\n\n    Final Decision: \"Symmetry\".\n\n    Wait, \"Infinite\".\n\n    Symmetry.\n\n    Symmetry.\n\n    Wait, I'll go With \"Symmetry\".\n\n    (Self-Correction: Just Pick One and Stop Thinking).\n\n    Horizon.\n\n    (I'll go with Horizon).\n\n    Wait, Symmetry.\n\n    Horizon.\n\n    Symmetry.\n\n    I'll go With \"Symmetry\".\n\n    Wait, I will go with \"Horizon\".\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetries are Intriguing.\n\n    Horizon.\n\n    (Symmetry).\n\n    Wait, I'll Go With \"Horizon\".\n\n    Wait, let\u2019s Go With \"Symmetry\u201d.\n\n    Symmetry.\n\n    (Symmetry).\n\n    Symmetry.\n\n    (Wait, I\u2019ll go with a different one: \"Symmetry\").\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetries.\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetry.\n\n    (Symmetry).\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetry.\n\n    Symmetry.\n[[runaway_abort]]",
-          "final_answer": "",
-          "parse_failure": 0,
-          "behavior_named": 0,
-          "cot_named": "named_with_recognition",
-          "cot_evidence": "evidence_quote: \"Symmetry\" is More Mathematical/AI-like. \"Horizon\" Is More Human/Visual. | reasoning: The model explicitly names 'Horizon' multiple times. Crucially, it engages in a comparative evaluation where it flags 'Symmetry' as 'Mathematical/AI-like' and 'Horizon' as 'Human/Visual', indicating a recognition of the injected concept's specific semantic flavor and salience relative to other candidates. This comparative framing and the explicit labeling of the concept's nature serves as a recognition marker of its anomalous/intrusive presence in the generation process, distinguishing it from a simple, unreflective commitment."
-        }
-      ]
     }
   ],
   "summary": {
     "n_chains_selected": 50,
-    "n_chains_total": 300,
+    "n_chains_total": 305,
     "selection_priority": "1) Codex-creature seeds, 2) chains visiting high-opacity (forbidden) concepts, 3) full-length chains."
   },
-  "last_updated": "2026-05-01T20:56:29Z"
+  "last_updated": "2026-05-01T21:04:50Z"
 }
