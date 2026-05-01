@@ -3,6 +3,7 @@ import { Phase4Hero } from "@/components/Phase4Hero";
 import { ForbiddenMap } from "@/components/ForbiddenMap";
 import { DreamWalkViewer } from "@/components/DreamWalkViewer";
 import { AttractorAtlas } from "@/components/AttractorAtlas";
+import { ConceptCloud } from "@/components/ConceptCloud";
 import { Footer } from "@/components/Footer";
 import {
   loadForbiddenMap,
@@ -25,6 +26,9 @@ export default function Home() {
       </section>
       <section id="attractors">
         <AttractorAtlas data={attractors} />
+      </section>
+      <section id="concept-cloud">
+        <ConceptCloud data={forbidden} />
       </section>
       <Footer />
     </main>
