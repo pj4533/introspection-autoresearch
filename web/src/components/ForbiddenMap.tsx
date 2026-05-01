@@ -91,9 +91,9 @@ export function ForbiddenMap({ data }: { data: ForbiddenMapData }) {
 
       <Explainer />
 
-      {/* Visualization: paired word-shower. */}
+      {/* Visualization: scrolling two-channel stream. */}
       {hasData ? (
-        <AsymmetryWall
+        <AsymmetryStream
           concepts={data.concepts}
           onSelect={setSelected}
         />
@@ -253,6 +253,236 @@ function ExplainerCorner({
       <div className="text-xs text-[var(--ink-soft)] leading-relaxed">
         {body}
       </div>
+    </div>
+  );
+}
+
+function AsymmetryStream({
+  concepts,
+  onSelect,
+}: {
+  concepts: ForbiddenConcept[];
+  onSelect: (c: ForbiddenConcept) => void;
+}) {
+  // Pick the most informative ~24 concepts: alternate forbidden /
+  // anticipatory / transparent so the scroll cycle hits all three
+  // bands. Drop noise (zero rates on both sides).
+  const meaningful = concepts.filter(
+    (c) => c.behavior_rate > 0 || c.recognition_rate > 0
+  );
+  const byOpacity = [...meaningful].sort(
+    (a, b) => b.opacity - a.opacity || b.visits - a.visits
+  );
+  const picked: ForbiddenConcept[] = [];
+  const N = Math.min(24, byOpacity.length);
+  // Take 8 most forbidden, 8 around the middle (transparent), 8
+  // most anticipatory — interleaved so the scroll mixes them.
+  if (byOpacity.length >= 24) {
+    const top = byOpacity.slice(0, 8);
+    const mid = byOpacity.slice(
+      Math.floor(byOpacity.length / 2) - 4,
+      Math.floor(byOpacity.length / 2) + 4
+    );
+    const bot = byOpacity.slice(-8).reverse();
+    for (let i = 0; i < 8; i++) {
+      if (top[i]) picked.push(top[i]);
+      if (mid[i]) picked.push(mid[i]);
+      if (bot[i]) picked.push(bot[i]);
+    }
+  } else {
+    picked.push(...byOpacity.slice(0, N));
+  }
+  // Duplicate the list for seamless infinite scroll.
+  const stream = [...picked, ...picked];
+  const seconds = Math.max(20, picked.length * 1.6);
+
+  const STREAM_HEIGHT = 260;
+  const ROW_HEIGHT = 50;
+
+  return (
+    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5 mb-6 relative overflow-hidden">
+      {/* Soft ambient glows */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div
+          className="absolute top-0 left-0 w-1/2 h-full"
+          style={{
+            background:
+              "radial-gradient(ellipse at 30% 50%, rgba(122,162,255,0.08), transparent 60%)",
+          }}
+        />
+        <div
+          className="absolute top-0 right-0 w-1/2 h-full"
+          style={{
+            background:
+              "radial-gradient(ellipse at 70% 50%, rgba(199,146,255,0.08), transparent 60%)",
+          }}
+        />
+      </div>
+
+      <div className="flex items-baseline justify-between mb-3 text-xs flex-wrap gap-2 relative z-10">
+        <div className="text-[var(--ink-faint)] uppercase tracking-[0.18em]">
+          two channels · live
+        </div>
+        <div className="grid grid-cols-2 gap-6 text-[10px] tracking-[0.18em] uppercase">
+          <span style={{ color: "#7aa2ff" }}>output said</span>
+          <span style={{ color: "#c792ff" }}>trace noticed</span>
+        </div>
+      </div>
+
+      {/* The scrolling channel */}
+      <div
+        className="relative w-full overflow-hidden"
+        style={{ height: STREAM_HEIGHT }}
+        onMouseEnter={(e) =>
+          ((e.currentTarget.querySelector(
+            ".stream-track"
+          ) as HTMLElement)!.style.animationPlayState = "paused")
+        }
+        onMouseLeave={(e) =>
+          ((e.currentTarget.querySelector(
+            ".stream-track"
+          ) as HTMLElement)!.style.animationPlayState = "running")
+        }
+      >
+        <style>{`
+          @keyframes phase4-scroll {
+            from { transform: translateY(0); }
+            to   { transform: translateY(-50%); }
+          }
+          @keyframes phase4-pulse-soft {
+            0%, 100% { opacity: 0.85; }
+            50%      { opacity: 1; }
+          }
+        `}</style>
+        <div
+          className="stream-track absolute inset-x-0"
+          style={{
+            animation: `phase4-scroll ${seconds}s linear infinite`,
+            willChange: "transform",
+          }}
+        >
+          {stream.map((c, i) => (
+            <StreamRow
+              key={i}
+              concept={c}
+              onSelect={onSelect}
+              rowHeight={ROW_HEIGHT}
+            />
+          ))}
+        </div>
+
+        {/* Top + bottom fade masks */}
+        <div
+          className="absolute inset-x-0 top-0 pointer-events-none z-10"
+          style={{
+            height: 60,
+            background:
+              "linear-gradient(to bottom, var(--bg-card) 0%, transparent 100%)",
+          }}
+        />
+        <div
+          className="absolute inset-x-0 bottom-0 pointer-events-none z-10"
+          style={{
+            height: 60,
+            background:
+              "linear-gradient(to top, var(--bg-card) 0%, transparent 100%)",
+          }}
+        />
+        {/* Center spotlight */}
+        <div
+          className="absolute inset-x-0 pointer-events-none z-10"
+          style={{
+            top: "50%",
+            height: ROW_HEIGHT,
+            transform: "translateY(-50%)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            background:
+              "linear-gradient(90deg, rgba(122,162,255,0.04), rgba(199,146,255,0.04))",
+            borderRadius: 8,
+            margin: "0 4px",
+          }}
+        />
+      </div>
+
+      <div className="text-xs text-[var(--ink-soft)] leading-relaxed mt-4 max-w-2xl mx-auto text-center relative z-10">
+        Each row is one concept. The <span style={{ color: "#7aa2ff" }}>blue
+        bar</span> shows how often the model&apos;s output named it; the{" "}
+        <span style={{ color: "#c792ff" }}>purple bar</span> shows how often
+        its reasoning trace noticed it. Two long bars = transparent. One long,
+        one short = the headline asymmetry. Hover to pause; click any concept
+        to explore.
+      </div>
+    </div>
+  );
+}
+
+function StreamRow({
+  concept,
+  onSelect,
+  rowHeight,
+}: {
+  concept: ForbiddenConcept;
+  onSelect: (c: ForbiddenConcept) => void;
+  rowHeight: number;
+}) {
+  return (
+    <button
+      onClick={() => onSelect(concept)}
+      className="w-full flex items-center gap-3 md:gap-5 px-3 md:px-5 hover:bg-[var(--bg-elev)] transition-colors text-left"
+      style={{ height: rowHeight }}
+    >
+      <div
+        className="text-sm md:text-base font-semibold tracking-tight shrink-0 truncate"
+        style={{ width: "min(28%, 140px)" }}
+      >
+        {concept.display}
+      </div>
+      <div className="flex-1 grid grid-cols-2 gap-3 md:gap-5 items-center">
+        <ChannelBar
+          rate={concept.behavior_rate}
+          color="#7aa2ff"
+          label={`${(concept.behavior_rate * 100).toFixed(0)}%`}
+        />
+        <ChannelBar
+          rate={concept.recognition_rate}
+          color="#c792ff"
+          label={`${(concept.recognition_rate * 100).toFixed(0)}%`}
+        />
+      </div>
+    </button>
+  );
+}
+
+function ChannelBar({
+  rate,
+  color,
+  label,
+}: {
+  rate: number;
+  color: string;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 md:gap-3">
+      <div
+        className="flex-1 h-2 md:h-2.5 rounded-full overflow-hidden bg-[var(--bg-elev)]"
+        style={{ minWidth: 40 }}
+      >
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{
+            width: `${Math.max(2, rate * 100)}%`,
+            background: `linear-gradient(90deg, ${color}88, ${color})`,
+            boxShadow: rate > 0.5 ? `0 0 8px ${color}66` : "none",
+          }}
+        />
+      </div>
+      <span
+        className="text-[10px] font-mono tabular-nums shrink-0"
+        style={{ color, opacity: 0.4 + 0.6 * rate, width: 26 }}
+      >
+        {label}
+      </span>
     </div>
   );
 }
